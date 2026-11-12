@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qrow logo directions</title>
+<meta name="description" content="Three logo directions for Qrow, a post-quantum escrow payments app, shown at real sizes on light and dark grounds.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · v2.0.0 · theme: coral (dealt 1/3, seed qrow-austere-calm-trustworthy-62da·feb5c929·2026-11-12·r0) · scope: component (brand review sheet) · genre: modern-minimal · tone: austere · signature: the three marks at 16px on paper and board */
+/* waive 26b: the sheet has no controls, so there is nothing to give an :active state */
+/* waive cream-palette (impeccable detector): the warm paper is the dealt Coral theme, not a default */
+/* critique: a review sheet, not a page; one idea per direction, marks shown at real sizes on both grounds, no invented facts */
+:root {
+  --color-paper: oklch(97% 0.006 55);
+  --color-paper-2: oklch(94.5% 0.007 55);
+  --color-ink: oklch(21% 0.012 38);
+  --color-muted: oklch(47% 0.013 45);
+  --color-rule: oklch(87% 0.009 55);
+  --color-board: oklch(22% 0.011 40);
+  --color-board-type: oklch(96.5% 0.006 70);
+  --color-board-muted: oklch(78% 0.01 60);
+  --color-accent-light: oklch(54% 0.165 29);
+  --color-accent-dark: oklch(74% 0.125 30);
+  --color-focus: oklch(54% 0.17 30);
+  --font-body: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 8px;
+  --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+  --text-sm: 0.875rem; --text-base: 1rem; --text-title: 1.375rem; --text-display: clamp(2rem, 4vw, 3rem);
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-base); line-height: 1.5; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: var(--space-2xl) var(--space-lg); }
+h1 { font-size: var(--text-display); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 var(--space-sm); overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
+.lede { color: var(--color-muted); margin: 0 0 var(--space-xl); max-width: 60ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: var(--space-lg); }
+.direction { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+h2 { text-wrap: balance; font-size: var(--text-title); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+h3 { font-size: var(--text-base); font-weight: 600; margin: 0 0 var(--space-sm); }
+.idea, .word-note { margin: 0; color: var(--color-muted); }
+.grounds { display: grid; gap: var(--space-sm); }
+.ground { margin: 0; border-radius: var(--radius-card); padding: var(--space-lg); display: grid; gap: var(--space-lg); }
+.ground--paper { background: var(--color-paper-2); color: var(--color-ink); --mark-accent: var(--color-accent-light); box-shadow: inset 0 0 0 1px var(--color-rule); }
+.ground--board { background: var(--color-board); color: var(--color-board-type); --mark-accent: var(--color-accent-dark); }
+.ground figcaption { font-size: var(--text-sm); color: var(--color-muted); }
+.ground--board figcaption, .ground--board .size__px { color: var(--color-board-muted); }
+.lockup { display: flex; align-items: center; gap: 12px; height: 56px; }
+.lockup__mark svg { width: 56px; height: 56px; display: block; }
+.lockup__word svg { height: 44px; width: auto; display: block; }
+.sizes { display: flex; align-items: flex-end; gap: var(--space-lg); flex-wrap: wrap; }
+.size { display: inline-flex; flex-direction: column; align-items: center; gap: var(--space-xs); }
+.size svg { width: var(--s); height: var(--s); display: block; }
+.size__px { font-size: var(--text-sm); color: var(--color-muted); }
+.critique { border-top: 1px solid var(--color-rule); padding-top: var(--space-md); }
+.critique dl { margin: 0; display: grid; gap: var(--space-sm); }
+.critique dt { font-weight: 600; font-size: var(--text-sm); }
+.critique dd { margin: 0; color: var(--color-muted); }
+.scores { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs) var(--space-md); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none; transition: none; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Qrow, three directions</h1>
+  <p class="lede">Each mark is shown as a lockup and at 16, 32, 48 and 96 pixels, on paper and on the ink board. Coral marks the one element that stands for the payment.</p>
+  <div class="grid">
+    
+  <article class="direction" aria-labelledby="h-sealed">
+    <h2 id="h-sealed">A. Sealed</h2>
+    <p class="idea">An envelope held shut by a round seal. The payment stays sealed until the recipient opens it; QoreSeal carries the notice.</p>
+    <div class="grounds">
+      
+      <figure class="ground ground--paper">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed0" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed0)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 70 28" role="img" aria-label="Qrow">
+  <g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8.3" cy="16" r="6.3"/>
+    <path d="M14.6 9.7V30.5"/>
+    <path d="M21.2 24V9.9M21.2 16.2c0-4.4 2.7-6.3 6.9-6.3"/>
+    <circle cx="38.1" cy="16" r="6.3"/>
+    <path d="M48.2 9.9 52.6 22.3 57.3 11.4 62 22.3 66.4 9.9"/>
+  </g></svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed1" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed1)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed2" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed2)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed3" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed3)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed4" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed4)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On paper</figcaption>
+      </figure>
+      <figure class="ground ground--board">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed5" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed5)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 70 28" role="img" aria-label="Qrow">
+  <g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8.3" cy="16" r="6.3"/>
+    <path d="M14.6 9.7V30.5"/>
+    <path d="M21.2 24V9.9M21.2 16.2c0-4.4 2.7-6.3 6.9-6.3"/>
+    <circle cx="38.1" cy="16" r="6.3"/>
+    <path d="M48.2 9.9 52.6 22.3 57.3 11.4 62 22.3 66.4 9.9"/>
+  </g></svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed6" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed6)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed7" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed7)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed8" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed8)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <defs>
+    <mask id="sealed-gap-sealed9" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="18.25" r="6.9" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#sealed-gap-sealed9)" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="3.25" y="7.25" width="25.5" height="18" rx="3"/>
+    <path d="M4.75 8.75 16 17.25 27.25 8.75"/>
+  </g>
+  <circle class="accent" cx="16" cy="18.25" r="4.6" fill="var(--mark-accent)"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On the ink board</figcaption>
+      </figure>
+    </div>
+    <p class="word-note">Rounded monoline lowercase, round caps.</p>
+    <section class="critique" aria-label="Critique of A. Sealed">
+      <h3>Critique</h3>
+      <dl>
+        <div><dt>Works</dt><dd>Closest to the product: a payment that stays sealed until the recipient opens it, and it ties to QoreSeal, the encrypted notice. The coral seal is the one element that reads as 'the money'.</dd></div>
+        <div><dt>Risks</dt><dd>An envelope is the universal mail icon, so next to a wallet or an inbox it can read as 'messages', not 'payments'. Says nothing about refunds or quantum safety.</dd></div>
+        <div><dt>At 16px</dt><dd>At 16px it holds as a rectangle with a dot; the flap lines thin out. Legible, but generic.</dd></div>
+        <div><dt>Scores</dt><dd><ul class="scores"><li>Concept 4/5</li><li>originality 2/5</li><li>16px 3/5</li><li>light/dark 5/5</li></ul></dd></div>
+      </dl>
+    </section>
+  </article>
+
+  <article class="direction" aria-labelledby="h-return">
+    <h2 id="h-return">B. Return</h2>
+    <p class="idea">One continuous stroke: a Q whose tail runs out and loops back into the ring. It goes out; unclaimed, it comes home.</p>
+    <div class="grounds">
+      
+      <figure class="ground ground--paper">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 32" role="img" aria-label="Qrow">
+  <g transform="translate(-1.5 -1.4) scale(1.02)"><path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.3" stroke-linejoin="round"/></g>
+  <g transform="translate(9.6 0)" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.2 24V9.9M21.2 16.2c0-4.4 2.7-6.3 6.9-6.3"/>
+    <circle cx="38.1" cy="16" r="6.3"/>
+    <path d="M48.2 9.9 52.6 22.3 57.3 11.4 62 22.3 66.4 9.9"/>
+  </g>
+</svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On paper</figcaption>
+      </figure>
+      <figure class="ground ground--board">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 32" role="img" aria-label="Qrow">
+  <g transform="translate(-1.5 -1.4) scale(1.02)"><path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.3" stroke-linejoin="round"/></g>
+  <g transform="translate(9.6 0)" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.2 24V9.9M21.2 16.2c0-4.4 2.7-6.3 6.9-6.3"/>
+    <circle cx="38.1" cy="16" r="6.3"/>
+    <path d="M48.2 9.9 52.6 22.3 57.3 11.4 62 22.3 66.4 9.9"/>
+  </g>
+</svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On the ink board</figcaption>
+      </figure>
+    </div>
+    <p class="word-note">The symbol is the capital Q, then “row” in the same monoline.</p>
+    <section class="critique" aria-label="Critique of B. Return">
+      <h3>Critique</h3>
+      <dl>
+        <div><dt>Works</dt><dd>The only mark that is also the letter, so the symbol and the wordmark are one idea. One continuous stroke tells the refund story: it goes out, and if nobody claims it, it comes back.</dd></div>
+        <div><dt>Risks</dt><dd>The looped tail can read as a speech bubble or a map pin if drawn too round; the loop must stay slim. Quantum safety is not in the mark, it lives in the product.</dd></div>
+        <div><dt>At 16px</dt><dd>Best at 16px: a ring with a tail is a Q at any size, and a single stroke has nothing to fill in.</dd></div>
+        <div><dt>Scores</dt><dd><ul class="scores"><li>Concept 4/5</li><li>originality 4/5</li><li>16px 5/5</li><li>light/dark 5/5</li></ul></dd></div>
+      </dl>
+    </section>
+  </article>
+
+  <article class="direction" aria-labelledby="h-lattice">
+    <h2 id="h-lattice">C. Lattice</h2>
+    <p class="idea">A 3×3 lattice with one cell set out. ML-DSA is lattice cryptography; eight cells hold, one payment moves.</p>
+    <div class="grounds">
+      
+      <figure class="ground ground--paper">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 69 28" role="img" aria-label="Qrow">
+  <g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="butt" stroke-linejoin="miter">
+    <rect x="2.2" y="9.9" width="12" height="12.2" rx="0"/>
+    <path d="M14.2 8.1V31"/>
+    <path d="M21.4 24V8.1M21.4 13.5c1.6-2.6 3.8-3.6 6.8-3.6"/>
+    <rect x="31.8" y="9.9" width="12.2" height="12.2"/>
+    <path d="M48.2 8.6 51.9 22.1 56.6 11.2 61.3 22.1 65 8.6"/>
+  </g></svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On paper</figcaption>
+      </figure>
+      <figure class="ground ground--board">
+        <div class="lockup">
+          <span class="lockup__mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg></span>
+          <span class="lockup__word"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 4 69 28" role="img" aria-label="Qrow">
+  <g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="butt" stroke-linejoin="miter">
+    <rect x="2.2" y="9.9" width="12" height="12.2" rx="0"/>
+    <path d="M14.2 8.1V31"/>
+    <path d="M21.4 24V8.1M21.4 13.5c1.6-2.6 3.8-3.6 6.8-3.6"/>
+    <rect x="31.8" y="9.9" width="12.2" height="12.2"/>
+    <path d="M48.2 8.6 51.9 22.1 56.6 11.2 61.3 22.1 65 8.6"/>
+  </g></svg></span>
+        </div>
+        <div class="sizes">
+          <span class="size" style="--s:16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">16px</span></span><span class="size" style="--s:32px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">32px</span></span><span class="size" style="--s:48px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">48px</span></span><span class="size" style="--s:96px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
+  <rect x="2" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="2" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="19" y="10.5" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="2" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect x="10.5" y="19" width="6" height="6" rx="1.3" fill="currentColor"/>
+  <rect class="accent" x="24.5" y="24.5" width="6" height="6" rx="1.3" fill="var(--mark-accent)"/>
+</svg><span class="size__px">96px</span></span>
+        </div>
+        <figcaption>On the ink board</figcaption>
+      </figure>
+    </div>
+    <p class="word-note">Square-cut monoline lowercase, butt caps, mitred joins.</p>
+    <section class="critique" aria-label="Critique of C. Lattice">
+      <h3>Critique</h3>
+      <dl>
+        <div><dt>Works</dt><dd>The most honest quantum-safe reference (ML-DSA is lattice cryptography) and the square-cut wordmark has real character. The coral cell is a clear 'one payment moves'.</dd></div>
+        <div><dt>Risks</dt><dd>A 3×3 grid of squares is the 'all apps' launcher icon and a phone keypad; most senders will not know what a lattice is, so the meaning needs explaining. Feels technical rather than calm.</dd></div>
+        <div><dt>At 16px</dt><dd>At 16px the nine cells blur into a grey square with a coral dot; it survives as a shape, not as a lattice.</dd></div>
+        <div><dt>Scores</dt><dd><ul class="scores"><li>Concept 3/5</li><li>originality 2/5</li><li>16px 3/5</li><li>light/dark 5/5</li></ul></dd></div>
+      </dl>
+    </section>
+  </article>
+  </div>
+</main>
+</body>
+</html>

@@ -20,3 +20,10 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **Design choices made by AI (approved plan):** ML-DSA-87 signature on every sensitive action, bound to chain id, contract, action, signer, per-signer nonce, ≤1h expiry and all params; `refundExpired` callable by anyone but pays only the sender; refunds to contracts that reject QOR become a pull credit; per-sender/per-token limits; no owner.
 - **Verified by AI:** compiled with solc-js 0.8.28 (0 errors, 0 warnings). Foundry install was blocked by the agent's permission policy (remote installer script) → human to install.
 - **Bug caught during compile:** precompile address literals needed EIP-55 checksum casing.
+
+## 2026-11-12 — Stage 2a: logo directions (awaiting pick)
+
+- **Human (hallmark ask-once):** tone austere; colour left to Hallmark; audience everyday senders; no material yet.
+- **AI:** dealt three Hallmark themes and picked Coral (warm stationery paper, near-black ink, coral only for the settled state). Hand-wrote three SVG directions in `brand/src/marks.mjs` (A Sealed, B Return, C Lattice) plus custom monoline wordmarks, and generated `brand/preview.html`.
+- **Checks:** impeccable detector (one cream-palette warning, waived because it's the dealt theme), Hallmark sloplint (3 FAIL for middle-dot score strings fixed; 1 REFLEX waived because there are no controls), and a logo-specific critique per direction, done in a single context rather than with dual sub-agents.
+- **AI revision after looking at the render:** slimmed the Return loop because it read as a speech bubble.

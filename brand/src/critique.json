@@ -1,0 +1,35 @@
+{
+  "sealed": {
+    "works": "Closest to the product: a payment that stays sealed until the recipient opens it, and it ties to QoreSeal, the encrypted notice. The coral seal is the one element that reads as 'the money'.",
+    "risks": "An envelope is the universal mail icon, so next to a wallet or an inbox it can read as 'messages', not 'payments'. Says nothing about refunds or quantum safety.",
+    "small": "At 16px it holds as a rectangle with a dot; the flap lines thin out. Legible, but generic.",
+    "score": [
+      "Concept 4/5",
+      "originality 2/5",
+      "16px 3/5",
+      "light/dark 5/5"
+    ]
+  },
+  "return": {
+    "works": "The only mark that is also the letter, so the symbol and the wordmark are one idea. One continuous stroke tells the refund story: it goes out, and if nobody claims it, it comes back.",
+    "risks": "The looped tail can read as a speech bubble or a map pin if drawn too round; the loop must stay slim. Quantum safety is not in the mark, it lives in the product.",
+    "small": "Best at 16px: a ring with a tail is a Q at any size, and a single stroke has nothing to fill in.",
+    "score": [
+      "Concept 4/5",
+      "originality 4/5",
+      "16px 5/5",
+      "light/dark 5/5"
+    ]
+  },
+  "lattice": {
+    "works": "The most honest quantum-safe reference (ML-DSA is lattice cryptography) and the square-cut wordmark has real character. The coral cell is a clear 'one payment moves'.",
+    "risks": "A 3×3 grid of squares is the 'all apps' launcher icon and a phone keypad; most senders will not know what a lattice is, so the meaning needs explaining. Feels technical rather than calm.",
+    "small": "At 16px the nine cells blur into a grey square with a coral dot; it survives as a shape, not as a lattice.",
+    "score": [
+      "Concept 3/5",
+      "originality 2/5",
+      "16px 3/5",
+      "light/dark 5/5"
+    ]
+  }
+}
