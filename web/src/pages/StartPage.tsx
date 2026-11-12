@@ -8,6 +8,7 @@ export function StartPage() {
       <div className="sheet__head">
         <h1 id="start-title">Payments that stay safe after Q-Day</h1>
         <p className="muted">Escrow payments on QoreChain, every step signed with a quantum-safe key.</p>
+        <p>Try every feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day.</p>
       </div>
       <Readiness />
       <section className="stack" aria-labelledby="try-title">

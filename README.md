@@ -50,6 +50,13 @@ Deployment details and every on-chain test transaction: [`docs/TEST_NOTES.md`](d
 
 Run the tests: `cd contracts && forge test` (150 tests), `cd web && npm test`, `cd agent && npm test`, `cd watcher && npm test`.
 
+## About the builder
+
+Built solo by **Terhemba Jonathan Alumo** ([GitHub: Terhemba10](https://github.com/Terhemba10)) in **Doha, Qatar**,
+for QoreChain's *Build Before Q-Day* Developer Fest, representing the **Middle East & Africa** region.
+Qrow is an independent community project: it uses QoreChain's public kits and the QoreX palette, never QoreChain's
+or QoreX's logos.
+
 ## Credits
 
 Every library below is used under its own licence; Qrow's own code is MIT.

@@ -7,6 +7,7 @@ export function HowToTestPage() {
     <article className="sheet prose" aria-labelledby="htt-title">
       <h1 id="htt-title">How to test Qrow</h1>
       <p className="muted">About 15 minutes. Testnet only: everything here is free and has no value.</p>
+      <p>Try every feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day.</p>
 
       <h2>1. Wallets</h2>
       <ol>
@@ -47,6 +48,9 @@ export function HowToTestPage() {
       <p>
         Use <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">Report a problem</a>. Say what you tried and what happened; no personal details needed.
       </p>
+
+      <h2>About Qrow</h2>
+      <p>Built in Doha, Qatar, Middle East, by one developer for QoreChain’s Build Before Q-Day Developer Fest. Qrow is an independent community project, not made by QoreChain.</p>
     </article>
   );
 }

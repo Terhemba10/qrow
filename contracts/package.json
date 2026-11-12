@@ -25,7 +25,8 @@
     "pq": "tsx --env-file=.env scripts/pq-call.ts",
     "stake": "tsx --env-file=.env scripts/stake.ts",
     "deploy:v2": "tsx --env-file=.env scripts/deploy-v2.ts",
-    "appkey": "tsx --env-file=.env scripts/appkey.ts"
+    "appkey": "tsx --env-file=.env scripts/appkey.ts",
+    "crossvm-probe": "tsx --env-file=.env scripts/crossvm-probe.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",

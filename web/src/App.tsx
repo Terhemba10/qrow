@@ -17,6 +17,7 @@ import { SendPage } from "./pages/SendPage";
 import { ShopPage } from "./pages/ShopPage";
 import { StakingPage } from "./pages/StakingPage";
 import { StartPage } from "./pages/StartPage";
+import { QorexCheckPage } from "./pages/QorexCheckPage";
 
 captureReferral(window.location.search);
 
@@ -66,6 +67,7 @@ export function App() {
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
           <Route path="/how-to-test" element={<HowToTestPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          {import.meta.env.DEV && <Route path="/dev/qorex-check" element={<QorexCheckPage />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -74,7 +76,7 @@ export function App() {
           Feedback
         </a>
         <p className="hint">
-          Qrow is open source (MIT). Testnet only: never send real funds. <NavLink to="/how-to-test">How to test</NavLink>, <NavLink to="/privacy">Privacy and testnet</NavLink>.
+          Built in Doha, Qatar, Middle East. Qrow is open source (MIT), a community project, not made by QoreChain. Testnet only: never send real funds. <NavLink to="/how-to-test">How to test</NavLink>, <NavLink to="/privacy">Privacy and testnet</NavLink>.
         </p>
       </footer>
     </>

@@ -402,3 +402,81 @@ Vercel deploy → live URL to the owner.
 Implemented 13 Nov: the agent API and REST relay moved to `web/server` and run as Vercel functions (`web/api`);
 `agent/` is now only the local dev server for the same code; Render runs only the watcher (`render.yaml`,
 `Dockerfile`). Details and env vars: `docs/DEPLOY.md`.
+
+
+## Live-user rules (owner, 2026-11-13)
+
+1. Users never create, copy, paste, save or import any key, phrase or recovery code. They open the site, connect
+   QoreX, use free test QOR, and sign in their wallet. Server-side keys live only in hosting env vars.
+2. Every transaction is signed in QoreX if at all possible (research below; design awaits the owner's OK).
+3. Every tab testable with free test QOR and fest tokens from dashboard.qorechain.io/faucet. Landing line: "Try every
+   feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day." (done)
+4. "Built in Doha, Qatar, Middle East" in the footer and How to test page (done); README "About the builder" (done);
+   submission: select **Qatar** as the country (Middle East & Africa region, Regional Award). The owner fills in the form.
+5. QoreChain-ecosystem look: QoreX palette (navy, soft-border cards, cyan-to-purple gradient buttons, teal
+   addresses), Qrow's own logo only. Done with the brief's values; all 25 text/background pairs pass WCAG AA in
+   `brand/src/build-tokens.mjs`. To do: sample exact values once `brand/reference/qorex-palette.png` is added.
+
+### Research: can QoreX sign everything? (13 Nov, with sources)
+
+| Question | Answer | Source |
+| --- | --- | --- |
+| Can QoreX send an EVM transaction? | **No.** Its EVM provider rejects `eth_sendTransaction`, `personal_sign`, `eth_signTypedData_v4` ("not yet supported"). | `@qorechain/qorex-types` 0.1.0 (latest on npm); docs.qorechain.io/qorex/dapp-browser |
+| Can it sign a message for `pqcVerify`? | **No.** `signArbitrary` is "present but refused in current builds". | same |
+| Can it sign native-lane messages? | **Yes**, `signAndBroadcast`, with the hybrid secp256k1 + ML-DSA-87 signature; it refuses key-management messages and types it can't display. | same |
+| Can a native message call an EVM contract? | **Yes, on testnet:** `/qorechain.crossvm.v1.MsgCrossVMCall` runs "as your own `0x` address" (`msg.sender` is the user); no EVM window is needed for a call the sender signs itself. No QOR can be attached (`funds` is only for Native targets). | docs.qorechain.io/developer-guide/cross-vm-reference |
+| Does it really work? | **Proven 13 Nov** with a script account (same hybrid signing as QoreX), no window open: `fUSD.approve(escrow, 12345)` via MsgCrossVMCall, tx `383E0DA437F912638A0E1E157C81DA584BE25DE1C77C22FC7D21E31AF2345F98`; allowance read back = 12345. Quirk: `source_vm` must be a known VM name (`cosmwasm` or `svm`) although the chain ignores it. | `contracts/scripts/crossvm-probe.ts` |
+| Will QoreX itself sign MsgCrossVMCall? | **Unknown** until the owner runs `/dev/qorex-check` in a browser with QoreX (harmless `fUSD.approve(escrow, 0)`). | |
+
+### Proposed design: QoreX only (awaiting the owner's OK)
+
+- **Every EVM action** (send, claim, cancel, refund, mint, list, buy, launch, claim coin, register a device key) is a
+  `MsgCrossVMCall` signed in QoreX. No MetaMask and no EVM windows: the account's EVM lane stays shut, which is
+  stronger for the Q-Day Drill (a leaked classical key can neither open a window nor sign a native transaction).
+- **`pqcVerify` stays** (category requirement and defence in depth): each device holds an invisible Qrow *device key*
+  (ML-DSA-87), created automatically on first connect, stored encrypted under a passkey (WebAuthn PRF: fingerprint,
+  face or PIN prompt) and never shown or exported. Where PRF isn't supported, a non-extractable browser key protects
+  it (weaker against a compromised page; the UI says so).
+- **Contract change (QrowKeys v3; needs a redeploy of all Qrow contracts before the Drill registration on 17 Nov):**
+  several device keys per account. The first registers instantly (one QoreX transaction). A new device is added
+  instantly if an existing device approves it, otherwise after a 3-day wait that any device or the account can
+  cancel, with a Telegram alert. No recovery code anywhere.
+- **Limits:** cross-VM calls can't carry QOR, so payments, mints and listings use fest tokens (fUSD, fETH, fBTC); QOR
+  stays for fees and staking. Faucet fest tokens arrive as bank coins: one-click Convert needs `MsgConvertCoin`,
+  which the SDK doesn't build; whether QoreX signs it is still to be tested.
+- Staking already signs in QoreX. The readiness card and How to test page change to: QoreX installed, testnet, test
+  QOR and fUSD, quantum-safe key registered (first transfer), device key (automatic).
+
+## Scale to 15k (owner, 2026-11-13). Plan and costs, awaiting OK
+
+**Assumptions:** 15,000 users over the fest; peaks of 1,000 to 2,000 online; a visitor does about 5 actions and 50
+page views; most traffic in the hour after a link is posted and during People's Choice (6 to 15 Dec).
+
+| Area | Bottleneck | Fix |
+| --- | --- | --- |
+| Frontend | One 3.9 MB JS bundle (minified, before gzip) | Code-split per tab, lazy-load wallet libraries, target under 2 MB first load; hashed assets cached a year (done) |
+| Our API | Per-instance memory caches and limits on Vercel | Shared store (Redis via the Vercel Marketplace) for the CoinMarketCap cache, rate limits per IP and per wallet, the AI budget counter |
+| CoinMarketCap | Each function instance fetching on its own | One fetch per 10 minutes shared through Redis (about 4,320 of 10,000 monthly credits), served with "last updated" |
+| AI | Cost and latency | Never blocks (checks show first); cached answers for identical check sets; 10 per wallet per day; global daily cap; Anthropic Console monthly cap |
+| Chain reads | 15k browsers polling public endpoints; QoreChain publishes no limits | Slower polling, paused in background tabs; shared reads (listings, floor, history, coins) from our indexer; per-user reads through the cached relay; back-off on errors |
+| Indexer and DB | Portfolio, history and market scan the chain from every browser | One indexer on the always-on Render service writing SQLite on its disk (no separate database bill), a paginated read API with indexed columns, cached at Vercel's edge |
+| Watcher | Telegram limits (about 30 messages a second, 1 a second per chat) | Send queue with batching, retry and back-off; opt-in only |
+| Demo recipient | Undecided (needs a server-held key) | Only if the owner says yes: a pool of demo accounts, a queue, 1 demo payment per wallet per day, low-balance alert |
+| Monitoring | None yet | UptimeRobot on /agent/health; Telegram alerts to the owner (API errors, watcher stopped, indexer lag, AI budget, CMC quota); a status line in the app; a runbook |
+
+**Load testing:** `autocannon` (MIT) rather than k6 (AGPL-3.0, outside the allowed licences), against a Vercel
+preview, 2,000 concurrent connections on reads and API routes; writes only as a small manual sample. The report gives
+p95, error rate, what failed first and what changed.
+
+**Costs (nothing paid without the owner's OK):**
+
+| Item | Free? | At 15k users | Monthly |
+| --- | --- | --- | --- |
+| Vercel Hobby (app and API) | Free: 100 GB transfer, 1M function calls, 4 h active CPU | Fits if polling is cut and reads are edge-cached; otherwise Pro | $0 (Pro $20 plus usage if needed) |
+| Redis (Vercel Marketplace, e.g. Upstash) | Free tier | Should fit with caching | $0 (limits confirmed when added) |
+| Render Starter: watcher, indexer and read API, 1 GB disk | Paid | Needed for always-on | about $7.25 |
+| Anthropic, Claude Haiku 5.5 ($0.10/M input, $0.50/M output, $0.01/M cached) | Paid per use | about $0.0002 per explanation; 75k explanations about $15 | about $15, capped at $25 |
+| CoinMarketCap | Free plan | about 4,320 of 10,000 credits | $0 |
+| **Total** | | | **about $7.25 base, about $22 with AI, about $42 if Vercel Pro is needed** |
+
+Draft message for QoreChain's Discord about endpoint limits: `docs/LAUNCH_KIT.md`.
