@@ -32,10 +32,23 @@ Approved 2026-11-12. Testnet only (`qorechain-diana`, EVM chain id 9800).
 
 ## 8a. QR codes (spec added 2026-11-12)
 
-**Libraries** (MIT, both actively maintained; credited in the README):
-- [`qrcode`](https://github.com/soldair/node-qrcode) 1.5.x generates the codes.
-- [`@zxing/browser`](https://github.com/zxing-js/browser) 0.2.x scans, from the camera or from an uploaded image.
-- I'm not using `qr-scanner`, which has had no release since 2022.
+**Licence rule (from the user, 2026-11-12):** only MIT, Apache-2.0 or BSD licences, never GPL, LGPL or AGPL. Each library's licence is listed in the README Credits, and licences are confirmed before anything is installed.
+
+**Libraries.** Licences were confirmed on 2026-11-12 by installing into a scratch folder with `--ignore-scripts`, reading each package's `license` field and LICENSE file, and scanning the full dependency tree, including `.wasm` files, for GPL/LGPL/AGPL text.
+
+| Library | Use | Licence | Its dependencies |
+|---|---|---|---|
+| [`qrcode`](https://github.com/soldair/node-qrcode) 1.5.4 | generate the codes | MIT | `dijkstrajs`, `pngjs`: MIT. `yargs` and its helpers are MIT or ISC, but they're only used by qrcode's command-line tool and never ship in the browser bundle. |
+| [`barcode-detector`](https://github.com/Sec-ant/barcode-detector) 3.2.3 | scan from the camera or an uploaded image (the standard `BarcodeDetector` API: the browser's own version where it exists, this library elsewhere, e.g. iOS Safari) | MIT | [`zxing-wasm`](https://github.com/Sec-ant/zxing-wasm) 3.1.6: MIT. It contains zxing-cpp (Apache-2.0) and zint (BSD-3-Clause). Also `type-fest`, which is types only: MIT or CC0. |
+
+**Rejected:**
+- `@zxing/browser` (MIT): its required dependency `@zxing/library` (Apache-2.0) ships two files ported from OpenJDK, `ByteArrayOutputStream` and `OutputStream`, under **GPLv2 with the Classpath exception**.
+- `qr-scanner`: no release since 2022.
+- `jsqr`: no release since 2021.
+
+**Implementation notes:**
+- The `zxing-wasm` reader binary is self-hosted from the app, not loaded from its default CDN.
+- A licence check script runs before every build and fails on any GPL, LGPL or AGPL licence in the production dependencies. It also produces the licence list for the README Credits.
 
 ### Payload, version 1
 
