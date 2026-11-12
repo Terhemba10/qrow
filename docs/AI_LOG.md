@@ -212,3 +212,9 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - Testnet base staking rewards are effectively 0 (pool `last_base_apy_bps` = 0), so Claim & restake can't be shown with real rewards today.
   - Locks need at least 10 QOR, which the script accounts don't have. A QoreX lock with Wallet 1 is the owner's test.
   - Auto-restake (D3b) is not built; optional, after the core.
+
+## Step 9: Market News tab (12 Nov)
+- **Built with Claude (Opus 5.5) in Claude Code:** `agent/src/market.ts` (CoinMarketCap prices cached 10 min server-side, QOR listing check once a day, RSS headlines from Cointelegraph, Decrypt and The Block cached 15 min), `/market/prices` and `/market/news` on the agent server, `web/src/pages/NewsPage.tsx`, and a two-row nav for 9 tabs.
+- **Probed first:** CMC quotes work on the free plan (1 credit); `content/latest` is refused (error 1006), so news comes from RSS; QOR is not listed on CMC.
+- **Safety:** the API key stays on the server; headlines keep title, source, date and link only (no article text); links must be https and on the feed's own domain (unit test); labels "Market prices are real. Qrow balances are testnet tokens with no value." and "Data from CoinMarketCap".
+- **Checked:** agent 5 tests and web 29 tests pass; tab verified in the browser with live data; sloplint 0 FAIL (3 REFLEX on the deliberate pure-white QR background, waived).

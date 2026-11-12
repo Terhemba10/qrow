@@ -3,6 +3,7 @@ import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { MarketPage } from "./pages/MarketPage";
+import { NewsPage } from "./pages/NewsPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
 import { ShopPage } from "./pages/ShopPage";
@@ -28,6 +29,7 @@ export function App() {
             <NavLink to="/market">NFT Market</NavLink>
             <NavLink to="/portfolio">Portfolio</NavLink>
             <NavLink to="/staking">Staking</NavLink>
+            <NavLink to="/news">Market News</NavLink>
           </nav>
           <span className="net">{NETWORK_NAME}</span>
           <WalletButton />
@@ -48,6 +50,7 @@ export function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/market" element={<MarketPage />} />
           <Route path="/staking" element={<StakingPage />} />
+          <Route path="/news" element={<NewsPage />} />
           <Route path="*" element={<Navigate to="/send" replace />} />
         </Routes>
       </main>

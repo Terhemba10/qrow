@@ -8,6 +8,7 @@
 import { createServer } from "node:http";
 import { MODEL, explain, hasCredentials, parseRequest } from "./explain.js";
 import { isQorAddress, referralCount } from "./referrals.js";
+import { news, prices } from "./market.js";
 
 const PORT = Number(process.env.QROW_AGENT_PORT ?? 8787);
 const MAX_BODY = 16 * 1024;
@@ -19,6 +20,16 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") return send(200, { ok: true, model: MODEL, ai: hasCredentials() });
+  if (req.method === "GET" && req.url === "/market/prices") {
+    try {
+      return send(200, { ok: true, ...(await prices()), attribution: "Data from CoinMarketCap" });
+    } catch (e) {
+      return send(e instanceof Error && e.message === "no_key" ? 503 : 502, { ok: false, reason: e instanceof Error && e.message === "no_key" ? "no_key" : "upstream" });
+    }
+  }
+  if (req.method === "GET" && req.url === "/market/news") {
+    return send(200, { ok: true, ...(await news()) });
+  }
   if (req.method === "GET" && req.url?.startsWith("/referrals/")) {
     const ref = decodeURIComponent(req.url.slice("/referrals/".length));
     if (!isQorAddress(ref)) return send(400, { ok: false, reason: "bad_address" });

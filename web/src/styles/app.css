@@ -47,8 +47,8 @@ a:hover { text-decoration-thickness: 2px; }
 .topbar__inner { max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter); height: 64px; display: flex; align-items: center; gap: var(--space-lg); }
 .brand { display: inline-flex; align-items: center; color: var(--color-ink); text-decoration: none; border-radius: var(--radius-input); }
 .brand img { height: 26px; width: auto; display: block; }
-.nav { display: flex; gap: var(--space-xs); margin-inline-end: auto; }
-.nav a { display: inline-flex; align-items: center; min-height: var(--hit); padding: 0 var(--space-sm); color: var(--color-ink-2); text-decoration: none; font-weight: var(--weight-medium); border-radius: var(--radius-input); }
+.nav { display: flex; gap: var(--space-xs); margin-inline-end: auto; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.nav a { white-space: nowrap; flex: none; display: inline-flex; align-items: center; min-height: var(--hit); padding: 0 var(--space-sm); color: var(--color-ink-2); text-decoration: none; font-weight: var(--weight-medium); border-radius: var(--radius-input); }
 .nav a:hover { color: var(--color-ink); background: var(--color-paper-2); }
 .nav a[aria-current="page"] { color: var(--color-ink); box-shadow: inset 0 -2px 0 var(--color-ink); border-radius: 0; }
 .net { font-size: var(--text-sm); color: var(--color-muted); white-space: nowrap; }
@@ -267,3 +267,17 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 
 .badge { display: inline-block; padding: 2px var(--space-sm); border-radius: var(--radius-pill); border: 1px solid var(--color-rule-2); font-size: var(--text-sm); font-weight: var(--weight-medium); }
 .badge--earned { border-color: var(--color-settled); color: var(--color-settled); }
+
+/* Market News */
+.table .up { color: var(--color-ok); }
+.table .down { color: var(--color-danger); }
+.headlines { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); max-width: 70ch; }
+.headlines a { font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.headlines .hint { margin: var(--space-xs) 0 0; }
+
+/* Nine tabs: below wide desktop they get their own row under the brand bar. */
+@media (max-width: 1180px) {
+  .topbar__inner { flex-wrap: wrap; height: auto; min-height: 64px; row-gap: 0; padding-top: var(--space-xs); }
+  .topbar__inner .brand { margin-inline-end: auto; }
+  .nav { order: 3; flex-basis: 100%; margin-inline-end: 0; }
+}
