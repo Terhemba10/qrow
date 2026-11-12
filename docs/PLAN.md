@@ -32,7 +32,7 @@ Approved 2026-11-12. Testnet only (`qorechain-diana`, EVM chain id 9800).
 
 ## 8a. QR codes (spec added 2026-11-12)
 
-**Licence rule (from the user, 2026-11-12):** only MIT, Apache-2.0 or BSD licences, never GPL, LGPL or AGPL. Each library's licence is listed in the README Credits, and licences are confirmed before anything is installed.
+**Licence rule (from the user, 2026-11-12):** only MIT, Apache-2.0, BSD or ISC licences (ISC approved as an MIT equivalent), never GPL, LGPL or AGPL. Each library's licence is listed in the README Credits, and licences are confirmed before anything is installed.
 
 **Libraries.** Licences were confirmed on 2026-11-12 by installing into a scratch folder with `--ignore-scripts`, reading each package's `license` field and LICENSE file, and scanning the full dependency tree, including `.wasm` files, for GPL/LGPL/AGPL text.
 
