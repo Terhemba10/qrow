@@ -1,36 +1,127 @@
 # Qrow build plan
 
-Approved 2026-11-12. Testnet only (`qorechain-diana`, EVM chain id 9800).
+Rewritten 2026-11-12 for the scope updates: payments + NFT marketplace + staking + market news + memecoin launcher + read-only admin. Testnet only (`qorechain-diana`, EVM chain id 9800).
 
 **Key dates (UTC):**
-- Q-Day Drill registration: **17 Nov 23:59**. Drill: 18 Nov.
+- Q-Day Drill registration: **17 Nov 23:59** (up to 5 contract addresses). Drill: 18 Nov.
 - Feature freeze: **28 Nov**.
 - Submission: **2 Dec 23:59**.
 
-## Architecture decisions
+**Rules (unchanged):**
+- Research the docs first.
+- Testnet only.
+- Credit everything.
+- MIT licence, and dependencies are MIT, Apache-2.0, BSD or ISC only.
+- Every sensitive action is post-quantum protected.
+- The agent never sends anything on its own.
+- No admin key can move user funds or NFTs.
+- The deployed escrow `0xcf36b836872a0b277919eac1fb976722e32d824b` stays unchanged unless a change is truly needed, and only after asking.
 
-- **Wallet signing.** QoreX connects and reads, and it signs native-lane transactions (opening and closing the EVM window, `MsgConvertCoin`). EVM transactions are signed by an injected wallet holding the same account, because QoreX doesn't answer EVM signing methods yet.
-- **Post-quantum signatures.** The contract verifies ML-DSA-87 over QoreSign's message format, `qorechain-msg-v1|<chain>|0x<digest>`, the same bytes QoreX's planned `signArbitrary` will sign. Until QoreX ships it, signatures are made in the app from the account's PQC recovery code. The code is held in memory only, never stored. Demo and Drill accounts are created as a private key plus a recovery code.
-- **EVM windows.** Every window is as small as possible: the exact transaction count, targets limited to the escrow and the token, and closed straight after use.
-- **Sign In With QoreChain.** The full verifier is tested with the wallet mock. It goes live when QoreX supports `signArbitrary`.
+## Platform facts that shape the scope (checked on testnet, 2026-11-12)
 
-## Stages
+### Hybrid PQC
+- Every native-lane transaction carries secp256k1 plus ML-DSA-87.
+- EVM transactions need a registered ML-DSA key and a scoped window.
+- Qrow contracts add an ML-DSA check on each sensitive action through `pqcVerify`, which was proven on chain with payment #1.
 
-| # | Stage | Status |
+### Triple-VM (EVM, SVM, CosmWasm)
+
+| Lane | On testnet today | How Qrow uses it |
 |---|---|---|
-| 1 | Research and plan | done |
-| 2 | Logo and design tokens | done (B. Return) |
-| 3 | Escrow contract, tests, QCAI audit, testnet deploy | contract and tests written; **waiting for Foundry**; deploy before 17 Nov |
-| 4 | Frontend: connect, Sign In With QoreChain, Send, checking agent, Confirm, sign | |
-| 5 | Inbox/Claim with the QoreSeal notice; PQ claim, cancel, refund | |
-| 6 | Alerts watcher and Telegram bot | |
-| 7 | History, CSV export, receipts, payment detail | |
-| — | **Core complete: everything above works end to end** | |
-| 8 | Extras, one at a time, each fully tested or removed: **8a QR codes**, 8b AI history chat, 8c Security page (QoreScan), 8d Arabic/RTL, 8e Keplr/Leap | |
-| 9 | impeccable audit and polish, end-to-end tests, hallmark sweep (**freeze 28 Nov**) | |
-| 10 | Submission package | |
+| **EVM** | Open; `pqcVerify` and `pqcKeyStatus` are live | All Qrow contracts: escrow, NFT collection, market, coin factory |
+| **Native (Cosmos) lane** | Open; hybrid-signed, and QoreX signs it today | Staking and staking tiers, PQC keys, EVM windows, `MsgConvertCoin` (fUSD to ERC-20), the AMM (read), the Admin indexer |
+| **CosmWasm** | Code upload is governance-only (`code_upload_access: Nobody`). All 50 listed codes have instantiate permission `Nobody`. | **Read only**: CW20 balances (for example the existing WDT token) in Portfolio. Qrow **cannot deploy** CosmWasm contracts. |
+| **SVM** | The docs say "The SVM lane is disabled for transactions on both networks" | **Read only**: show the account's unified SVM address and the lane's status in Portfolio. No SVM transactions. |
+| **CrossVM** | The `0x…0901` precompile reaches only 3 allowlisted CosmWasm targets | Not usable for Qrow's own contracts. Documented in the README as a limitation. |
 
-## 8a. QR codes (spec added 2026-11-12)
+So "Triple-VM" in Qrow means the contracts run on EVM, staking runs on the hybrid-PQC native lane, and the app reads CosmWasm and SVM state. No feature claims a deployment that the testnet doesn't allow.
+
+### Staking (`x/stakingtier`, chain v3.2.4)
+- Locks are **3, 6 or 12 months only** (`AllowedLockMonths`), with bonuses of 1.5%, 3% and 5% APY.
+- An early unlock **burns 5%** of the locked amount and forfeits the bonus.
+- The minimum lock is 10 QOR.
+- Normal unbonding takes **21 days**.
+- Delegation (`x/staking`), rewards (`x/distribution`) and `x/authz` are present.
+- The EVM staking precompile is **not active**, and CosmWasm is closed, so **a Qrow lock contract on top of native staking can't be built** on testnet.
+
+### AMM (`x/amm`)
+- Constant-product pools exist (fETH/QOR, fUSD/QOR).
+- **Creating a pool costs 100 QOR.**
+- A pool's tokens are bank denoms. A launched ERC-20 would need a registered token pair first.
+- LP tokens can't be locked by an EVM contract.
+
+### Wallets
+- QoreX signs native-lane transactions now. That covers staking, which can therefore be signed fully in QoreX.
+- EVM transactions are signed by an injected wallet, and ML-DSA messages come from the recovery code, until QoreX ships `eth_sendTransaction` and `signArbitrary`.
+- The contracts already verify the QoreSign message format, so that switch needs no redeploy.
+
+## Decisions requested from the owner (each conflicts with what the chain allows)
+
+| # | Request | What the chain allows | Recommendation |
+|---|---|---|---|
+| D1 | Lock-ups of 90 days, 240 days and 1 year | Native 3, 6 or 12 months; a custom lock contract is impossible (no staking precompile, no CosmWasm) | Offer **90 days, 180 days and 1 year**, all native. Drop 240 days. |
+| D2 | Pro-rata rewards on early unstake | Base staking rewards accrue per block and stay yours (pro-rata). The tier bonus is forfeited and **5% of the lock is burned**. | Show both on the confirm screen, with the exact numbers from chain parameters, before signing. Qrow can't waive the chain's penalty. |
+| D3 | Opt-in capped auto-restake | `x/authz` exists. A capped, expiring `StakeAuthorization` plus withdraw-only permission is possible, but needs a Qrow restaker account with its own PQC key | Build "Claim & restake" plus the reminder alert in step 8. Auto-restake only if step 8 finishes early, default off. |
+| D4 | Launch: AMM pool with locked creator liquidity | 100 QOR pool fee, token-pair registration, LP can't be locked by our contracts | **Drop** (it was optional). |
+| D5 | Strict order "each step works before the next" vs. the Drill (17 Nov) | Drill points at deployed contracts | Write, test and **deploy QrowGenesis, QrowMarket and QrowCoinFactory by 16 Nov**, ahead of their UI steps, so all four contracts are in the Drill. The UI steps stay in strict order. |
+
+## Build order and estimate
+
+Day 0 is 13 Nov. "Days" are working days of build time. Steps that need the owner (wallet actions, API keys, bot token) can wait on them.
+
+| # | Step | Contents | Estimate | Target done |
+|---|---|---|---|---|
+| — | **Contract sprint for the Drill** (D5) | QrowGenesis (ERC-721, original on-chain SVG art), QrowMarket (fixed price, escrowed NFT, atomic pay, ML-DSA list/buy/cancel), QrowCoinFactory (fixed supply, no owner powers, ≤10% creator share, name blocklist). Foundry tests, leaked-ECDSA tests, deploy, Drill details | 3 | **16 Nov** |
+| 4 | Send + Receive | Receive tab: incoming list, countdowns, QoreSeal notice (note field returns), claim with ML-DSA, cancel and refund buttons, request-payment link and QR. The Send polish left over. | 2 | 19 Nov |
+| 5 | Alerts + Portfolio | Event watcher plus a Telegram bot for sender and receiver (waiting, 24 h before expiry, cancelled, claimed, refunded, day-5 reminder, overdue, failure). Portfolio: balances (EVM, native, CW20 read, SVM address), NFTs, listings, pending payments, activity, CSV | 2 | 21 Nov |
+| — | **Payments core complete** | Must work end to end before continuing | | |
+| 6 | NFT Shop | Mint and buy with QOR or fUSD (convert flow), gallery | 1 | 22 Nov |
+| 7 | NFT Market | List, floor, buy, cancel. Agent checks: price vs floor, seller lookalike, simulation. Confirm screen | 1.5 | 23 Nov |
+| 8 | Staking | Validators, delegate, 90/180/365-day native locks, early-unlock maths on the confirm screen (D2), unbonding notice, Claim & restake, reminder alert, referral link, count and badges (no payouts). Tests | 2 | 25 Nov |
+| 9 | Market News | Server-side CoinMarketCap prices (cached, attribution); news from CMC if the free plan allows, otherwise reputable RSS (headline, source, link); "testnet tokens have no value" label | 0.5 | 26 Nov |
+| 10 | Launch | Form, impersonation and duplicate checks, simulation, confirm, launched-coins list with safety badges; Send and Portfolio integration | 1 | 27 Nov |
+| 11 | Admin & Analytics | Read-only indexer over public events (payments, NFTs, sales, floor, staking, launches), segmented dashboard, Sign In With QoreChain plus an allowlisted address gate | 1.5 | **28 Nov, freeze** |
+| 12 | Extras, only if all of 4–11 are done | Scan-to-pay QR, Arabic/RTL, AI history chat, Security page (QoreScan), Keplr/Leap, auto-restake (D3) | — | after the freeze: none |
+| 13 | Polish and submission | impeccable audit and polish, webapp-testing end-to-end, hallmark sweep, QCAI audit fixes, README, THREAT_MODEL, AI_USAGE, video | — | 29 Nov – 2 Dec |
+
+**Total for 4–11 plus the sprint: about 14.5 working days in 16 calendar days, with no slack.** Risks, in the order they'd show up:
+- The Drill on 18 Nov costs about half a day.
+- QCAI audit findings may need contract changes.
+- Owner wait times (keys, bot token, wallet steps).
+- A QoreX release changing signing.
+
+**Early-warning rule:** if any step ends more than half a day behind its target date, the owner is told that day, together with what moves. No required tab is dropped without the owner's decision.
+
+**Cuts already made:** none to required tabs. Decided by the chain rather than cut: 240-day lock (D1), AMM liquidity lock (D4), CosmWasm and SVM deployments (read only).
+
+## Contracts
+
+| Contract | Status | In the Drill |
+|---|---|---|
+| QrowEscrow | deployed `0xcf36b836872a0b277919eac1fb976722e32d824b`, 90 tests | yes |
+| QrowGenesis (ERC-721) | sprint | yes, if deployed by 16 Nov |
+| QrowMarket | sprint | yes, if deployed by 16 Nov |
+| QrowCoinFactory (and the coins it deploys) | sprint | yes, if deployed by 16 Nov |
+
+Shared rules:
+- Every sensitive action takes an ML-DSA-87 signature over QoreSign's message format, bound to chain, contract, action, nonce, expiry and params.
+- No owner can touch funds or NFTs.
+- Reentrancy guards and checks-effects-interactions.
+- Foundry tests for every function and failure path, plus leaked-ECDSA attack tests.
+- The QCAI audit covers all of them, and all appear in THREAT_MODEL.md.
+- Base code from OpenZeppelin Contracts (MIT), credited. The licence is confirmed before installing.
+
+## Architecture decisions (still in force)
+
+- **Wallet signing.** QoreX connects and signs native-lane transactions. EVM transactions are signed by an injected wallet holding the same account until QoreX ships EVM signing.
+- **Post-quantum signatures.** Contracts verify ML-DSA-87 over `qorechain-msg-v1|<chain>|0x<digest>`. Until QoreX ships `signArbitrary`, the key comes from the recovery code, held in memory only.
+- **EVM windows.** The smallest scope, closed straight after use.
+- **Agent.** Deterministic checks first; one Claude Haiku 5.5 explanation per action; warnings never depend on AI.
+- **Sign In With QoreChain.** Gates Admin. The full verifier is tested with the wallet mock, and it's live when QoreX supports `signArbitrary`.
+
+## QR codes (spec 8a, added 2026-11-12)
+
+Request-payment QR and link are built in step 4 (Receive). Scan-to-pay is an extra (step 12).
 
 **Licence rule (from the user, 2026-11-12):** only MIT, Apache-2.0, BSD or ISC licences (ISC approved as an MIT equivalent), never GPL, LGPL or AGPL. Each library's licence is listed in the README Credits, and licences are confirmed before anything is installed.
 
