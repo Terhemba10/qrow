@@ -28,7 +28,7 @@ abstract contract Base is Test {
         vm.etch(QorePQC.PQC_KEY_STATUS, type(MockPQCKeyStatus).runtimeCode);
         vm.etch(QorePQC.PQC_VERIFY, type(MockPQCVerify).runtimeCode);
 
-        escrow = new QrowEscrow();
+        escrow = new QrowEscrow("qorechain-diana");
         fusd = new MockERC20("Faucet USD", "fUSD");
 
         _registerKey(alice);
@@ -59,7 +59,7 @@ abstract contract Base is Test {
         sig = new bytes(QorePQC.ML_DSA_87_SIG_LEN);
         bytes32 tag = keccak256(abi.encode("sig", who, digest));
         for (uint256 i = 0; i < 32; i++) sig[i] = tag[i];
-        verifier.record(_pubkey(who), sig, abi.encodePacked(digest));
+        verifier.record(_pubkey(who), sig, escrow.pqMessage(digest));
     }
 
     function _validUntil() internal view returns (uint64) {

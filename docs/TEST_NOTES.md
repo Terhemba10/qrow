@@ -34,7 +34,12 @@ These addresses are notes for manual testing. They are **not** defaults in code.
 2. **QoreX doesn't answer EVM signing methods yet** (`eth_sendTransaction` and the others), nor `signArbitrary` (ML-DSA message signing). Through QoreX alone, nobody can sign the escrow calls today.
 3. Wallet 2 needs faucet QOR first. Then it needs its ML-DSA key registered (QoreX can do this on the native lane) before it can claim.
 
-Options for running the flows are in the stage-3 discussion. The decision will be recorded here.
+**Decision (2026-11-12, owner chose the recommended path):**
+- **Contract:** QrowEscrow verifies ML-DSA-87 signatures over QoreSign's message format, `"qorechain-msg-v1|qorechain-diana|0x<digest hex>"`. Those are the bytes QoreX's planned `signArbitrary` signs, so QoreX works later with no redeploy. This was cross-checked against `@qorechain/qoresign` 0.2.0 (`npm run check:pq-message`).
+- **Manual tests and the Q-Day Drill** use fresh Ethereum-style accounts that the owner creates locally with `npm run account:new -- --prefix <NAME>_`. The private key and recovery code go straight into `.env` and are never printed or shared. The owner imports the key into MetaMask themselves.
+- **Wallet 2** is the QoreX recipient. To set it up: faucet, then register its ML-DSA key in QoreX.
+- **Wallet 1** is a payout recipient, and the source for converting fest tokens through QoreX.
+- **Automated end-to-end tests** use `@qorechain/qorex-wallet-mock` in its planned-signing mode.
 
 ## Manual test checklist (to fill in once the signing path is settled)
 

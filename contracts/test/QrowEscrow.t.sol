@@ -376,7 +376,7 @@ contract ClaimTest is Base {
     }
 
     function test_RevertWhen_SigFromOtherEscrowDeployment() public {
-        QrowEscrow other = new QrowEscrow();
+        QrowEscrow other = new QrowEscrow("qorechain-diana");
         uint256 id = _createNative(ONE);
         uint64 v = _validUntil();
         bytes32 digest = other.actionDigest(escrow.ACTION_CLAIM(), bob, 0, v, _idParams(id));

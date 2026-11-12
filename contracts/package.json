@@ -13,11 +13,14 @@
     "window": "tsx --env-file=.env scripts/window.ts",
     "pq:selftest": "tsx --env-file=.env scripts/pq-selftest.ts",
     "deploy:testnet": "tsx --env-file=.env scripts/deploy.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "account:new": "tsx scripts/account-new.ts",
+    "check:pq-message": "tsx scripts/check/pq-message-compat.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
     "@qorechain/evm": "0.14.0",
+    "@qorechain/qoresign": "0.2.0",
     "@qorechain/sdk": "0.14.0",
     "viem": "^2.21.0"
   },

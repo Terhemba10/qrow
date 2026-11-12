@@ -88,6 +88,31 @@ contract QrowEscrow {
 
     uint256 private _lock = 1;
 
+    /// @notice QoreChain native chain id this deployment signs for, e.g. "qorechain-diana".
+    string public nativeChainId;
+    /// @dev "qorechain-msg-v1|" + nativeChainId + "|": QoreSign's message-signing domain
+    ///      (messagePqSignBytes), the same bytes QoreX's planned signArbitrary will sign.
+    bytes private _msgPrefix;
+
+    bytes16 private constant HEX = "0123456789abcdef";
+
+    error InvalidChainId();
+
+    /// @param nativeChainId_ the QoreChain native chain id matching this EVM chain
+    ///        ("qorechain-diana" for EVM chain id 9800). Fixed for the contract's lifetime.
+    constructor(string memory nativeChainId_) {
+        bytes memory id = bytes(nativeChainId_);
+        if (id.length == 0 || id.length > 64) revert InvalidChainId();
+        for (uint256 i = 0; i < id.length; i++) {
+            bytes1 c = id[i];
+            bool ok = (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c == "." || c == "_"
+                || c == "-";
+            if (!ok) revert InvalidChainId();
+        }
+        nativeChainId = nativeChainId_;
+        _msgPrefix = abi.encodePacked("qorechain-msg-v1|", nativeChainId_, "|");
+    }
+
     // ------------------------------------------------------------------ events
 
     event PaymentCreated(
@@ -296,7 +321,7 @@ contract QrowEscrow {
         return QorePQC.provenKey(account).length != 0;
     }
 
-    /// @notice The 32 bytes the signer's ML-DSA-87 key must sign for an action.
+    /// @notice The 32-byte digest of an action. The ML-DSA-87 key signs pqMessage(digest).
     /// @param paramsHash keccak256(abi.encode(...)) of the action's parameters:
     ///   CREATE:     (recipient, token, amount, mode, keccak256(sealedNote))
     ///   CANCEL / CLAIM / RELEASE: (id)
@@ -307,6 +332,21 @@ contract QrowEscrow {
         returns (bytes32)
     {
         return keccak256(abi.encode(DOMAIN_TAG, block.chainid, address(this), action, signer, nonce, validUntil, paramsHash));
+    }
+
+    /// @notice The exact bytes the ML-DSA-87 key signs for a digest: QoreSign's
+    ///         messagePqSignBytes(nativeChainId, "0x" + lowercase hex of the digest).
+    ///         The data part is 66 ASCII characters, so a wallet can show it as text.
+    function pqMessage(bytes32 digest) public view returns (bytes memory) {
+        bytes memory hexStr = new bytes(66);
+        hexStr[0] = "0";
+        hexStr[1] = "x";
+        for (uint256 i = 0; i < 32; i++) {
+            uint8 b = uint8(digest[i]);
+            hexStr[2 + 2 * i] = HEX[b >> 4];
+            hexStr[3 + 2 * i] = HEX[b & 0x0f];
+        }
+        return abi.encodePacked(_msgPrefix, hexStr);
     }
 
     // ================================================================== internals
@@ -328,7 +368,7 @@ contract QrowEscrow {
 
         uint256 nonce = pqNonce[signer];
         bytes32 digest = actionDigest(action, signer, nonce, validUntil, paramsHash);
-        if (!QorePQC.verify(pubkey, sig, abi.encodePacked(digest))) revert BadPqSignature();
+        if (!QorePQC.verify(pubkey, sig, pqMessage(digest))) revert BadPqSignature();
         pqNonce[signer] = nonce + 1;
     }
 

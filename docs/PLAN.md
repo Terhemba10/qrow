@@ -10,7 +10,7 @@ Approved 2026-11-12. Testnet only (`qorechain-diana`, EVM chain id 9800).
 ## Architecture decisions
 
 - **Wallet signing.** QoreX connects and reads, and it signs native-lane transactions (opening and closing the EVM window, `MsgConvertCoin`). EVM transactions are signed by an injected wallet holding the same account, because QoreX doesn't answer EVM signing methods yet.
-- **Post-quantum signatures.** ML-DSA-87 signatures for `pqcVerify` are made in the app from the account's PQC recovery code. The code is held in memory only, never stored. Demo and Drill accounts are created as a private key plus a recovery code.
+- **Post-quantum signatures.** The contract verifies ML-DSA-87 over QoreSign's message format, `qorechain-msg-v1|<chain>|0x<digest>`, the same bytes QoreX's planned `signArbitrary` will sign. Until QoreX ships it, signatures are made in the app from the account's PQC recovery code. The code is held in memory only, never stored. Demo and Drill accounts are created as a private key plus a recovery code.
 - **EVM windows.** Every window is as small as possible: the exact transaction count, targets limited to the escrow and the token, and closed straight after use.
 - **Sign In With QoreChain.** The full verifier is tested with the wallet mock. It goes live when QoreX supports `signArbitrary`.
 

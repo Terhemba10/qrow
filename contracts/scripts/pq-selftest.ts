@@ -7,6 +7,7 @@
  *   (with QROW_ESCROW_ADDRESS)  also asks the deployed escrow for a real CLAIM digest
  */
 import { pqcSign } from "@qorechain/sdk";
+import { messagePqSignBytes } from "@qorechain/qoresign";
 import { encodeAbiParameters, keccak256, toBytes, toHex, type Hex } from "viem";
 import { evmClients, loadAccount } from "./lib.js";
 
@@ -56,6 +57,13 @@ const escrowAbi = [
   { type: "function", name: "ACTION_CLAIM", stateMutability: "view", inputs: [], outputs: [{ type: "bytes32" }] },
   {
     type: "function",
+    name: "pqMessage",
+    stateMutability: "view",
+    inputs: [{ name: "digest", type: "bytes32" }],
+    outputs: [{ type: "bytes" }],
+  },
+  {
+    type: "function",
     name: "hasPqKey",
     stateMutability: "view",
     inputs: [{ name: "account", type: "address" }],
@@ -101,12 +109,19 @@ async function main() {
     console.log(`escrow.hasPqKey: ${has}`);
   }
 
-  const sig = pqcSign(acc.pqc.secretKey, toBytes(digest));
+  // The bytes QrowEscrow verifies: QoreSign's message format over the digest as 0x-hex text.
+  let message: Hex = toHex(messagePqSignBytes("qorechain-diana", digest));
+  if (escrow) {
+    const onChain = await publicClient.readContract({ address: escrow, abi: escrowAbi, functionName: "pqMessage", args: [digest] });
+    console.log(`escrow.pqMessage matches QoreSign: ${onChain.toLowerCase() === message.toLowerCase()}`);
+    message = onChain;
+  }
+  const sig = pqcSign(acc.pqc.secretKey, toBytes(message));
   const ok = await publicClient.readContract({
     address: PQC_VERIFY,
     abi: pqcAbi,
     functionName: "pqcVerify",
-    args: [pubkey, toHex(sig), digest],
+    args: [pubkey, toHex(sig), message],
   });
   const tampered = Uint8Array.from(sig);
   tampered[100] ^= 0x01;
@@ -114,7 +129,7 @@ async function main() {
     address: PQC_VERIFY,
     abi: pqcAbi,
     functionName: "pqcVerify",
-    args: [pubkey, toHex(tampered), digest],
+    args: [pubkey, toHex(tampered), message],
   });
   console.log(`pqcVerify(real signature):     ${ok}   (expect true)`);
   console.log(`pqcVerify(tampered signature): ${bad}  (expect false)`);

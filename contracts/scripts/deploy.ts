@@ -6,8 +6,8 @@
  *   pnpm deploy:testnet
  *   pnpm window close
  *
- * Writes the address to deployments/testnet.json. The constructor takes no arguments and the
- * contract has no owner, so the deployer keeps no power over it.
+ * Writes the address to deployments/testnet.json. The constructor takes only the native chain id
+ * ("qorechain-diana") and the contract has no owner, so the deployer keeps no power over it.
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import type { Hex } from "viem";
@@ -22,7 +22,7 @@ async function main() {
   const { publicClient, walletClient, account } = evmClients(acc);
   console.log(`deployer: ${account.address}`);
 
-  const hash = await walletClient.deployContract({ abi: artifact.abi, bytecode: artifact.bytecode.object, args: [] });
+  const hash = await walletClient.deployContract({ abi: artifact.abi, bytecode: artifact.bytecode.object, args: ["qorechain-diana"] });
   console.log(`tx: ${hash}`);
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   if (receipt.status !== "success" || !receipt.contractAddress) throw new Error("deployment failed");

@@ -41,3 +41,14 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - First run: 82/84 passed. AI fixes: (1) a test bug, where `expectEmit` was armed before the helper's own calls; (2) the contract now reverts with a clear `InvalidToken` error for a token address with no code (before, it was an empty revert). The behaviour is unchanged.
 - Result: **84/84 pass**. Coverage of src: 100% lines, 98.9% statements, 95.2% branches, 100% functions.
 - `forge lint` triage by AI: block-timestamp, unsafe-typecast and arbitrary-send-eth were reviewed and dismissed (7-day deadlines; uint64 time; payouts only go to the recorded sender or recipient). The reentrancy-eth/no-eth warnings are false positives: every state-changing function holds the same lock. **One real point:** in `createPayment` the token is pulled before state is written (to support fee-on-transfer tokens). Proposed a strict checks-effects-interactions change, awaiting the human's decision.
+
+## 2026-11-12 — Stage 3c: CEI, QoreSign message format, account tooling
+
+- **Human decisions:** strict checks-effects-interactions; then the "recommended path" for signing (the contract is ready for QoreX's planned `signArbitrary`, and fresh script-made accounts are used for tests and the Drill). Rule: connect via QoreX and never ask for keys or recovery phrases.
+- **AI:**
+  - `createPayment` now records state before pulling tokens and rejects non-standard tokens (`NonStandardToken`).
+  - The contract verifies ML-DSA over QoreSign's `messagePqSignBytes` (`qorechain-msg-v1|qorechain-diana|0x…`). The constructor takes the native chain id. New `PqMessage.t.sol`.
+  - Byte-for-byte check against `@qorechain/qoresign` 0.2.0 with a real ML-DSA-87 signature (`scripts/check/pq-message-compat.ts`).
+  - `account-new.ts` writes fresh secrets straight to `.env` and prints only addresses.
+- **AI investigation of the owner's wallets** (read-only): verified `qor1↔0x` with the SDK. Found that Wallet 1 has a Cosmos-style secp256k1 account key, so it can't send EVM transactions; Wallet 2 isn't on chain yet. Recorded in `docs/TEST_NOTES.md`.
+- Tests: **90/90 pass**.
