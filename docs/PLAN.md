@@ -447,36 +447,34 @@ Implemented 13 Nov: the agent API and REST relay moved to `web/server` and run a
 - Staking already signs in QoreX. The readiness card and How to test page change to: QoreX installed, testnet, test
   QOR and fUSD, quantum-safe key registered (first transfer), device key (automatic).
 
-## Scale to 15k (owner, 2026-11-13). Plan and costs, awaiting OK
+## Scale to 3k (owner, 2026-11-13; reduced from 15k). Plan and costs, awaiting OK
 
-**Assumptions:** 15,000 users over the fest; peaks of 1,000 to 2,000 online; a visitor does about 5 actions and 50
-page views; most traffic in the hour after a link is posted and during People's Choice (6 to 15 Dec).
+**Assumptions:** 3,000 users over the fest; peaks of 200 to 400 online (right after a link is posted and during
+People's Choice, 6 to 15 Dec); a visitor does about 5 actions and 50 page views.
 
-| Area | Bottleneck | Fix |
+| Area | Bottleneck at 3k | Fix |
 | --- | --- | --- |
 | Frontend | One 3.9 MB JS bundle (minified, before gzip) | Code-split per tab, lazy-load wallet libraries, target under 2 MB first load; hashed assets cached a year (done) |
-| Our API | Per-instance memory caches and limits on Vercel | Shared store (Redis via the Vercel Marketplace) for the CoinMarketCap cache, rate limits per IP and per wallet, the AI budget counter |
-| CoinMarketCap | Each function instance fetching on its own | One fetch per 10 minutes shared through Redis (about 4,320 of 10,000 monthly credits), served with "last updated" |
-| AI | Cost and latency | Never blocks (checks show first); cached answers for identical check sets; 10 per wallet per day; global daily cap; Anthropic Console monthly cap |
-| Chain reads | 15k browsers polling public endpoints; QoreChain publishes no limits | Slower polling, paused in background tabs; shared reads (listings, floor, history, coins) from our indexer; per-user reads through the cached relay; back-off on errors |
-| Indexer and DB | Portfolio, history and market scan the chain from every browser | One indexer on the always-on Render service writing SQLite on its disk (no separate database bill), a paginated read API with indexed columns, cached at Vercel's edge |
-| Watcher | Telegram limits (about 30 messages a second, 1 a second per chat) | Send queue with batching, retry and back-off; opt-in only |
-| Demo recipient | Undecided (needs a server-held key) | Only if the owner says yes: a pool of demo accounts, a queue, 1 demo payment per wallet per day, low-balance alert |
-| Monitoring | None yet | UptimeRobot on /agent/health; Telegram alerts to the owner (API errors, watcher stopped, indexer lag, AI budget, CMC quota); a status line in the app; a runbook |
+| Our API | Per-instance caches and limits on Vercel | Fine at this size with edge caching (done); a shared Redis store only if the load test shows duplicate upstream calls |
+| CoinMarketCap | Each region's cache fetching on its own | Edge cache 10 min (done): worst case a few fetches per window, well under 10,000 credits a month |
+| AI | Cost and latency | Never blocks (checks show first); per-IP limit (done) plus 10 per wallet per day; daily cap; Anthropic Console monthly cap |
+| Chain reads | Browsers polling public endpoints; QoreChain publishes no limits | Slower polling, paused in background tabs; shared lists (listings, floor, history, coins) from the indexer; back-off on errors |
+| Indexer | Portfolio, history and market scan the chain from every browser | One indexer beside the watcher on the always-on Render service, SQLite on its disk, paginated read API cached at the edge |
+| Watcher | Telegram limits (about 30 messages a second, 1 a second per chat) | Send queue with retry and back-off; opt-in only |
+| Monitoring | None yet | UptimeRobot on /agent/health; Telegram alerts to the owner; status line in the app; runbook |
 
-**Load testing:** `autocannon` (MIT) rather than k6 (AGPL-3.0, outside the allowed licences), against a Vercel
-preview, 2,000 concurrent connections on reads and API routes; writes only as a small manual sample. The report gives
-p95, error rate, what failed first and what changed.
+**Load testing:** `autocannon` (MIT) against a Vercel preview with 400 concurrent connections (peak) and a 1,000
+burst, on reads and API routes; writes only as a small manual sample. Report: p95, errors, first failure, fixes.
 
 **Costs (nothing paid without the owner's OK):**
 
-| Item | Free? | At 15k users | Monthly |
-| --- | --- | --- | --- |
-| Vercel Hobby (app and API) | Free: 100 GB transfer, 1M function calls, 4 h active CPU | Fits if polling is cut and reads are edge-cached; otherwise Pro | $0 (Pro $20 plus usage if needed) |
-| Redis (Vercel Marketplace, e.g. Upstash) | Free tier | Should fit with caching | $0 (limits confirmed when added) |
-| Render Starter: watcher, indexer and read API, 1 GB disk | Paid | Needed for always-on | about $7.25 |
-| Anthropic, Claude Haiku 5.5 ($0.10/M input, $0.50/M output, $0.01/M cached) | Paid per use | about $0.0002 per explanation; 75k explanations about $15 | about $15, capped at $25 |
-| CoinMarketCap | Free plan | about 4,320 of 10,000 credits | $0 |
-| **Total** | | | **about $7.25 base, about $22 with AI, about $42 if Vercel Pro is needed** |
+| Item | At 3k users | Monthly |
+| --- | --- | --- |
+| Vercel Hobby (app and API): 100 GB transfer, 1M function calls, 4 h active CPU | Fits comfortably with edge caching | $0 |
+| Render Starter: watcher, indexer and read API, 1 GB disk | Needed for always-on alerts and the indexer | about $7.25 |
+| Anthropic, Claude Haiku 5.5 ($0.10/M input, $0.50/M output) | about 15k explanations at about $0.0002 | about $3, capped at $10 |
+| CoinMarketCap free plan | a few thousand of 10,000 credits | $0 |
+| Redis | Only if the load test needs it (free tier) | $0 |
+| **Total** | | **about $7.25 base, about $10 with AI** |
 
 Draft message for QoreChain's Discord about endpoint limits: `docs/LAUNCH_KIT.md`.

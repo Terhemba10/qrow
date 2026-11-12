@@ -322,13 +322,10 @@ contract QrowEscrowDemo {
     }
 
     /// @notice Whether `account` has an ML-DSA-87 key registered with proof of possession.
-    function pqKeyOf(address account) public view returns (bytes memory) {
-        if (address(KEYS) == address(0)) return QorePQC.provenKey(account);
-        return KEYS.keyOf(account);
-    }
-
+    /// @notice Whether `account` can authorise actions (a Qrow device key or a proven chain key).
     function hasPqKey(address account) external view returns (bool) {
-        return pqKeyOf(account).length != 0;
+        if (address(KEYS) != address(0) && KEYS.hasDevice(account)) return true;
+        return QorePQC.provenKey(account).length != 0;
     }
 
     /// @notice The 32-byte digest of an action. The ML-DSA-87 key signs pqMessage(digest).
@@ -373,12 +370,21 @@ contract QrowEscrowDemo {
         if (block.timestamp > validUntil) revert SignatureExpired();
         if (validUntil > block.timestamp + MAX_SIG_VALIDITY) revert SignatureTooLong();
 
-        bytes memory pubkey = pqKeyOf(signer);
+        // A Qrow device key signs as `uint8 slot || ML-DSA-87 signature`; a bare signature means the
+        // account's key registered on QoreChain.
+        bytes memory pubkey;
+        bytes calldata mldsa = sig;
+        if (sig.length == QorePQC.ML_DSA_87_SIG_LEN + 1 && address(KEYS) != address(0)) {
+            pubkey = KEYS.deviceKey(signer, uint8(sig[0]));
+            mldsa = sig[1:];
+        } else {
+            pubkey = QorePQC.provenKey(signer);
+        }
         if (pubkey.length == 0) revert NoPqKey();
 
         uint256 nonce = pqNonce[signer];
         bytes32 digest = actionDigest(action, signer, nonce, validUntil, paramsHash);
-        if (!QorePQC.verify(pubkey, sig, pqMessage(digest))) revert BadPqSignature();
+        if (!QorePQC.verify(pubkey, mldsa, pqMessage(digest))) revert BadPqSignature();
         pqNonce[signer] = nonce + 1;
     }
 

@@ -3,15 +3,17 @@ pragma solidity ^0.8.24;
 
 import {QorePQC} from "./IQorePQC.sol";
 
-/// @notice Where Qrow contracts look up a signer's ML-DSA-87 key (QrowKeys).
+/// @notice Where Qrow contracts look up a signer's device keys (QrowKeys).
 interface IQrowKeys {
-    /// @return the account's Qrow app key if set, else its key registered on QoreChain (empty if none)
-    function keyOf(address account) external view returns (bytes memory);
+    /// @return the ML-DSA-87 public key in `slot` for `account` (empty if none)
+    function deviceKey(address account, uint8 slot) external view returns (bytes memory);
+    function hasDevice(address account) external view returns (bool);
 }
 
 /// @title  PqAuth: post-quantum authorisation shared by Qrow's contracts (same scheme as QrowEscrow)
-/// @notice A sensitive call must carry an ML-DSA-87 signature, made with the caller's Qrow app key
-///         (QrowKeys) or, if it has none, its key registered on QoreChain, over QoreSign's message format:
+/// @notice A sensitive call must carry an ML-DSA-87 signature over QoreSign's message format, made with
+///         either one of the caller's Qrow device keys (QrowKeys; signature = uint8 slot || sig, 4,628
+///         bytes) or the caller's key registered on QoreChain (bare 4,627-byte signature):
 ///             "qorechain-msg-v1|" + nativeChainId + "|" + "0x" + hex(digest)
 ///         where digest binds the domain tag, EVM chain id, this contract, the action, the signer,
 ///         the signer's nonce, an expiry (at most 1 hour ahead) and a hash of the call's parameters.
@@ -74,23 +76,24 @@ abstract contract PqAuth {
         return abi.encodePacked(_msgPrefix, hexStr);
     }
 
-    /// @notice The ML-DSA-87 key that must sign for `account`: its Qrow app key, else its chain key.
-    function pqKeyOf(address account) public view virtual returns (bytes memory) {
-        if (address(KEYS) == address(0)) return QorePQC.provenKey(account);
-        return KEYS.keyOf(account);
-    }
-
-    /// @notice Whether `account` can authorise actions here (has an app key or a proven chain key).
+    /// @notice Whether `account` can authorise actions here (a Qrow device key or a proven chain key).
     function hasPqKey(address account) public view returns (bool) {
-        return pqKeyOf(account).length != 0;
+        if (address(KEYS) != address(0) && KEYS.hasDevice(account)) return true;
+        return QorePQC.provenKey(account).length != 0;
     }
 
     function _requirePq(address signer, bytes32 action, bytes32 paramsHash, uint64 validUntil, bytes calldata sig)
         internal
     {
-        bytes memory pubkey = pqKeyOf(signer);
-        if (pubkey.length == 0) revert NoPqKey();
-        _requirePqWith(pubkey, signer, action, paramsHash, validUntil, sig);
+        if (sig.length == QorePQC.ML_DSA_87_SIG_LEN + 1 && address(KEYS) != address(0)) {
+            bytes memory device = KEYS.deviceKey(signer, uint8(sig[0]));
+            if (device.length == 0) revert NoPqKey();
+            _requirePqWith(device, signer, action, paramsHash, validUntil, sig[1:]);
+            return;
+        }
+        bytes memory chainKey = QorePQC.provenKey(signer);
+        if (chainKey.length == 0) revert NoPqKey();
+        _requirePqWith(chainKey, signer, action, paramsHash, validUntil, sig);
     }
 
     /// @dev Verify `sig` by `pubkey` over this action and consume the signer's nonce.

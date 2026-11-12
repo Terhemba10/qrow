@@ -4,131 +4,185 @@ pragma solidity ^0.8.24;
 import {QorePQC} from "./IQorePQC.sol";
 import {PqAuth} from "./PqAuth.sol";
 
-/// @title  QrowKeys: one Qrow app key (ML-DSA-87) per account, shared by every Qrow contract
-/// @notice Why: QoreX holds each account's chain-registered ML-DSA-87 key but can't sign messages,
-///         so a QoreX user can't produce the per-action signatures Qrow's contracts verify with
-///         pqcVerify. Qrow instead generates a separate ML-DSA-87 key in the browser (saved by the
-///         user as a QRC1 recovery code) and registers it here once. Every action is still checked
-///         with pqcVerify, against this key.
+/// @title  QrowKeys v3: invisible per-device ML-DSA-87 keys, shared by every Qrow contract
+/// @notice Why: QoreX holds each account's chain-registered ML-DSA-87 key and signs native-lane
+///         transactions (including MsgCrossVMCall, which reaches Qrow's EVM contracts as the user),
+///         but it can't sign the messages pqcVerify checks. So each browser the user uses holds a
+///         Qrow *device key* (ML-DSA-87), generated and stored by the app behind a passkey and never
+///         shown. Every Qrow action is still verified with pqcVerify against one of these keys.
 ///
-///         Safeguards:
-///         - Registering needs a key registered on QoreChain with proof of possession, so the
-///           account's EVM lane is already gated by ML-DSA: a stolen secp256k1 key alone can't even
-///           open the EVM window the registration has to travel through.
-///         - Registering proves possession of the new key (it signs the registration itself).
-///         - Rotating or revoking needs a signature from the current app key.
-///         - Lost code: a reset takes RESET_DELAY (3 days) and the current app key can cancel it,
-///           so a thief who somehow sends one EVM transaction still can't swap the key quietly.
-///         - No owner, no admin, no upgrade path.
+///         Signatures: a device-key signature is `uint8 slot || ML-DSA-87 signature` (4,628 bytes).
+///         A bare 4,627-byte signature means the account's chain-registered key (script accounts).
+///
+///         Adding devices:
+///         - The first device registers instantly (it signs its own registration).
+///         - Another device registers instantly if an existing device approves it, or
+///         - after PROPOSAL_DELAY (3 days), during which the account or any device can cancel it and
+///           the watcher alerts the owner. No recovery code exists anywhere.
+///         Every change needs msg.sender == the account. On QoreChain that is only reachable with the
+///         account's ML-DSA-87 key (a hybrid-signed MsgCrossVMCall, or an EVM transaction inside a
+///         window that itself needs ML-DSA), so a leaked secp256k1 key alone changes nothing.
+///         No owner, no admin, no upgrade path.
 contract QrowKeys is PqAuth {
-    bytes32 public constant ACTION_REGISTER = keccak256("REGISTER_APP_KEY");
-    bytes32 public constant ACTION_ROTATE = keccak256("ROTATE_APP_KEY");
-    bytes32 public constant ACTION_REVOKE = keccak256("REVOKE_APP_KEY");
-    bytes32 public constant ACTION_CANCEL_RESET = keccak256("CANCEL_RESET");
-    uint64 public constant RESET_DELAY = 3 days;
+    bytes32 public constant ACTION_ADD_DEVICE = keccak256("ADD_DEVICE");
+    bytes32 public constant ACTION_APPROVE_DEVICE = keccak256("APPROVE_DEVICE");
+    uint8 public constant MAX_DEVICES = 8;
+    uint64 public constant PROPOSAL_DELAY = 3 days;
 
-    mapping(address => bytes) private _appKey;
-    /// @notice When a pending reset of the account's app key can be finished (0 = none pending).
-    mapping(address => uint64) public resetAt;
+    struct Proposal {
+        bytes pubkey;
+        uint64 dueAt;
+    }
 
-    event AppKeyRegistered(address indexed account, bytes32 indexed keyHash);
-    event AppKeyRotated(address indexed account, bytes32 indexed oldKeyHash, bytes32 indexed newKeyHash);
-    event AppKeyRevoked(address indexed account, bytes32 indexed keyHash);
-    event ResetRequested(address indexed account, uint64 finishAfter);
-    event ResetCancelled(address indexed account);
-    event ResetFinished(address indexed account, bytes32 indexed keyHash);
+    mapping(address => mapping(uint8 => bytes)) private _device;
+    mapping(address => uint8) public deviceCount;
+    mapping(address => Proposal) private _proposal;
 
-    error AlreadyRegistered();
-    error NoAppKey();
+    event DeviceAdded(address indexed account, uint8 indexed slot, bytes32 indexed keyHash, bool approved);
+    event DeviceRemoved(address indexed account, uint8 indexed slot, bytes32 indexed keyHash);
+    event DeviceProposed(address indexed account, bytes32 indexed keyHash, uint64 dueAt);
+    event ProposalCancelled(address indexed account, bytes32 indexed keyHash);
+
     error NoChainPqKey();
     error BadKeyLength();
-    error ResetPending();
-    error NoResetPending();
-    error ResetNotDue();
+    error HasDevices();
+    error NoDevices();
+    error TooManyDevices();
+    error KeyInUse();
+    error BadSlot();
+    error ProposalPending();
+    error NoProposal();
+    error ProposalNotDue();
 
-    constructor(string memory nativeChainId_) PqAuth(keccak256("QROW_KEYS_V1"), nativeChainId_, address(0)) {}
+    constructor(string memory nativeChainId_) PqAuth(keccak256("QROW_KEYS_V3"), nativeChainId_, address(0)) {}
 
-    // ================================================================== views
+    // ================================================================== views (IQrowKeys)
 
-    function appKeyOf(address account) external view returns (bytes memory) {
-        return _appKey[account];
+    function deviceKey(address account, uint8 slot) public view returns (bytes memory) {
+        return _device[account][slot];
     }
 
-    function hasAppKey(address account) public view returns (bool) {
-        return _appKey[account].length != 0;
+    function hasDevice(address account) external view returns (bool) {
+        return deviceCount[account] != 0;
     }
 
-    /// @inheritdoc PqAuth
-    function pqKeyOf(address account) public view override returns (bytes memory) {
-        bytes memory k = _appKey[account];
-        return k.length != 0 ? k : QorePQC.provenKey(account);
+    /// @notice All slots in use, with each key's hash (for the app's device list).
+    function devices(address account) external view returns (uint8[] memory slots, bytes32[] memory keyHashes) {
+        uint8 n = deviceCount[account];
+        slots = new uint8[](n);
+        keyHashes = new bytes32[](n);
+        uint8 k;
+        for (uint8 s = 0; s < MAX_DEVICES && k < n; s++) {
+            bytes storage key = _device[account][s];
+            if (key.length != 0) {
+                slots[k] = s;
+                keyHashes[k] = keccak256(key);
+                k++;
+            }
+        }
     }
 
-    /// @notice What every Qrow contract verifies against: the app key, else the chain key.
-    function keyOf(address account) external view returns (bytes memory) {
-        return pqKeyOf(account);
+    function proposal(address account) external view returns (bytes32 keyHash, uint64 dueAt) {
+        Proposal storage p = _proposal[account];
+        return (p.pubkey.length == 0 ? bytes32(0) : keccak256(p.pubkey), p.dueAt);
     }
 
-    // ================================================================== actions
+    // ================================================================== adding devices
 
-    /// @notice Register an app key. `pop` is the NEW key's signature over this registration.
-    function register(bytes calldata pubkey, uint64 validUntil, bytes calldata pop) external {
-        if (_appKey[msg.sender].length != 0) revert AlreadyRegistered();
+    /// @notice First device: instant. `pop` is the new key's signature over this registration.
+    function addFirstDevice(bytes calldata pubkey, uint64 validUntil, bytes calldata pop)
+        external
+        returns (uint8 slot)
+    {
+        if (deviceCount[msg.sender] != 0) revert HasDevices();
         if (QorePQC.provenKey(msg.sender).length == 0) revert NoChainPqKey();
+        _checkNewKey(pubkey, validUntil, pop);
+        slot = _store(msg.sender, pubkey);
+        emit DeviceAdded(msg.sender, slot, keccak256(pubkey), false);
+    }
+
+    /// @notice Another device, approved by an existing one (`approverSig` = slot byte || signature
+    ///         over ACTION_APPROVE_DEVICE and the new key's hash). Instant.
+    function addApprovedDevice(bytes calldata pubkey, uint64 validUntil, bytes calldata pop, bytes calldata approverSig)
+        external
+        returns (uint8 slot)
+    {
+        if (deviceCount[msg.sender] == 0) revert NoDevices();
+        _checkNewKey(pubkey, validUntil, pop);
+        _requireDeviceSig(msg.sender, ACTION_APPROVE_DEVICE, keccak256(pubkey), validUntil, approverSig);
+        slot = _store(msg.sender, pubkey);
+        emit DeviceAdded(msg.sender, slot, keccak256(pubkey), true);
+    }
+
+    /// @notice Another device without an approving device: it can be finished after PROPOSAL_DELAY.
+    function proposeDevice(bytes calldata pubkey, uint64 validUntil, bytes calldata pop) external {
+        if (deviceCount[msg.sender] == 0) revert NoDevices();
+        if (_proposal[msg.sender].pubkey.length != 0) revert ProposalPending();
+        _checkNewKey(pubkey, validUntil, pop);
+        uint64 due = uint64(block.timestamp) + PROPOSAL_DELAY;
+        _proposal[msg.sender] = Proposal(pubkey, due);
+        emit DeviceProposed(msg.sender, keccak256(pubkey), due);
+    }
+
+    /// @notice Finish a proposal after the delay.
+    function finishProposal() external returns (uint8 slot) {
+        Proposal memory p = _proposal[msg.sender];
+        if (p.pubkey.length == 0) revert NoProposal();
+        if (block.timestamp < p.dueAt) revert ProposalNotDue();
+        delete _proposal[msg.sender];
+        slot = _store(msg.sender, p.pubkey);
+        emit DeviceAdded(msg.sender, slot, keccak256(p.pubkey), false);
+    }
+
+    /// @notice Cancel a pending proposal (the account, through QoreX).
+    function cancelProposal() external {
+        Proposal storage p = _proposal[msg.sender];
+        if (p.pubkey.length == 0) revert NoProposal();
+        bytes32 h = keccak256(p.pubkey);
+        delete _proposal[msg.sender];
+        emit ProposalCancelled(msg.sender, h);
+    }
+
+    /// @notice Remove a device (lost or replaced). The account decides, through QoreX.
+    function removeDevice(uint8 slot) external {
+        bytes memory key = _device[msg.sender][slot];
+        if (key.length == 0) revert BadSlot();
+        delete _device[msg.sender][slot];
+        deviceCount[msg.sender] -= 1;
+        emit DeviceRemoved(msg.sender, slot, keccak256(key));
+    }
+
+    // ================================================================== internals
+
+    /// @dev The new key proves possession by signing ACTION_ADD_DEVICE over its own hash.
+    function _checkNewKey(bytes calldata pubkey, uint64 validUntil, bytes calldata pop) private {
         if (pubkey.length != QorePQC.ML_DSA_87_PUBKEY_LEN) revert BadKeyLength();
-        _requirePqWith(pubkey, msg.sender, ACTION_REGISTER, keccak256(pubkey), validUntil, pop);
-        _appKey[msg.sender] = pubkey;
-        emit AppKeyRegistered(msg.sender, keccak256(pubkey));
+        _requirePqWith(pubkey, msg.sender, ACTION_ADD_DEVICE, keccak256(pubkey), validUntil, pop);
     }
 
-    /// @notice Replace the app key: signed by the current key (`sig`) and by the new one (`pop`).
-    function rotate(bytes calldata newPubkey, uint64 validUntil, bytes calldata sig, bytes calldata pop) external {
-        bytes memory old = _appKey[msg.sender];
-        if (old.length == 0) revert NoAppKey();
-        if (newPubkey.length != QorePQC.ML_DSA_87_PUBKEY_LEN) revert BadKeyLength();
-        bytes32 newHash = keccak256(newPubkey);
-        _requirePqWith(old, msg.sender, ACTION_ROTATE, newHash, validUntil, sig);
-        _requirePqWith(newPubkey, msg.sender, ACTION_REGISTER, newHash, validUntil, pop);
-        _appKey[msg.sender] = newPubkey;
-        resetAt[msg.sender] = 0;
-        emit AppKeyRotated(msg.sender, keccak256(old), newHash);
+    function _store(address account, bytes memory pubkey) private returns (uint8) {
+        bytes32 h = keccak256(pubkey);
+        uint8 free = MAX_DEVICES;
+        for (uint8 s = 0; s < MAX_DEVICES; s++) {
+            bytes storage k = _device[account][s];
+            if (k.length == 0) {
+                if (free == MAX_DEVICES) free = s;
+            } else if (keccak256(k) == h) {
+                revert KeyInUse();
+            }
+        }
+        if (free == MAX_DEVICES) revert TooManyDevices();
+        _device[account][free] = pubkey;
+        deviceCount[account] += 1;
+        return free;
     }
 
-    /// @notice Remove the app key (back to the chain key), signed by the current app key.
-    function revoke(uint64 validUntil, bytes calldata sig) external {
-        bytes memory old = _appKey[msg.sender];
-        if (old.length == 0) revert NoAppKey();
-        _requirePqWith(old, msg.sender, ACTION_REVOKE, bytes32(0), validUntil, sig);
-        delete _appKey[msg.sender];
-        resetAt[msg.sender] = 0;
-        emit AppKeyRevoked(msg.sender, keccak256(old));
-    }
-
-    /// @notice Lost the recovery code? Start a reset; it can be finished after RESET_DELAY.
-    function requestReset() external {
-        if (_appKey[msg.sender].length == 0) revert NoAppKey();
-        if (resetAt[msg.sender] != 0) revert ResetPending();
-        uint64 due = uint64(block.timestamp) + RESET_DELAY;
-        resetAt[msg.sender] = due;
-        emit ResetRequested(msg.sender, due);
-    }
-
-    /// @notice Stop a reset you didn't ask for, signed by the current app key.
-    function cancelReset(uint64 validUntil, bytes calldata sig) external {
-        if (resetAt[msg.sender] == 0) revert NoResetPending();
-        _requirePqWith(_appKey[msg.sender], msg.sender, ACTION_CANCEL_RESET, bytes32(0), validUntil, sig);
-        resetAt[msg.sender] = 0;
-        emit ResetCancelled(msg.sender);
-    }
-
-    /// @notice After the delay, remove the app key so a new one can be registered.
-    function finishReset() external {
-        uint64 due = resetAt[msg.sender];
-        if (due == 0) revert NoResetPending();
-        if (block.timestamp < due) revert ResetNotDue();
-        bytes32 h = keccak256(_appKey[msg.sender]);
-        delete _appKey[msg.sender];
-        resetAt[msg.sender] = 0;
-        emit ResetFinished(msg.sender, h);
+    function _requireDeviceSig(address account, bytes32 action, bytes32 params, uint64 validUntil, bytes calldata sig)
+        private
+    {
+        if (sig.length != QorePQC.ML_DSA_87_SIG_LEN + 1) revert BadPqSignature();
+        bytes memory key = _device[account][uint8(sig[0])];
+        if (key.length == 0) revert NoPqKey();
+        _requirePqWith(key, account, action, params, validUntil, sig[1:]);
     }
 }
