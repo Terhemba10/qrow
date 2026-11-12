@@ -244,3 +244,16 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 
 .note-closed, .note-open { grid-column: 1 / -1; }
 .note-open { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-inline-start: 3px solid var(--color-rule-2); background: var(--color-paper-2); border-radius: var(--radius-input); }
+
+/* ---------------------------------------------------------------- tables, portfolio, NFTs */
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.table th, .table td { text-align: start; padding: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: top; }
+.table thead th { font-weight: var(--weight-medium); color: var(--color-muted); }
+.table .num { text-align: end; }
+.lanes div { grid-template-columns: 5rem minmax(0, 1fr); }
+.lanes dd { overflow-wrap: anywhere; }
+.nftgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr)); gap: var(--space-md); }
+.nftcard { display: grid; gap: var(--space-xs); padding: var(--space-sm); background: var(--color-cotton); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); min-width: 0; }
+.nftcard img { width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-input); display: block; }
+.nftcard__name { font-weight: var(--weight-medium); }
+@media (max-width: 40rem) { .table { display: block; overflow-x: auto; } }

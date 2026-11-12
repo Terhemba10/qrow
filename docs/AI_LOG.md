@@ -168,3 +168,18 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - CLI `seal status/register/read`; the pay script seals like the app.
   - Send note field with a live KEM-key check; Receive NoteReader that decrypts with the recovery code in memory only.
 - **On chain:** registered the Drill account's KEM key; payment #4 with a note decrypted by the recipient, and refused for another key.
+
+## 2026-11-12 — Step 5: alerts watcher + Portfolio
+
+- **Human:** said "go to step 5" and "everything working today".
+- **AI found:** a WebSocket EVM endpoint (`wss://evm-ws-testnet.qore.host`), which allows true event subscription, and the EVM-to-Cosmos hash lookup for explorer links (`ethereum_tx.ethereumTxHash`).
+- **AI generated `watcher/`:**
+  - Live `eth_subscribe` on escrow logs and new blocks, with a back-fill on start.
+  - Pure alert rules with 6 tests: created/waiting, notified, claimed, released, cancelled, refunded, day-5 reminder, 24 h before expiry, refund overdue, failure with the decoded reason.
+  - Every alert carries the escrow address, tx hash and explorer link.
+  - Telegram bot commands `/watch`, `/unwatch`, `/list`, `/stop`; plain-text messages only.
+  - A Notifier interface ready for email.
+  - State (chat ids) git-ignored.
+- **AI generated the Portfolio tab:** EVM and native balances, a CW20 read, EVM/native/SVM addresses, Genesis NFTs with listings, pending payments, an activity table, CSV export. 2 more tests.
+- **Verified:** the watcher back-filled 7 escrow events. Portfolio for the Drill account shows live balances and activity.
+- **Waiting on the human:** send `/watch <address>` to @qrow_alerts_bot to receive live alerts.

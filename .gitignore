@@ -34,3 +34,6 @@ brand/node_modules/
 
 # Secret env files with other names (e.g. watcher.env holds the Telegram bot token)
 *.env
+
+# Watcher runtime state (Telegram chat ids and subscriptions)
+watcher/data/
