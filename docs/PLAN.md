@@ -230,3 +230,70 @@ Unit tests for the parser, plus webapp-testing end to end:
 - duplicate fields (two `to=`) and missing required fields (`to`, `chain`)
 - an over-limit amount
 - a **lookalike-address code, which must show the red "Possible scam" block**
+
+## Deployment stage: public testnet (owner request, 2026-11-13). PROPOSAL, awaiting OK
+
+Goal: one public HTTPS link where anyone can use Qrow on QoreChain testnet (`qorechain-diana`, EVM 9800) from a PC
+or a phone, for the build.qorechain.io project page. Testnet only, never mainnet. Nothing is deployed until the
+owner approves this section.
+
+### Hosting
+
+| Part | Host | Plan | Why |
+| --- | --- | --- | --- |
+| Frontend (`web/`, static) | Cloudflare Pages | Free | Global CDN, HTTPS, auto-deploy from `main`, a preview link per pull request, 500 builds a month, security headers via a `_headers` file. Static bandwidth isn't billed on Pages (confirm on Cloudflare's pricing page), which matters: the app is ~4 MB and People's Choice voting (6 to 15 Dec) brings traffic. |
+| Agent API + REST relay + watcher + light indexer (`agent/`, `watcher/`) | Render, one web service from the `Dockerfile` | Starter, $7/month, always on, plus a 1 GB disk ($0.25/month) | Render's free web services sleep when idle (the first request then takes up to a minute) and free plans can't run background workers or disks, so the watcher would miss events and Telegram alerts. One always-on service runs both processes and keeps their state on the disk. Health checks, deploy notifications, 7 days of logs and instant rollbacks are included. |
+| Indexer / database | None separate | | The watcher already back-fills every Qrow contract event; it keeps a small index on the Render disk, and the API serves Portfolio history and Admin & Analytics from it. A database is only worth adding if that index outgrows the disk. |
+| Uptime monitoring | UptimeRobot (or Better Stack) | Free | Pings `/agent/health` every 5 minutes and emails the owner. |
+
+Expected cost: about $7.25 a month (Render), everything else free. Free-only fallback: the API on Render's free
+plan, accepting cold starts and no Telegram alerts. Not recommended for judging.
+
+### Accounts the owner creates (logins only the owner does; never share passwords)
+
+1. GitHub: a public repo `Terhemba10/qrow` (the fest requires one). Claude pushes `main`; Git asks the owner to sign in.
+2. Cloudflare: Pages project connected to the repo (build `npm ci && npm run build` in `web/`, output `web/dist`).
+3. Render: Blueprint from `render.yaml`, Starter plan, secrets entered in the dashboard.
+4. Anthropic Console (if AI wording is wanted): a key for Qrow only, with a **monthly spend limit** set in the console.
+5. Optional: Reown (WalletConnect) project ID; UptimeRobot.
+
+### Secrets and safety
+
+- Secrets live only in Render's environment settings: `ANTHROPIC_API_KEY`, `CMC_API_KEY`, `TELEGRAM_BOT_TOKEN`.
+  `contracts/.env` (deployer and Drill private keys) never leaves this PC; the live app needs no private keys.
+- The frontend bundle holds public values only: contract addresses, RPC URLs, `VITE_API_BASE` (the Render URL).
+- API protection, in place or to add before launch:
+  - Done: per-IP rate limits; 16 KB request bodies; GET-only allowlisted REST relay; cached CoinMarketCap (10 min) and news (15 min); daily AI cap.
+  - To add: CORS limited to the Pages domain; per-wallet limits where a request names a wallet (AI explain, Telegram linking).
+  - Owner: a hard monthly cap on the Anthropic key, set in the Anthropic Console.
+  - AI is never required: if the key, quota or cap runs out, every check still shows without the AI wording.
+- Security headers: strict CSP, HTTPS only (HSTS), no framing, no referrer. No personal data stored beyond public
+  wallet addresses and, for opted-in alerts, a Telegram chat ID. New page: Privacy & Testnet notice.
+
+### Works for everyone, on any device (checked against the QoreX docs, 2026-11-13)
+
+- Desktop: QoreX extension (Chrome, Firefox, Safari on macOS).
+- Mobile: open Qrow inside the QoreX app's dApp Browser (Home tab, "Enter a dApp URL"). QoreX injects `window.qorex`
+  there, connections are per session, and only `https://` sites connect.
+  - In the dApp Browser, QoreX can sign native transactions (staking, opening and closing EVM windows).
+  - Its EVM provider is read-only: it does not sign EVM transactions or messages (the desktop extension can't either).
+  - So on a phone, Staking works fully and the EVM actions (send, claim, mint, list, buy, launch) need an
+    EVM-signing wallet that holds the same key. Qrow says this plainly on the phone and in the How to test page,
+    and it goes into the network feedback for QoreChain.
+- Friendly screens for no wallet / wrong network: how to install QoreX, switch to Testnet, and get free tokens from
+  `dashboard.qorechain.io/faucet`.
+- Banner on every page: "Testnet: tokens have no real value."
+- New page "How to test Qrow": wallet, testnet, faucet, send to a friend, claim, NFT, stake, launch a coin.
+- Telegram alerts for anyone: link a chat to a wallet in @qrow_alerts_bot with a signed proof (a one-time code the
+  wallet signs on chain or in QoreX), opt-in, `/unlink` anytime.
+- Admin & Analytics behind Sign In With QoreChain plus the owner's allowlisted address.
+
+### Process
+
+- Every push to `main` auto-deploys (Pages and Render); pull requests get Pages preview links.
+- First public version as soon as approved (Send and Receive already work end to end); then update after every stage.
+- Roll back: Render "Rollback" on a previous deploy; Cloudflare Pages "Rollback to this deployment". Both are instant.
+- Before the 28 Nov freeze: test the live link on Chrome desktop and in the QoreX phone app, run the end-to-end
+  tests against the live URL, fix what breaks.
+- Hand-off: live URL, accounts and settings, rollback steps, and "What judges should try first" in the README and
+  on the project page.
