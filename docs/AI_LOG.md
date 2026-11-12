@@ -183,3 +183,17 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **AI generated the Portfolio tab:** EVM and native balances, a CW20 read, EVM/native/SVM addresses, Genesis NFTs with listings, pending payments, an activity table, CSV export. 2 more tests.
 - **Verified:** the watcher back-filled 7 escrow events. Portfolio for the Drill account shows live balances and activity.
 - **Waiting on the human:** send `/watch <address>` to @qrow_alerts_bot to receive live alerts.
+
+## 2026-11-12 — Demo refund, steps 6–7: NFT Shop and NFT Market
+
+- **Human:** approved the demo escrow; said again "everything working today".
+- **AI:**
+  - **QrowEscrowDemo:** an exact copy of the escrow with only 3 lines changed (title, 10-minute period, domain tag), plus 3 tests (136 total).
+  - Deployed it; demo mode in the app (banner and wording from one constant).
+  - On-chain refund triggered by the recipient, paid to the sender.
+  - Exact-amount approval step in the shared PQ action panel.
+  - NFT Shop tab (stats, on-chain art gallery, mint with QOR or fUSD).
+  - `pq-call.ts` generic script.
+  - Market agent checks (price vs floor, seller lookalike, balance; 4 tests).
+  - NFT Market tab (floor stats, listings, buy with checks and acknowledgement, list with price-sanity warnings, cancel).
+- **On chain:** Genesis #1 minted → listed → bought by the Drill account, atomically.

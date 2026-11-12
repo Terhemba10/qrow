@@ -2,6 +2,7 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
+import { MarketPage } from "./pages/MarketPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
 import { ShopPage } from "./pages/ShopPage";
@@ -20,6 +21,7 @@ export function App() {
             <NavLink to="/send">Send</NavLink>
             <NavLink to="/receive">Receive</NavLink>
             <NavLink to="/shop">NFT Shop</NavLink>
+            <NavLink to="/market">NFT Market</NavLink>
             <NavLink to="/portfolio">Portfolio</NavLink>
           </nav>
           <span className="net">{NETWORK_NAME}</span>
@@ -39,6 +41,7 @@ export function App() {
           <Route path="/receive" element={<ReceivePage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/market" element={<MarketPage />} />
           <Route path="*" element={<Navigate to="/send" replace />} />
         </Routes>
       </main>

@@ -48,7 +48,7 @@ These addresses are notes for manual testing. They are **not** defaults in code.
 | 1 | Send | deployer → Wallet 2, **1 QOR**, Direct, via `npm run pay` (the same calls as the app) | PaymentCreated #1 | **Done 2026-11-12.** tx `0xba048ad3147cb7d88baccba87026b91fbfd07d979bf5e6977177a78118577df8`, block 9,958,584, gas 420,983, refundable after 2026-11-19 15:06 UTC. Window: 1 tx, escrow-only target, 1.75 QOR cap, opened `48B4E6FD…5B90` / closed `95D43BAF…04FF`. Note and alert pending stages 5/6. |
 | 2 | Claim | deployer → Drill account 0.5 QOR (#2); the Drill account claims with ML-DSA via `npm run action` (the same calls as the app) | PaymentClaimed | **Done 2026-11-12.** #2 created tx `0x1184def88ffe5e94d8b5661519f5b54b87919788af650cd639b1a8bc086b0947`; claim tx `0x6bbc0e1cefd09cff18cd241b5c94cd6217ffae8c42f3c8711c5ca4b92c26eda0` (gas 273,435) → Claimed. Drill window: 1 tx, escrow only, closed `3F7D5475…1BE`. |
 | 3 | Cancel | deployer → Drill account 0.5 QOR (#3); the deployer cancels with ML-DSA | PaymentCancelled; funds back | **Done 2026-11-12.** #3 created tx `0x5d6496352a9683eee599383bfbc16f9ed9c0d1635c75e967e365bb14f9471393`; cancel tx `0xcb59dedeed81d543997350a5ccedcda16a5e19f6cac51918aae82f2de2a100e0` (gas 255,883) → Cancelled. Deployer window: 3 txs, escrow only, closed `A84CDEC8…9A98`. Afterwards the escrow holds exactly 1 QOR (#1, still pending). |
-| 4 | Refund | after 2026-11-19 16:06 UTC, anyone calls `npm run action -- refund --id 1` (or the app's "Refund to sender") | PaymentRefunded to the deployer | Pending: the 7 days must pass. Covered by Foundry tests until then. |
+| 4 | Refund | **Demo escrow** `0x5005f0efa49ae70e7d785983a610c997c80d3bb4` (QrowEscrowDemo, 10-minute period, own domain tag): deployer → Drill account 0.1 QOR; after 10 min the **recipient** calls `refundExpired` | PaymentRefunded to the **sender** | **Done 2026-11-12.** Demo #1 tx `0x752f3b463de78039702cf68ef77a4b8e0a5534b798ce4ed53b195957bdaeceec`; refund tx `0x0665720717e432e0a7975c408b2663f4aff6d966e99984eb8847a6cf9f4b9b42` (gas 47,722, no PQ signature needed) → Refunded. The real escrow's #1 becomes refundable after 2026-11-19 16:06 UTC. |
 | 5 | Lookalike | as the deployer (dev watch wallet, browser storage cleared), enter `0x5b2d00000000000000000000000000000000304a` | red "Possible scam" block | **Done 2026-11-12.** Caught from on-chain history alone (payment #1 logs): 10 checks in 689 ms; comparison shows `0x5B2d9c0F…304A` vs `0x5B2d0000…304A`. The real Wallet 2 then passes every check, including "You've paid this address before". |
 
 ## Testnet deployment (2026-11-12)
@@ -123,3 +123,13 @@ After closing, **no EVM window is open on the deployer or the Drill account**.
   - The recipient's `npm run seal -- read --id 4 --drill` returns the exact notice JSON. The `<b>` in the note stays text.
   - The deployer's key fails ("the envelope has no entry for this key").
 - **Web:** the Drill account's Receive tab lists #4 with "Read the encrypted notice". On Send, the note field is disabled, with an explanation, for recipients without an ML-KEM key (deployer, Wallet 2).
+
+## NFTs on chain (steps 6–7, 2026-11-12)
+
+| Step | Who | Tx | Result |
+|---|---|---|---|
+| Mint Genesis #1 (1 QOR, ML-DSA) | deployer | `0x0da6311ca4b54eb99f16541ceae50ab1aa9aa372178525461fdf1e75616485d5` (353,862 gas) | Minted #1; 1 QOR straight to the beneficiary |
+| List #1 for 2 QOR (ML-DSA) | deployer | `0x7df63bd6a00fad4e67375bcd8dddf98a782372918835df8b39e4fb48dc79e8c1` (473,121 gas) | Listing #1; NFT escrowed in the market |
+| Buy listing #1 (ML-DSA, price bound in the signature) | Drill account | `0xfaabbc6edcb37f41dd8925b52f62050fb32b1cbed0ea24690c730067c45a7a9c` (312,659 gas) | Sold; Drill account owns #1; 2 QOR to the seller in the same tx; market holds 0 QOR, 0 listings |
+
+Each step used a 1-tx window scoped to the one contract, closed straight after.
