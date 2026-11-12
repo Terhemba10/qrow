@@ -197,3 +197,18 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - Market agent checks (price vs floor, seller lookalike, balance; 4 tests).
   - NFT Market tab (floor stats, listings, buy with checks and acknowledgement, list with price-sanity warnings, cancel).
 - **On chain:** Genesis #1 minted → listed → bought by the Drill account, atomically.
+
+## 2026-11-12 — Step 8: Staking
+
+- **AI researched:** the QoreX native `signAndBroadcast` request shape (encoded Any messages, memo, gas hint); the SDK builders (`msg.staking`, `msg.distribution`, `msg.stakingtier`); the testnet validators (4 bonded); that tx search needs a height floor because the node prunes history.
+- **AI generated:**
+  - The Staking tab: validators, stake, 90d/180d/1y native locks with live bonus rates, early-unlock confirm showing days staked, the 5% burn, the forfeited bonus and 21-day unbonding (D2), Claim & restake as one QoreX signature (D3a).
+  - Referral link + memo tag, plus a count endpoint in the agent server and a Portfolio badge (tracking only, no payouts).
+  - A daily rewards reminder in the watcher.
+  - A `stake` CLI for script accounts.
+  - Tests for the early-unlock maths and referral capture (29 web tests).
+- **On chain:** the deployer staked 2 QOR with graviton, carrying `qrow-ref:<Wallet 2>`; the referral count for Wallet 2 reads 1.
+- **Honest limits:**
+  - Testnet base staking rewards are effectively 0 (pool `last_base_apy_bps` = 0), so Claim & restake can't be shown with real rewards today.
+  - Locks need at least 10 QOR, which the script accounts don't have. A QoreX lock with Wallet 1 is the owner's test.
+  - Auto-restake (D3b) is not built; optional, after the core.

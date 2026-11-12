@@ -6,6 +6,10 @@ import { MarketPage } from "./pages/MarketPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
 import { ShopPage } from "./pages/ShopPage";
+import { StakingPage } from "./pages/StakingPage";
+import { captureReferral } from "./lib/staking";
+
+captureReferral(window.location.search);
 import { ReviewPage } from "./pages/ReviewPage";
 import { SendPage } from "./pages/SendPage";
 
@@ -23,6 +27,7 @@ export function App() {
             <NavLink to="/shop">NFT Shop</NavLink>
             <NavLink to="/market">NFT Market</NavLink>
             <NavLink to="/portfolio">Portfolio</NavLink>
+            <NavLink to="/staking">Staking</NavLink>
           </nav>
           <span className="net">{NETWORK_NAME}</span>
           <WalletButton />
@@ -42,6 +47,7 @@ export function App() {
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/market" element={<MarketPage />} />
+          <Route path="/staking" element={<StakingPage />} />
           <Route path="*" element={<Navigate to="/send" replace />} />
         </Routes>
       </main>

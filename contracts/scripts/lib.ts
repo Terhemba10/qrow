@@ -65,6 +65,7 @@ export async function broadcastNative(
   acc: UnifiedAccount,
   mode: "hybrid" | "classical",
   messages: Parameters<EthNativeSigner["sign"]>[0]["messages"],
+  memo?: string,
 ): Promise<string> {
   const net = network();
   const { accountNumber, sequence } = await accountSequence(net.rest, acc.cosmos);
@@ -75,8 +76,9 @@ export async function broadcastNative(
       chainId: net.chainId,
       accountNumber,
       sequence,
-      fee: FEE,
+      fee: messages.length > 1 ? { amount: [{ denom: "uqor", amount: String(100_000 * messages.length) }], gas: String(800_000 * messages.length) } : FEE,
       messages,
+      ...(memo ? { memo } : {}),
     });
     return res.transactionHash;
   } finally {

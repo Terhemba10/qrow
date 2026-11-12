@@ -1,5 +1,7 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { evmToQor } from "@qorechain/sdk";
 import { useAccount } from "wagmi";
 import { IconAlert } from "../components/Icons";
 import { CHAIN } from "../config/network";
@@ -19,6 +21,16 @@ export function PortfolioPage() {
   const balances = useBalances(me);
   const nfts = useNfts(me);
   const payments = usePayments(me);
+  const referrals = useQuery({
+    queryKey: ["referrals", me],
+    enabled: !!me,
+    staleTime: 300_000,
+    queryFn: async () => {
+      const r = await fetch(`/agent/referrals/${evmToQor(me!)}`);
+      if (!r.ok) throw new Error("unavailable");
+      return ((await r.json()) as { count: number }).count;
+    },
+  });
 
   const activity = useMemo<ActivityRow[]>(() => {
     if (!payments.data || !me) return [];
@@ -142,6 +154,23 @@ export function PortfolioPage() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section aria-labelledby="ref-title" className="stack">
+        <h2 id="ref-title">Referrals</h2>
+        {referrals.data !== undefined ? (
+          <p>
+            <span className={`badge${referrals.data > 0 ? " badge--earned" : ""}`}>{referrals.data >= 10 ? "Connector" : referrals.data >= 3 ? "Guide" : referrals.data >= 1 ? "First referral" : "No referrals yet"}</span>{" "}
+            <span className="fig">{referrals.data}</span> {referrals.data === 1 ? "person has" : "people have"} staked through your link. Tracking only: Qrow pays no commission.
+          </p>
+        ) : referrals.isError ? (
+          <p className="muted">Referral counts need the Qrow agent server running.</p>
+        ) : (
+          <span className="skeleton" style={{ width: "40%" }} />
+        )}
+        <p className="hint">
+          Your link: <span className="mono">{`${window.location.origin}/?ref=${evmToQor(me)}`}</span>
+        </p>
       </section>
 
       <section aria-labelledby="pend-title" className="stack">

@@ -7,6 +7,7 @@
  */
 import { createServer } from "node:http";
 import { MODEL, explain, hasCredentials, parseRequest } from "./explain.js";
+import { isQorAddress, referralCount } from "./referrals.js";
 
 const PORT = Number(process.env.QROW_AGENT_PORT ?? 8787);
 const MAX_BODY = 16 * 1024;
@@ -18,6 +19,16 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") return send(200, { ok: true, model: MODEL, ai: hasCredentials() });
+  if (req.method === "GET" && req.url?.startsWith("/referrals/")) {
+    const ref = decodeURIComponent(req.url.slice("/referrals/".length));
+    if (!isQorAddress(ref)) return send(400, { ok: false, reason: "bad_address" });
+    try {
+      const r = await referralCount(ref);
+      return send(200, { ok: true, count: r.count });
+    } catch {
+      return send(502, { ok: false, reason: "chain_unavailable" });
+    }
+  }
   if (req.method !== "POST" || req.url !== "/explain") return send(404, { ok: false, reason: "not_found" });
 
   let size = 0;

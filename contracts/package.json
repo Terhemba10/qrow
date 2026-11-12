@@ -22,7 +22,8 @@
     "action": "tsx --env-file=.env scripts/action.ts",
     "seal": "tsx --env-file=.env scripts/seal.ts",
     "deploy:demo": "tsx --env-file=.env scripts/deploy-demo.ts",
-    "pq": "tsx --env-file=.env scripts/pq-call.ts"
+    "pq": "tsx --env-file=.env scripts/pq-call.ts",
+    "stake": "tsx --env-file=.env scripts/stake.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",

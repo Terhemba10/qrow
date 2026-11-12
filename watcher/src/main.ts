@@ -177,6 +177,27 @@ async function clock() {
   for (const p of Object.values(state.pending)) await deliver(clockAlerts(p, p.createdAt, now));
 }
 
+/** Staking reminder (D3): once a day, tell watchers when at least 1 QOR of rewards is ready to Claim & restake. */
+async function stakingReminders() {
+  const day = Math.floor(Date.now() / 86_400_000);
+  const addrs = [...new Set(Object.values(state.subs).flat())];
+  for (const a of addrs) {
+    try {
+      const { evmToQor } = await import("@qorechain/sdk");
+      const qor = evmToQor(a);
+      const r = (await (await fetch(`${REST}/cosmos/distribution/v1beta1/delegators/${qor}/rewards`)).json()) as { total?: { denom: string; amount: string }[] };
+      const uqor = BigInt((r.total?.find((t) => t.denom === "uqor")?.amount ?? "0").split(".")[0]);
+      if (uqor < 1_000_000n) continue;
+      const qorAmt = formatUnits(uqor, 6);
+      await deliver([{ key: `rewards:${a}:${day}`, to: a, role: "sender", kind: "reminder_day5", text: `Qrow: ${qorAmt} QOR of staking rewards is ready. Open Staking in Qrow and use Claim & restake (one QoreX signature). Nothing is restaked without you.
+
+Testnet: these tokens have no value.` }]);
+    } catch {
+      /* try again next hour */
+    }
+  }
+}
+
 // ---------------------------------------------------------------- Telegram commands (long polling the Bot API)
 function toEvm(s: string): Address | undefined {
   const t = s.trim();
@@ -259,6 +280,7 @@ async function main() {
     onError: (e) => console.log(`[ws] ${e.message.split("\n")[0]}`),
   });
   setInterval(() => void clock(), 60_000);
+  setInterval(() => void stakingReminders(), 3_600_000);
   void clock();
   void pollTelegram();
 }
