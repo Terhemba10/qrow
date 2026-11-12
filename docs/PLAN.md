@@ -297,3 +297,57 @@ plan, accepting cold starts and no Telegram alerts. Not recommended for judging.
   tests against the live URL, fix what breaks.
 - Hand-off: live URL, accounts and settings, rollback steps, and "What judges should try first" in the README and
   on the project page.
+
+### First-run experience (owner request, 2026-11-13)
+
+Journey for a brand-new visitor, desktop or phone, testnet only. Built tab by tab; tested on the live link with a fresh
+wallet on desktop and phone before the 28 Nov freeze.
+
+1. **Landing → Connect:** one-sentence pitch, the testnet banner, one button **Connect QoreX**; address shown with the
+   first and last 4 characters highlighted, balances right after. Before connecting, every tab shows "Connect your
+   QoreX wallet to use this" instead of empty data.
+2. **"Ready to test?" card** (runs after connect), each item with a live status and a fix:
+   QoreX installed (link to qorechain.io/qorex) · on Testnet (explain Settings → "Use testnet (developers)"; never
+   switch for them) · has test QOR (**Get test tokens** → dashboard.qorechain.io/faucet, free, once per 24 h; re-check
+   on return) · ML-DSA key registered (QoreX registers it with the first transfer: offer a tiny self-transfer) ·
+   EVM window (Qrow's own "Open window in QoreX" button) · fUSD on the EVM side (one-click **Convert fUSD**,
+   MsgConvertCoin signed in QoreX).
+3. **"Try Qrow" checklist** (collapsible, saved per wallet in local storage, ticks itself from on-chain events,
+   "5 of 9 tried"): Send, Receive, Portfolio, NFT Shop, NFT Market, Staking, Market News, Launch, Alerts. Each task
+   links to its screen with a one-line hint.
+4. **Every tab works for a stranger:** teaching empty states; every action is checking agent → confirm → the user
+   signs; plain-language errors with the fix (fees, window closed, wrong network, key not registered, rejected).
+   **"Test with a demo recipient"** for solo testers (see open question C).
+5. **Feedback button** on every page → a GitHub issue template (no personal data needed).
+
+#### Facts from the QoreX docs that change parts of this (checked 2026-11-13)
+
+- QoreX (extension and app) **never sends EVM transactions**. QoreChain's documented flow is: open the EVM window in
+  QoreX, then send from MetaMask (or another EVM wallet) holding the same account. So "the user signs in QoreX" holds
+  for native actions (staking, windows, fUSD conversion, alerts linking); EVM actions are signed in MetaMask. The
+  "Ready to test?" card gets a MetaMask item, and the How to test page shows how to hold one testnet account in both
+  wallets (create it in MetaMask, restore that phrase into QoreX; a fresh testnet-only wallet).
+- QoreX registers the ML-DSA key automatically with the first transfer; websites can't ask it to register.
+- QoreX does **not** support message signing (`signArbitrary`), and gives users no QRC1 PQC recovery code.
+
+#### Open questions for the owner
+
+- **A. Blocker: per-action ML-DSA signatures for QoreX users.** Qrow's contracts verify an ML-DSA signature
+  (`pqcVerify`) against the key registered on chain. QoreX holds that key and won't sign messages, so a QoreX user
+  can't authorise Send, Claim, Mint, List, Buy or Launch today. Only accounts with a QRC1 code (Qrow's script
+  accounts) can. Options:
+  1. *Recommended:* a **Qrow app key**. Qrow generates a separate ML-DSA-87 key in the browser, shown once as a QRC1
+     code to save. It's registered once in Qrow's contracts by a transaction inside a QoreX-opened window, and from
+     then on every action is still checked with `pqcVerify`, against that key. Needs a contract change and a
+     redeploy of all four Qrow contracts (escrow, Genesis, Market, Coin Factory), new tests, and a fresh demo run,
+     before the Drill registration on 17 Nov. About a day.
+  2. Wait for QoreX message signing: core tabs stay unusable for QoreX users until it ships (no date).
+  3. Ask users for their 24 words so Qrow can derive the key: **rejected**. It hands a website full control of the
+     account and is exactly what phishing sites do.
+- **B. Staking terms:** the chain offers 3, 6 and 12 months only, so "240 days" can't be offered; Qrow keeps
+  90 days / 180 days / 1 year (decision D1).
+- **C. Demo recipient:** auto-claiming needs a server-held key for a dedicated testnet demo account (it signs claims
+  and opens its own windows). That's an exception to "no private keys on servers": a separate account holding only
+  fee dust, never the deployer or Drill keys. Needs the owner's yes.
+- **D. Sign In With QoreChain** for Admin: to check how SIWQ proves ownership when QoreX has no message signing
+  (likely a signed native transaction); confirmed when Admin is built.
