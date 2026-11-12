@@ -1,0 +1,29 @@
+{
+  "name": "qrow-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "QrowEscrow: post-quantum protected escrow on the QoreChain EVM (testnet qorechain-diana).",
+  "scripts": {
+    "forge-std": "forge install foundry-rs/forge-std --no-git",
+    "build": "forge build",
+    "test": "forge test -vv",
+    "coverage": "forge coverage --report summary",
+    "window": "tsx --env-file=.env scripts/window.ts",
+    "pq:selftest": "tsx --env-file=.env scripts/pq-selftest.ts",
+    "deploy:testnet": "tsx --env-file=.env scripts/deploy.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cosmjs/stargate": "^0.39.0",
+    "@qorechain/evm": "0.14.0",
+    "@qorechain/sdk": "0.14.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
+  }
+}
