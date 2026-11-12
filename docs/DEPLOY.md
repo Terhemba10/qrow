@@ -1,58 +1,52 @@
 # Deploying Qrow (public testnet)
 
-Qrow runs as one small Node process from the `Dockerfile` at the repo root. It serves the web app, the
-agent API at `/agent` and a read-only relay to QoreChain's REST API at `/lcd-testnet` (that API sends no
-CORS headers, so browsers can't call it directly). Any host that runs a Docker image and gives HTTPS works.
+Hosting approved by the owner on 2026-11-13: **Vercel** for the app and its API, **Render** only for the always-on
+Telegram watcher. Testnet only (`qorechain-diana`, EVM 9800), never mainnet. No private keys on any host.
 
-## Qrow's hosting (approved 2026-11-13)
+## 1. Vercel: the app + API (`web/`)
 
-**Frontend: Cloudflare Pages** (free). Workers & Pages > Create > Pages > Connect to Git > this repo.
-- Project name: `qrow` (gives `https://qrow.pages.dev`; the API allows this name and its previews).
-- Root directory: `web`. Build command: `npm run build:pages`. Output directory: `dist`.
-- Environment variables (Production and Preview): `VITE_API_BASE` = the Render URL (e.g. `https://qrow-api.onrender.com`),
-  `NODE_VERSION` = `22`, optionally `VITE_WALLETCONNECT_PROJECT_ID`.
-- `npm run build:pages` writes `_headers` (CSP that only allows Qrow's API and QoreChain) and `_redirects` (app routes).
+Import `github.com/Terhemba10/qrow` in Vercel with **Root Directory `web`**. `web/vercel.json` sets the rest:
+framework Vite, `npm ci`, `npm run build` (typechecks the app and the API, then builds), output `dist`.
 
-**API + relay + watcher: Render** (Starter, $7/month, plus a 1 GB disk). New > Blueprint > this repo; Render reads `render.yaml`.
-- Secrets it asks for: `CMC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY` (optional), `QROW_ALLOWED_ORIGINS` (optional, a custom domain).
-- `agent/src/run.ts` starts the server and the watcher; the watcher restarts itself if it crashes. `/agent/health` shows
-  `"watcher":"running"`.
-- First deploy: confirm the watcher can write to the disk at `/app/watcher/data` (health stays "running").
+| Path | Served by |
+| --- | --- |
+| `/`, `/send`, ... | the built app (`dist`); every app route falls back to `index.html` |
+| `/agent/*` | `web/api/agent/[...path].ts`: AI explanation, prices, news, referrals, health |
+| `/lcd-testnet/*` | `web/api/lcd/[...path].ts`: read-only QoreChain REST relay (GET, allowlisted paths) |
 
-**Uptime:** UptimeRobot HTTP monitor on `https://<render-url>/agent/health`, every 5 minutes, email alerts.
+The app calls these on its own domain, so there's no CORS and the CSP stays `'self'`.
 
-**Roll back:** Render > service > Events > a previous deploy > Rollback. Cloudflare Pages > Deployments > a previous one > Rollback.
+**Environment variables** (Project > Settings > Environment Variables). The owner pastes the secrets; never commit them.
 
-## 1. Service: web app + agent API
-
-- Build from the repo root with the `Dockerfile`. It listens on `$PORT` (default 8080) and has a health check at `/agent/health`.
-- The image already sets `HOST=0.0.0.0` and `TRUST_PROXY=1` (exactly one reverse proxy in front, as on most hosts).
-- Set these as **secret environment variables in the host's dashboard**, never in the repo:
-
-| Variable | Needed for | Notes |
+| Variable | Needed | Notes |
 | --- | --- | --- |
-| `CMC_API_KEY` | Market News prices | Free CoinMarketCap plan; cached 10 min server-side |
-| `ANTHROPIC_API_KEY` | Plain-language summary on Review | Optional; without it every check still works |
-| `QROW_DAILY_AI_CAP` | Spending ceiling | Default 2000 AI calls per UTC day across all users |
+| `CMC_API_KEY` | yes, for Market News prices | secret |
+| `ANTHROPIC_API_KEY` | optional | secret; without it every check still shows, just without the AI wording. Set a **monthly spend limit** in the Anthropic Console. |
+| `QROW_DAILY_AI_CAP` | optional | default 2000 AI calls per UTC day per function instance |
+| `VITE_LIVE_TABS` | optional | default `send,receive,portfolio,news`; add a tab the day it passes its tests |
+| `VITE_WALLETCONNECT_PROJECT_ID` | optional | public; lets phone wallets connect by QR |
 
-- Build-time (optional): `VITE_WALLETCONNECT_PROJECT_ID`, a free project ID from Reown (WalletConnect), so phone
-  wallets can connect by QR code. Without it, phones work only inside a wallet's built-in browser.
+Caching: prices `s-maxage=600`, news 900, referral counts 300, so a crowd costs one upstream call per window.
+Rate limits run per function instance (6 AI calls, 120 other calls, 600 relay reads per IP per minute).
 
-## 2. Service: Telegram alerts watcher (optional)
+**Roll back:** Vercel > Deployments > a previous deployment > "Promote to Production" (instant).
+Every push to `main` deploys to production; every pull request gets a preview URL.
 
-Same image, command `npm --prefix watcher run start:prod`, secret `TELEGRAM_BOT_TOKEN`. It needs a persistent
-disk mounted at `/app/watcher/data` (subscriptions and back-fill position). Run only one copy.
+## 2. Render: the Telegram watcher (optional, $7/month)
 
-## 3. After the first deploy
+Render > New > Blueprint > this repo; it reads `render.yaml` (a Starter background worker built from the root
+`Dockerfile`, with a 1 GB disk at `/app/watcher/data`). Secret: `TELEGRAM_BOT_TOKEN`. Run only one copy (Telegram
+allows one poller per bot, so stop the local watcher first). Logs: Render > qrow-watcher > Logs.
 
-- Open `https://<your-domain>/agent/health`: `{"ok":true,...}`.
-- Open the app on a phone and a PC; Market News should show prices, Launch should list LANT.
-- Update the project page on build.qorechain.io with the link.
+**Roll back:** Render > qrow-watcher > Events > a previous deploy > Rollback.
 
-## What the server protects
+## 3. Checks after each deploy
 
-- Rate limits per IP: 6 AI summaries a minute, 120 other agent calls, 600 relay reads.
-- The relay is GET-only and allowlisted (`/cosmos/{bank,staking,distribution,auth,tx,base}/`, `/qorechain/`,
-  `/cosmwasm/wasm/v1/contract/`), 15 s timeout, 4 MB cap. It cannot broadcast transactions.
-- Security headers: a strict Content-Security-Policy (scripts only from Qrow itself), no framing, no referrer.
-- No cookies, no accounts, nothing about users stored. Keys never reach the browser.
+- `https://<domain>/agent/health` returns `{"ok":true,...}`.
+- The Start page shows the readiness card; Market News shows prices; Send and Receive load.
+- Uptime: an UptimeRobot HTTP monitor on `/agent/health` every 5 minutes, email alerts.
+
+## Local development
+
+`web`: `npm run dev` (Vite on 127.0.0.1:5173). `agent`: `npm run start` (127.0.0.1:8787) serves the same `/agent`
+and `/lcd-testnet` code from `web/server` for the dev proxy. `watcher`: `npm run start`.
