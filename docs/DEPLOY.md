@@ -4,13 +4,24 @@ Qrow runs as one small Node process from the `Dockerfile` at the repo root. It s
 agent API at `/agent` and a read-only relay to QoreChain's REST API at `/lcd-testnet` (that API sends no
 CORS headers, so browsers can't call it directly). Any host that runs a Docker image and gives HTTPS works.
 
-## On Render (what Qrow uses)
+## Qrow's hosting (approved 2026-11-13)
 
-1. Render dashboard: **New > Blueprint**, connect the GitHub repo. Render reads `render.yaml`.
-2. Fill in the secrets it asks for (`CMC_API_KEY`; `ANTHROPIC_API_KEY` and `VITE_WALLETCONNECT_PROJECT_ID` can stay empty).
-3. Apply. The first build takes a few minutes; the link is `https://qrow-xxxx.onrender.com` (or your own domain).
-4. The free plan sleeps after a while without visitors, so the first visit afterwards is slow. Move to an
-   always-on plan before the People's Choice vote (6 to 15 December).
+**Frontend: Cloudflare Pages** (free). Workers & Pages > Create > Pages > Connect to Git > this repo.
+- Project name: `qrow` (gives `https://qrow.pages.dev`; the API allows this name and its previews).
+- Root directory: `web`. Build command: `npm run build:pages`. Output directory: `dist`.
+- Environment variables (Production and Preview): `VITE_API_BASE` = the Render URL (e.g. `https://qrow-api.onrender.com`),
+  `NODE_VERSION` = `22`, optionally `VITE_WALLETCONNECT_PROJECT_ID`.
+- `npm run build:pages` writes `_headers` (CSP that only allows Qrow's API and QoreChain) and `_redirects` (app routes).
+
+**API + relay + watcher: Render** (Starter, $7/month, plus a 1 GB disk). New > Blueprint > this repo; Render reads `render.yaml`.
+- Secrets it asks for: `CMC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY` (optional), `QROW_ALLOWED_ORIGINS` (optional, a custom domain).
+- `agent/src/run.ts` starts the server and the watcher; the watcher restarts itself if it crashes. `/agent/health` shows
+  `"watcher":"running"`.
+- First deploy: confirm the watcher can write to the disk at `/app/watcher/data` (health stays "running").
+
+**Uptime:** UptimeRobot HTTP monitor on `https://<render-url>/agent/health`, every 5 minutes, email alerts.
+
+**Roll back:** Render > service > Events > a previous deploy > Rollback. Cloudflare Pages > Deployments > a previous one > Rollback.
 
 ## 1. Service: web app + agent API
 

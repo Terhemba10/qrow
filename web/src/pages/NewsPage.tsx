@@ -1,3 +1,4 @@
+import { AGENT } from "../config/network";
 import { useQuery } from "@tanstack/react-query";
 import { IconAlert } from "../components/Icons";
 
@@ -33,13 +34,13 @@ export function NewsPage() {
     staleTime: 300_000,
     refetchInterval: 600_000,
     retry: 1,
-    queryFn: () => getJson<{ data: Price[]; qorListed: boolean; updated: string }>("/agent/market/prices"),
+    queryFn: () => getJson<{ data: Price[]; qorListed: boolean; updated: string }>(`${AGENT}/market/prices`),
   });
   const news = useQuery({
     queryKey: ["market-news"],
     staleTime: 600_000,
     retry: 1,
-    queryFn: () => getJson<{ data: Headline[]; updated: string }>("/agent/market/news"),
+    queryFn: () => getJson<{ data: Headline[]; updated: string }>(`${AGENT}/market/news`),
   });
 
   return (

@@ -11,6 +11,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { MODEL, explain, hasCredentials, parseRequest } from "./explain.js";
 import { isQorAddress, referralCount } from "./referrals.js";
 import { news, prices } from "./market.js";
+import { watcherState } from "./state.js";
 
 const MAX_BODY = 16 * 1024;
 /** Hard ceiling on AI calls per UTC day across all users, so a flood can't run up the bill. */
@@ -34,7 +35,7 @@ export async function agentRoute(req: IncomingMessage, res: ServerResponse, url:
     res.end(JSON.stringify(body));
   };
 
-  if (req.method === "GET" && url === "/health") return send(200, { ok: true, model: MODEL, ai: hasCredentials() });
+  if (req.method === "GET" && url === "/health") return send(200, { ok: true, model: MODEL, ai: hasCredentials(), watcher: watcherState.enabled ? (watcherState.running ? "running" : "restarting") : "off" });
   if (req.method === "GET" && url === "/market/prices") {
     try {
       return send(200, { ok: true, ...(await prices()), attribution: "Data from CoinMarketCap" });

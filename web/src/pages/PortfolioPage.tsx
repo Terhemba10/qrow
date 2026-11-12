@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { evmToQor } from "@qorechain/sdk";
 import { useAccount } from "wagmi";
 import { IconAlert } from "../components/Icons";
-import { CHAIN } from "../config/network";
+import { AGENT, CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
@@ -28,7 +28,7 @@ export function PortfolioPage() {
     enabled: !!me,
     staleTime: 300_000,
     queryFn: async () => {
-      const r = await fetch(`/agent/referrals/${evmToQor(me!)}`);
+      const r = await fetch(`${AGENT}/referrals/${evmToQor(me!)}`);
       if (!r.ok) throw new Error("unavailable");
       return ((await r.json()) as { count: number }).count;
     },

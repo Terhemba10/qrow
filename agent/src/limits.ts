@@ -34,3 +34,20 @@ export function clientIp(req: IncomingMessage, trustProxy: boolean): string {
   }
   return req.socket.remoteAddress ?? "unknown";
 }
+
+/**
+ * Browser origins allowed to call the API cross-origin: an explicit list (QROW_ALLOWED_ORIGINS,
+ * comma-separated) plus the Cloudflare Pages project and its preview deployments
+ * (https://<project>.pages.dev and https://<preview>.<project>.pages.dev). Same origin always works.
+ */
+export function makeOriginCheck(list: string | undefined, pagesProject: string | undefined): (origin: string) => boolean {
+  const allowed = new Set((list ?? "").split(",").map((s) => s.trim().replace(/\/$/, "")).filter(Boolean));
+  const project = (pagesProject ?? "").replace(/[^a-z0-9-]/g, "");
+  return (origin) => {
+    if (allowed.has(origin)) return true;
+    if (!project || !origin.startsWith("https://")) return false;
+    const h = origin.slice("https://".length);
+    const suffix = `.${project}.pages.dev`;
+    return h === `${project}.pages.dev` || (h.endsWith(suffix) && /^[a-z0-9-]+$/.test(h.slice(0, -suffix.length)));
+  };
+}

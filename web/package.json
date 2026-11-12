@@ -10,7 +10,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:pages": "npm run build && node scripts/pages-files.mjs"
   },
   "dependencies": {
     "@qorechain/evm": "0.14.0",

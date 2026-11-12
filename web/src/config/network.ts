@@ -6,8 +6,15 @@ export const CHAIN = qorechainTestnet; // EVM chain id 9800
 export const NATIVE_CHAIN_ID = "qorechain-diana";
 export const NETWORK_NAME = "QoreChain testnet";
 
-/** REST (LCD) through the dev/preview proxy (the public API sends no CORS headers). */
-export const REST = "/lcd-testnet";
+/**
+ * Qrow's own server (agent API + REST relay). Empty = same origin (dev proxy, or the server also
+ * serving the app). On Cloudflare Pages it's the Render URL, set at build time with VITE_API_BASE.
+ */
+export const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");
+/** Agent API: AI wording, prices, news, referrals. */
+export const AGENT = `${API_BASE}/agent`;
+/** REST (LCD) through Qrow's relay (the public API sends no CORS headers). */
+export const REST = `${API_BASE}/lcd-testnet`;
 
 /** The deployed escrow (see contracts/deployments/testnet.json). Override with VITE_QROW_ESCROW. */
 export const ESCROW: Address =

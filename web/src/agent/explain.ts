@@ -1,3 +1,4 @@
+import { AGENT } from "../config/network";
 import type { AgentRun } from "./checks";
 import type { PaymentDraft } from "../lib/draft";
 import { formatUnitsExact } from "../lib/amount";
@@ -35,7 +36,7 @@ export async function fetchExplanation(run: AgentRun, draft: PaymentDraft, token
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), EXPLAIN_TIMEOUT_MS);
   try {
-    const res = await fetch("/agent/explain", {
+    const res = await fetch(`${AGENT}/explain`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(explainPayload(run, draft, token)),

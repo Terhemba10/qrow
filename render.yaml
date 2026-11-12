@@ -6,7 +6,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: free # sleeps when idle; switch to an always-on plan before People's Choice voting (6 Dec)
+    plan: starter # always on ($7/month): free services sleep and can't keep a disk
     healthCheckPath: /agent/health
     autoDeploy: true
     envVars:
@@ -16,9 +16,19 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: VITE_WALLETCONNECT_PROJECT_ID
-        sync: false
       - key: QROW_DAILY_AI_CAP
         value: "2000"
-# The Telegram alerts watcher needs a paid background worker with a disk, so it isn't here by default.
-# See docs/DEPLOY.md, section 2.
+      - key: QROW_RUN_WATCHER
+        value: "1"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: QROW_PAGES_PROJECT
+        value: qrow
+      - key: QROW_ALLOWED_ORIGINS
+        sync: false # add a custom domain here later, e.g. https://qrow.app
+    disk:
+      name: watcher-data
+      mountPath: /app/watcher/data
+      sizeGB: 1
+# The Telegram alerts watcher runs inside this service (agent/src/run.ts) and keeps its state on the disk.
+# The frontend is on Cloudflare Pages (see docs/DEPLOY.md); VITE_WALLETCONNECT_PROJECT_ID belongs there now.

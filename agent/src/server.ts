@@ -15,7 +15,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODEL, hasCredentials } from "./explain.js";
-import { RateLimiter, clientIp } from "./limits.js";
+import { RateLimiter, clientIp, makeOriginCheck } from "./limits.js";
 import { agentRoute } from "./routes.js";
 
 const PORT = Number(process.env.PORT ?? process.env.QROW_AGENT_PORT ?? 8787);
@@ -23,6 +23,7 @@ const HOST = process.env.HOST ?? "127.0.0.1";
 const REST = process.env.QROW_REST ?? "https://api-testnet.qore.host";
 const DIST = resolve(process.env.QROW_WEB_DIST ?? join(fileURLToPath(new URL(".", import.meta.url)), "../../web/dist"));
 const TRUST_PROXY = process.env.TRUST_PROXY === "1";
+const originAllowed = makeOriginCheck(process.env.QROW_ALLOWED_ORIGINS, process.env.QROW_PAGES_PROJECT);
 
 /** Only the read endpoints the app uses. Anything else (broadcast, gRPC gateways we don't need) is refused. */
 const REST_ALLOW = [/^\/cosmos\/(bank|staking|distribution|auth|tx|base)\//, /^\/qorechain\//, /^\/cosmwasm\/wasm\/v1\/contract\//];
@@ -115,6 +116,19 @@ const server = createServer(async (req, res) => {
   headers(res);
   const url = req.url ?? "/";
   const ip = clientIp(req, TRUST_PROXY);
+  const isApi = url.startsWith("/agent") || url.startsWith("/lcd-testnet/");
+  const origin = typeof req.headers.origin === "string" ? req.headers.origin : "";
+  if (isApi && origin) {
+    if (!originAllowed(origin) && origin !== `https://${req.headers.host}` && origin !== `http://${req.headers.host}`) {
+      return json(res, 403, { ok: false, reason: "origin_not_allowed" });
+    }
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, { "access-control-allow-methods": "GET, POST", "access-control-allow-headers": "content-type", "access-control-max-age": "600" });
+      return res.end();
+    }
+  }
   try {
     if (url === "/agent" || url.startsWith("/agent/")) {
       const sub = url.slice("/agent".length) || "/";
