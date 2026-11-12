@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@qorechain/evm": "0.14.0",
+    "@qorechain/qoreseal": "^0.1.0",
     "@qorechain/qoresign": "0.2.0",
     "@qorechain/qorex-rainbowkit": "0.1.0",
     "@qorechain/sdk": "0.14.0",

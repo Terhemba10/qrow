@@ -10,7 +10,10 @@
 import { readFileSync } from "node:fs";
 import { pqcSign } from "@qorechain/sdk";
 import { type Abi, encodeAbiParameters, getAddress, keccak256, parseEther, parseEventLogs, toBytes, toHex, type Address, type Hex } from "viem";
-import { evmClients, loadAccount } from "./lib.js";
+import { evmClients, loadAccount, network } from "./lib.js";
+import { seal } from "@qorechain/qoreseal";
+import { fetchKemKey } from "@qorechain/qoreseal/network";
+import { formatEther } from "viem";
 
 const args = process.argv.slice(2);
 const flag = (n: string) => {
@@ -34,7 +37,14 @@ async function main() {
     c.readContract({ address: escrow, abi, functionName, args: a }) as Promise<T>;
 
   // Same digest and message the browser builds.
-  const sealedNote: Hex = "0x";
+  // Same QoreSeal notice as the web app (web/src/lib/seal.ts), if the recipient registered an ML-KEM key.
+  let sealedNote: Hex = "0x";
+  const kem = await fetchKemKey({ rest: network().rest, address: to });
+  if (kem.registered && kem.publicKey && kem.algorithmId === 2) {
+    const notice = { v: 1, amount: formatEther(amount), token: "QOR", from: sender, claimBefore: new Date(Date.now() + 7 * 86_400_000).toISOString(), ...(flag("note") ? { note: flag("note")!.slice(0, 140) } : {}) };
+    sealedNote = toHex(seal({ chainId: network().chainId, purpose: "qrow-payment-notice-v1", recipients: [{ mlkemPublicKey: kem.publicKey }], plaintext: new TextEncoder().encode(JSON.stringify(notice)), mode: "mlkem" }));
+    console.log(`QoreSeal notice: ${(sealedNote.length - 2) / 2} bytes, sealed to the recipient's ML-KEM-1024 key`);
+  }
   const [action, nonce, block] = await Promise.all([read<Hex>("ACTION_CREATE"), read<bigint>("pqNonce", [sender]), c.getBlock()]);
   const validUntil = block.timestamp + 30n * 60n;
   const paramsHash = keccak256(

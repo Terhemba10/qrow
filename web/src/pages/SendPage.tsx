@@ -13,6 +13,8 @@ import { formatUnitsExact } from "../lib/amount";
 import { usePayments } from "../lib/payments";
 import { explainParseError, parsePayload } from "../lib/qrPayload";
 import { PaymentList } from "../components/PaymentList";
+import { useQuery } from "@tanstack/react-query";
+import { recipientKemKey } from "../lib/seal";
 
 const AMOUNT_ERRORS = {
   empty: "Enter an amount.",
@@ -26,6 +28,29 @@ const RECIPIENT_ERRORS = {
   checksum: "This 0x address has a capitalisation error, so it may be mistyped. Copy it again from the recipient.",
   bech32: "This qor1 address has a typo: its checksum doesn’t match. Copy it again from the recipient.",
 } as const;
+
+function NoteField({ recipient, note, setNote }: { recipient?: `0x${string}`; note: string; setNote: (s: string) => void }) {
+  const id = useId();
+  const kem = useQuery({ queryKey: ["kem", recipient], enabled: !!recipient, staleTime: 60_000, queryFn: () => recipientKemKey(recipient!).then((k) => !!k) });
+  return (
+    <div className="field">
+      <label htmlFor={id}>Note for the recipient (optional)</label>
+      <textarea id={id} className="input" value={note} maxLength={140} onChange={(e) => setNote(e.target.value)} aria-describedby={`${id}-hint`} disabled={kem.data === false} />
+      <span className="counter" aria-live="polite">
+        {note.length}/140
+      </span>
+      <p className="hint" id={`${id}-hint`}>
+        {!recipient
+          ? "Encrypted with QoreSeal (ML-KEM-1024) so only the recipient can read it."
+          : kem.isPending
+            ? "Checking whether the recipient can receive encrypted notes…"
+            : kem.data
+              ? "Encrypted with QoreSeal (ML-KEM-1024) so only the recipient can read it. They also get a sealed notice of this payment."
+              : "This recipient hasn’t set up encrypted notes (no ML-KEM key on chain), so no note or notice can be sent. The payment itself works the same."}
+      </p>
+    </div>
+  );
+}
 
 export function SendPage() {
   const { address, chainId, isConnected } = useAccount();
@@ -48,6 +73,7 @@ export function SendPage() {
   const sent = usePayments(isConnected && chainId === CHAIN.id ? address : undefined);
   const [freelancer, setFreelancer] = useState(prev?.freelancer ?? false);
   const [submitted, setSubmitted] = useState(false);
+  const [note, setNote] = useState(prev?.note ?? "");
 
   const token = tokenBySymbol(symbol)!;
   const recipient = parseRecipient(to);
@@ -92,7 +118,7 @@ export function SendPage() {
       token: token.symbol,
       amountUnits: parsed.units.toString(),
       freelancer,
-      note: "",
+      note: note.trim().slice(0, 140),
     });
     navigate("/review");
   }
@@ -245,7 +271,7 @@ export function SendPage() {
           </label>
         </fieldset>
 
-        {/* The encrypted note (QoreSeal, ML-KEM-1024) arrives in stage 5; it is hidden until it works end to end. */}
+        <NoteField recipient={recipient.ok ? recipient.evm : undefined} note={note} setNote={setNote} />
 
         <div className="actions">
           <button className="btn btn--block" type="submit" disabled={wrongNetwork}>

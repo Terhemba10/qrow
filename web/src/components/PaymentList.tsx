@@ -8,6 +8,7 @@ import { actionsFor, type Payment } from "../lib/payments";
 import { Countdown, useNow } from "./Countdown";
 import { IconAlert } from "./Icons";
 import { PqActionPanel } from "./PqActionPanel";
+import { NoteReader } from "./NoteReader";
 
 type Act = "claim" | "release" | "cancel" | "refund";
 
@@ -89,6 +90,7 @@ export function PaymentList({
                 </button>
               )}
             </div>
+            {direction === "in" && p.sealedNote && <NoteReader me={me} envelope={p.sealedNote} />}
             {a.claim && hasPqKey === false && (
               <p className="field-error paylist__note">
                 <IconAlert /> You need a registered quantum-safe (ML-DSA-87) key to claim. Set it up in QoreX. If you don’t claim within {REFUND_DAYS} days, it goes back to the sender.

@@ -114,3 +114,12 @@ After closing, **no EVM window is open on the deployer or the Drill account**.
 2. QrowGenesis `0xb82ba02428506ad69be84ee932c844e0d99bc67f`
 3. QrowMarket `0x92da580048b7cedfd6d834a0f839d38121fc347b`
 4. QrowCoinFactory `0x3571ac216de6fd72ce8e1d9ecebf79d030142f12`
+
+## QoreSeal notices (step 4b, 2026-11-12)
+
+- **Drill account ML-KEM-1024 key registered:** tx `CB28FF41D8704E0E16004BBAE885E28019C7BE55FFE770006269787CD74DA38F`. The key comes from the ML-DSA secret, as `SHA-256("qrow-qoreseal-seed-v1|" || sk)`.
+- **Payment #4:** deployer → Drill account, 0.1 QOR, with a note. tx `0x59169daee54b91f9163630febd8d8382ef5ad6a42f8a50994e89fb5cbcdc67a5`, gas 397,802 (+48k for the 1,869-byte envelope). Window: 1 tx, escrow only, closed `DE975888…2C60`.
+- **Decryption:**
+  - The recipient's `npm run seal -- read --id 4 --drill` returns the exact notice JSON. The `<b>` in the note stays text.
+  - The deployer's key fails ("the envelope has no entry for this key").
+- **Web:** the Drill account's Receive tab lists #4 with "Read the encrypted notice". On Send, the note field is disabled, with an explanation, for recipients without an ML-KEM key (deployer, Wallet 2).

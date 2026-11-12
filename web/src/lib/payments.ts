@@ -21,8 +21,11 @@ export interface Payment {
   status: Status;
   createdTx: Hex;
   createdBlock: bigint;
+  /** QoreSeal envelope from the PaymentNote event, if the sender attached one. */
+  sealedNote?: Hex;
 }
 
+const noteEvent = parseAbiItem("event PaymentNote(uint256 indexed id, address indexed recipient, bytes sealedNote)");
 const created = parseAbiItem(
   "event PaymentCreated(uint256 indexed id, address indexed sender, address indexed recipient, address token, uint256 amount, uint64 deadline, uint8 mode)",
 );
@@ -54,10 +57,16 @@ async function load(client: PublicClient, me: Address): Promise<{ incoming: Paym
           status: STATUS[p.status] ?? "None",
           createdTx: l.transactionHash,
           createdBlock: l.blockNumber,
-        } satisfies Payment;
+        } as Payment;
       }),
     );
-  const [incoming, outgoing] = await Promise.all([enrich(inLogs), enrich(outLogs)]);
+  const [incoming, outgoing, notes] = await Promise.all([
+    enrich(inLogs),
+    enrich(outLogs),
+    client.getLogs({ address: ESCROW, event: noteEvent, args: { recipient: me }, fromBlock: ESCROW_DEPLOY_BLOCK, toBlock: latest }),
+  ]);
+  const byId = new Map(notes.map((n) => [n.args.id!.toString(), n.args.sealedNote!]));
+  for (const p of incoming) p.sealedNote = byId.get(p.id.toString());
   const newestFirst = (a: Payment, b: Payment) => Number(b.id - a.id);
   return { incoming: incoming.sort(newestFirst), outgoing: outgoing.sort(newestFirst) };
 }

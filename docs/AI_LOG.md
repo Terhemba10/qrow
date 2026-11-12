@@ -157,3 +157,14 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - A mainnet link is blocked with the exact message and nothing filled in.
 - **Sweep:** 21 web unit tests pass; Hallmark sloplint is clean.
 - **Next (4b):** QoreSeal encrypted notes. ML-KEM key registration from the CLI; notes sealed in `createPayment`; decrypted in Receive with recovery-code-derived seal keys.
+
+## 2026-11-12 — Step 4b: QoreSeal notices
+
+- **Human:** said build 4b, and to build everything today with one tab per feature.
+- **AI:**
+  - Seal keys derived from the recovery-code ML-DSA key, so the one secret both claims and decrypts.
+  - ML-KEM-only seal.
+  - The note is authenticated by binding its hash in the sender's ML-DSA authorisation (QoreSeal envelopes aren't signed by themselves).
+  - CLI `seal status/register/read`; the pay script seals like the app.
+  - Send note field with a live KEM-key check; Receive NoteReader that decrypts with the recovery code in memory only.
+- **On chain:** registered the Drill account's KEM key; payment #4 with a note decrypted by the recipient, and refused for another key.

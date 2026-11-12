@@ -9,6 +9,8 @@ import { displayAmount } from "../lib/amount";
 import { clearDraft, type PaymentDraft } from "../lib/draft";
 import { forget, readWindow, signCreate, unlockPqKey, type PqKey, type WindowStatus } from "../lib/pq";
 import { IconAlert, IconCheck } from "./Icons";
+import { recipientKemKey, sealNotice } from "../lib/seal";
+import { formatUnitsExact } from "../lib/amount";
 
 type Step =
   | { s: "key" }
@@ -122,7 +124,19 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
   // 4. Sign the authorisation with ML-DSA-87 and simulate the exact transaction.
   const prepare = async (key: PqKey) => {
     const mode = draft.freelancer ? 1 : 0;
-    const sealedNote: Hex = "0x";
+    // QoreSeal notice for the recipient (only if they registered an ML-KEM-1024 key).
+    let sealedNote: Hex = "0x";
+    const kem = await recipientKemKey(draft.recipient).catch(() => undefined);
+    if (kem) {
+      sealedNote = sealNotice(kem, {
+        v: 1,
+        amount: formatUnitsExact(amount, token.decimals),
+        token: token.symbol,
+        from: sender,
+        claimBefore: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+        ...(draft.note ? { note: draft.note } : {}),
+      });
+    }
     const { validUntil, signature } = await signCreate(client, key, sender, { recipient: draft.recipient, token: tokenAddr, amount, mode, sealedNote });
     forget(key);
     const args: CreateArgs = [draft.recipient, tokenAddr, amount, mode, sealedNote, validUntil, signature];

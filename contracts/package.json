@@ -19,11 +19,13 @@
     "pay": "tsx --env-file=.env scripts/pay.ts",
     "deps:sol": "git clone --depth 1 --branch v1.17.0 https://github.com/foundry-rs/forge-std lib/forge-std && git clone --depth 1 --branch v5.6.1 https://github.com/OpenZeppelin/openzeppelin-contracts lib/openzeppelin-contracts",
     "deploy:sprint": "tsx --env-file=.env scripts/deploy-sprint.ts",
-    "action": "tsx --env-file=.env scripts/action.ts"
+    "action": "tsx --env-file=.env scripts/action.ts",
+    "seal": "tsx --env-file=.env scripts/seal.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
     "@qorechain/evm": "0.14.0",
+    "@qorechain/qoreseal": "^0.1.0",
     "@qorechain/qoresign": "0.2.0",
     "@qorechain/sdk": "0.14.0",
     "viem": "^2.21.0"

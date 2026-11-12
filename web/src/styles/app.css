@@ -241,3 +241,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
   .split { grid-template-columns: minmax(0, 1fr); }
   .request__grid { grid-template-columns: minmax(0, 1fr); justify-items: center; }
 }
+
+.note-closed, .note-open { grid-column: 1 / -1; }
+.note-open { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-inline-start: 3px solid var(--color-rule-2); background: var(--color-paper-2); border-radius: var(--radius-input); }
