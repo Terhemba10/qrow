@@ -30,28 +30,33 @@ function spendOk(): boolean {
 }
 
 export async function agentRoute(req: IncomingMessage, res: ServerResponse, url: string): Promise<void> {
-  const send = (status: number, body: unknown) => {
-    res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
+  // Prices, news and referral counts are the same for everyone: let the CDN cache them, so a crowd
+  // of visitors costs one upstream call per window (CoinMarketCap credits, chain queries).
+  const send = (status: number, body: unknown, cacheSeconds = 0) => {
+    res.writeHead(status, {
+      "content-type": "application/json",
+      "cache-control": cacheSeconds && status === 200 ? `public, max-age=60, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds}` : "no-store",
+    });
     res.end(JSON.stringify(body));
   };
 
   if (req.method === "GET" && url === "/health") return send(200, { ok: true, model: MODEL, ai: hasCredentials(), watcher: watcherState.enabled ? (watcherState.running ? "running" : "restarting") : "off" });
   if (req.method === "GET" && url === "/market/prices") {
     try {
-      return send(200, { ok: true, ...(await prices()), attribution: "Data from CoinMarketCap" });
+      return send(200, { ok: true, ...(await prices()), attribution: "Data from CoinMarketCap" }, 600);
     } catch (e) {
       return send(e instanceof Error && e.message === "no_key" ? 503 : 502, { ok: false, reason: e instanceof Error && e.message === "no_key" ? "no_key" : "upstream" });
     }
   }
   if (req.method === "GET" && url === "/market/news") {
-    return send(200, { ok: true, ...(await news()) });
+    return send(200, { ok: true, ...(await news()) }, 900);
   }
   if (req.method === "GET" && url?.startsWith("/referrals/")) {
     const ref = decodeURIComponent(url.slice("/referrals/".length));
     if (!isQorAddress(ref)) return send(400, { ok: false, reason: "bad_address" });
     try {
       const r = await referralCount(ref);
-      return send(200, { ok: true, count: r.count });
+      return send(200, { ok: true, count: r.count }, 300);
     } catch {
       return send(502, { ok: false, reason: "chain_unavailable" });
     }

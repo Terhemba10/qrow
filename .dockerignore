@@ -6,5 +6,6 @@
 contracts
 brand
 docs
-web/dist
+web
+agent
 watcher/data

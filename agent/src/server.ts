@@ -14,20 +14,16 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { MODEL, hasCredentials } from "./explain.js";
-import { RateLimiter, clientIp, makeOriginCheck } from "./limits.js";
-import { agentRoute } from "./routes.js";
+import { MODEL, hasCredentials } from "../../web/server/explain.js";
+import { RateLimiter, clientIp, makeOriginCheck } from "../../web/server/limits.js";
+import { agentRoute } from "../../web/server/routes.js";
+import { relay } from "../../web/server/relay.js";
 
 const PORT = Number(process.env.PORT ?? process.env.QROW_AGENT_PORT ?? 8787);
 const HOST = process.env.HOST ?? "127.0.0.1";
-const REST = process.env.QROW_REST ?? "https://api-testnet.qore.host";
 const DIST = resolve(process.env.QROW_WEB_DIST ?? join(fileURLToPath(new URL(".", import.meta.url)), "../../web/dist"));
 const TRUST_PROXY = process.env.TRUST_PROXY === "1";
 const originAllowed = makeOriginCheck(process.env.QROW_ALLOWED_ORIGINS, process.env.QROW_PAGES_PROJECT);
-
-/** Only the read endpoints the app uses. Anything else (broadcast, gRPC gateways we don't need) is refused. */
-const REST_ALLOW = [/^\/cosmos\/(bank|staking|distribution|auth|tx|base)\//, /^\/qorechain\//, /^\/cosmwasm\/wasm\/v1\/contract\//];
-const REST_MAX_BYTES = 4 * 1024 * 1024;
 
 const limits = {
   explain: new RateLimiter(6, 60_000), // AI calls: a few per minute per person is plenty
@@ -62,21 +58,6 @@ const json = (res: ServerResponse, status: number, body: unknown, extra: Record<
   res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store", ...extra });
   res.end(JSON.stringify(body));
 };
-
-async function relay(req: IncomingMessage, res: ServerResponse, path: string) {
-  if (req.method !== "GET") return json(res, 405, { ok: false, reason: "read_only" });
-  const pathname = path.split("?")[0];
-  if (!REST_ALLOW.some((r) => r.test(pathname)) || pathname.includes("..")) return json(res, 403, { ok: false, reason: "path_not_allowed" });
-  try {
-    const up = await fetch(`${REST}${path}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
-    const buf = Buffer.from(await up.arrayBuffer());
-    if (buf.length > REST_MAX_BYTES) return json(res, 502, { ok: false, reason: "too_large" });
-    res.writeHead(up.status, { "content-type": up.headers.get("content-type") ?? "application/json", "cache-control": "no-store" });
-    res.end(buf);
-  } catch {
-    json(res, 504, { ok: false, reason: "chain_unavailable" });
-  }
-}
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",

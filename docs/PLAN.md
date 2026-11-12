@@ -398,3 +398,7 @@ The owner has a Vercel account. Supersedes the Pages row and the Render web serv
 Owner accounts: GitHub (repo), Vercel (import the repo), Render (worker only), Anthropic Console (spend limit).
 Order (owner, 13 Nov): v2 redeploy ✓ → Send + Receive for a QoreX user → push to GitHub after the owner's OK →
 Vercel deploy → live URL to the owner.
+
+Implemented 13 Nov: the agent API and REST relay moved to `web/server` and run as Vercel functions (`web/api`);
+`agent/` is now only the local dev server for the same code; Render runs only the watcher (`render.yaml`,
+`Dockerfile`). Details and env vars: `docs/DEPLOY.md`.

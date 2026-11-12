@@ -1,34 +1,17 @@
-# Render Blueprint for Qrow (public testnet). New > Blueprint in the Render dashboard, pick this repo.
-# Secrets marked sync: false are asked for in the dashboard and never stored in the repo.
+# Render Blueprint: only the always-on Telegram alerts watcher. The app and its API run on Vercel.
+# New > Blueprint in the Render dashboard, pick this repo. Secrets marked sync: false are asked for there.
 services:
-  - type: web
-    name: qrow
+  - type: worker
+    name: qrow-watcher
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: starter # always on ($7/month): free services sleep and can't keep a disk
-    healthCheckPath: /agent/health
+    plan: starter # always on; free plans can't run workers or keep a disk
     autoDeploy: true
     envVars:
-      - key: PORT
-        value: "8080"
-      - key: CMC_API_KEY
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: QROW_DAILY_AI_CAP
-        value: "2000"
-      - key: QROW_RUN_WATCHER
-        value: "1"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: QROW_PAGES_PROJECT
-        value: qrow
-      - key: QROW_ALLOWED_ORIGINS
-        sync: false # add a custom domain here later, e.g. https://qrow.app
     disk:
       name: watcher-data
       mountPath: /app/watcher/data
       sizeGB: 1
-# The Telegram alerts watcher runs inside this service (agent/src/run.ts) and keeps its state on the disk.
-# The frontend is on Cloudflare Pages (see docs/DEPLOY.md); VITE_WALLETCONNECT_PROJECT_ID belongs there now.
