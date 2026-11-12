@@ -141,3 +141,19 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - The Genesis mint price is 1 QOR or 1 fUSD.
 - **Test fixes, not contract bugs:** fUSD decimals in the test fixtures; a receiver hook on a mock.
 - **Deployed:** Genesis `0xb82b…c67f`, Market `0x92da…347b`, Factory `0x3571…2f12`. Window closed. Configuration read back.
+
+## 2026-11-12 — Step 4a: Receive tab, sent payments, request links
+
+- **AI generated:**
+  - A generic post-quantum action flow (`PqActionPanel` + `lib/pqAction.ts`), reused for claim, release, cancel and refund, and later for NFT, market and launch actions.
+  - Payment lists built from `PaymentCreated` logs plus `getPayment`, with live countdowns.
+  - The Receive tab: incoming payments, Claim, a warning when the account has no ML-DSA key, and the request-payment panel (qrow:pay v1 QR via `qrcode` (MIT), Copy link, Download PNG).
+  - "Your sent payments" on Send: Cancel, Release, and Refund after the deadline.
+  - Strict `parsePayload` with 11 tests covering every case in the plan; link prefill on Send.
+- **Verified in the browser** (dev watch wallet, live testnet):
+  - Wallet 2 sees payment #1 "Claim within 6d 22h", and Claim opens the recovery-code step.
+  - The deployer sees it under sent payments, with Cancel.
+  - A valid request link pre-fills 12.5 fUSD; a `<script>` note renders escaped.
+  - A mainnet link is blocked with the exact message and nothing filled in.
+- **Sweep:** 21 web unit tests pass; Hallmark sloplint is clean.
+- **Next (4b):** QoreSeal encrypted notes. ML-KEM key registration from the CLI; notes sealed in `createPayment`; decrypted in Receive with recovery-code-derived seal keys.

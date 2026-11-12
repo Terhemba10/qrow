@@ -207,3 +207,37 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .explain { display: grid; gap: var(--space-xs); padding: var(--space-md); border-radius: var(--radius-card); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
 .explain__text { font-size: var(--text-md); line-height: var(--leading-snug); }
 .explain--off { padding: 0 var(--space-xs); }
+
+/* ---------------------------------------------------------------- payments, receive, request */
+.page { max-width: var(--container); margin: 0 auto; display: grid; gap: var(--space-lg); }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 540px); gap: var(--space-xl); align-items: start; }
+.stack { display: grid; gap: var(--space-md); min-width: 0; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap; }
+.paylist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.paylist__item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm) var(--space-md); padding: var(--space-md); background: var(--color-cotton); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); align-items: center; }
+.paylist__main { display: grid; gap: 2px; min-width: 0; }
+.paylist__amount { font-size: var(--text-lg); font-weight: var(--weight-display); font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.paylist__who { font-size: var(--text-sm); color: var(--color-ink-2); }
+.paylist__state { display: grid; gap: 2px; justify-items: end; text-align: end; }
+.paylist__actions { grid-column: 1 / -1; display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.paylist__actions:empty { display: none; }
+.paylist__note { grid-column: 1 / -1; }
+.paylist__item > .signflow { grid-column: 1 / -1; }
+.status { font-size: var(--text-sm); font-weight: var(--weight-medium); padding: 2px var(--space-sm); border-radius: var(--radius-pill); border: 1px solid var(--color-rule-2); color: var(--color-ink-2); }
+.status--pending { border-color: var(--color-ink-2); color: var(--color-ink); }
+/* Coral is spent only on the settled state. */
+.status--settled { border-color: var(--color-settled); color: var(--color-settled); }
+.countdown--soon { color: var(--color-warn); font-weight: var(--weight-medium); }
+.request { display: grid; gap: var(--space-md); }
+.request__grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg); align-items: start; }
+.request__qr { margin: 0; display: grid; gap: var(--space-sm); justify-items: center; max-width: 220px; }
+.qr { width: 200px; height: 200px; background: var(--color-qr-light); border-radius: var(--radius-input); padding: var(--space-xs); }
+.qr svg { width: 100%; height: 100%; display: block; }
+.request__qr figcaption { display: grid; gap: 2px; text-align: center; }
+.qr__addr { font-size: var(--text-xs); overflow-wrap: anywhere; }
+.request-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+:root { --color-qr-light: oklch(100% 0 0); }
+@media (max-width: 60rem) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .request__grid { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+}

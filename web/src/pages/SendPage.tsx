@@ -1,6 +1,6 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useId, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAccount, useSwitchChain } from "wagmi";
 import { IconAlert, IconInfo } from "../components/Icons";
 import { CHAIN, NETWORK_NAME, REFUND_DAYS, networkLabel } from "../config/network";
@@ -9,6 +9,10 @@ import { parseRecipient } from "../lib/address";
 import { displayAmount, parseAmount } from "../lib/amount";
 import { useTokenBalance } from "../lib/balances";
 import { loadDraft, saveDraft } from "../lib/draft";
+import { formatUnitsExact } from "../lib/amount";
+import { usePayments } from "../lib/payments";
+import { explainParseError, parsePayload } from "../lib/qrPayload";
+import { PaymentList } from "../components/PaymentList";
 
 const AMOUNT_ERRORS = {
   empty: "Enter an amount.",
@@ -30,10 +34,18 @@ export function SendPage() {
   const navigate = useNavigate();
   const ids = { to: useId(), amount: useId(), toErr: useId(), amtErr: useId() };
 
-  const prev = useMemo(() => loadDraft(), []);
-  const [to, setTo] = useState(prev?.recipient ?? "");
-  const [symbol, setSymbol] = useState<TokenSymbol>(prev?.token ?? "fUSD");
-  const [amount, setAmount] = useState("");
+  // A payment-request link (?pay=qrow:pay?...) only pre-fills the form; every check still runs.
+  const [search] = useSearchParams();
+  const request = useMemo(() => {
+    const raw = search.get("pay");
+    return raw ? parsePayload(raw, CHAIN.id) : undefined;
+  }, [search]);
+  const req = request?.ok ? request.request : undefined;
+  const prev = useMemo(() => (req ? undefined : loadDraft()), [req]);
+  const [to, setTo] = useState<string>(req?.to ?? prev?.recipient ?? "");
+  const [symbol, setSymbol] = useState<TokenSymbol>(req?.token ?? prev?.token ?? "fUSD");
+  const [amount, setAmount] = useState(req?.token && req.amountUnits !== undefined ? formatUnitsExact(req.amountUnits, tokenBySymbol(req.token)!.decimals) : "");
+  const sent = usePayments(isConnected && chainId === CHAIN.id ? address : undefined);
   const [freelancer, setFreelancer] = useState(prev?.freelancer ?? false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -76,7 +88,7 @@ export function SendPage() {
     saveDraft({
       recipient: recipient.evm,
       recipientQor: recipient.qor,
-      source: "typed",
+      source: req && recipient.ok && recipient.evm === req.to ? "qr" : "typed",
       token: token.symbol,
       amountUnits: parsed.units.toString(),
       freelancer,
@@ -101,6 +113,28 @@ export function SendPage() {
           <button className="btn" type="button" onClick={() => switchChain({ chainId: CHAIN.id })} aria-busy={switching}>
             {switching ? "Waiting for your wallet…" : `Switch to ${NETWORK_NAME}`}
           </button>
+        </div>
+      )}
+
+      {request && !request.ok && (
+        <div className="notice notice--danger" role="alert" style={{ marginBottom: "var(--space-lg)" }}>
+          <p className="notice__title">
+            <IconAlert /> This payment request can’t be used
+          </p>
+          <p>{explainParseError(request.error)} Nothing was filled in.</p>
+        </div>
+      )}
+      {req && (
+        <div className="notice" style={{ marginBottom: "var(--space-lg)" }}>
+          <p className="notice__title">
+            <IconInfo /> Filled in from a payment request
+          </p>
+          <p>Check every detail. Qrow runs all its checks before anything is sent.</p>
+          {req.note && (
+            <p>
+              Their note: <q className="request-note">{req.note}</q>
+            </p>
+          )}
         </div>
       )}
 
@@ -220,6 +254,16 @@ export function SendPage() {
           <p className="hint">Next, Qrow checks the address and the amount. You’ll see every detail before you sign.</p>
         </div>
       </form>
+
+      {address && sent.data && sent.data.outgoing.length > 0 && (
+        <section className="stack" aria-labelledby="sent-title" style={{ marginTop: "var(--space-xl)" }}>
+          <div className="section-head">
+            <h2 id="sent-title">Your sent payments</h2>
+            <p className="hint fig">{sent.data.outgoing.filter((p) => p.status === "Pending").length} in escrow</p>
+          </div>
+          <PaymentList me={address} payments={sent.data.outgoing} direction="out" hasPqKey={undefined} onChanged={() => void sent.refetch()} />
+        </section>
+      )}
     </section>
   );
 }
