@@ -67,3 +67,33 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - Wallet 2's QoreX key registration never reached the chain.
   - viem rejects the mixed-case precompile addresses. Fixed in the self-test.
   - The explorer needs Cosmos hashes and a client-side Testnet switch.
+
+## 2026-11-12 — Stage 4b: checking agent, Confirm screen, signing flow
+
+- **AI generated:**
+  - `web/src/agent/*`: 10 deterministic, parallel, timed checks, logged to `window.qrowAgentLog` and the console. Covers:
+    - address validity (custody kit `validateAddress`, vendored with its Apache-2.0 LICENSE and NOTICE)
+    - self-send
+    - lookalike/poisoning against the sender's past recipients (local index, topped up from `PaymentCreated` logs)
+    - new recipient
+    - recipient ML-DSA key (via `escrow.hasPqKey`)
+    - contract vs wallet
+    - recipient history and age (REST)
+    - balance, fee reserve, limits
+  - Confirm sheet: the first and last 4 characters set large, warnings above the sheet, a side-by-side comparison for lookalikes, an acknowledgement checkbox for danger findings, and Confirm & Send disabled on blocking findings.
+  - Signing flow:
+    1. derive the PQ key from the recovery code (memory only, checked against the registered key)
+    2. check the EVM window, or show the exact scoped command
+    3. exact-amount ERC-20 approval
+    4. ML-DSA signature over `pqMessage`
+    5. `simulateContract`, shown decoded
+    6. wallet signature
+- **Verified in the browser** (dev-only read-only watch wallet on Wallet 1, live testnet):
+  - 10 checks in 744 ms
+  - a lookalike `0x5b2d…304a` of Wallet 2 caught with the red "Possible scam" block
+  - the acknowledgement gate works
+  - no horizontal scroll at 375 px
+  - the production bundle contains no dev connector
+- **Sweep:** Hallmark sloplint (app scope) is clean apart from fixed items: the buzzword "Unlock", off-scale padding, typographic quotes.
+- **Human decision:** the note field is hidden until QoreSeal works (stage 5), following the rule that a feature fully works or isn't shown.
+- **Not yet done:** the one AI explanation call per send; an on-chain signing run with a real wallet.

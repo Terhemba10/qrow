@@ -2,6 +2,7 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { NETWORK_NAME } from "./config/network";
+import { ReviewPage } from "./pages/ReviewPage";
 import { SendPage } from "./pages/SendPage";
 
 export function App() {
@@ -23,6 +24,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/send" replace />} />
           <Route path="/send" element={<SendPage />} />
+          <Route path="/review" element={<ReviewPage />} />
           <Route path="*" element={<Navigate to="/send" replace />} />
         </Routes>
       </main>

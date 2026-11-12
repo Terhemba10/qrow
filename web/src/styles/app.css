@@ -149,3 +149,56 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
   .btn, .input, .seg label { transition: none; }
   .btn:active { transform: none; }
 }
+
+/* ---------------------------------------------------------------- review, checks, confirm */
+.review { max-width: var(--container); margin: 0 auto; }
+.review__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: var(--space-xl); align-items: start; }
+.review__main { display: grid; gap: var(--space-md); min-width: 0; }
+.row { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; }
+.actions .row { justify-content: flex-end; }
+
+.checks { display: grid; gap: var(--space-sm); }
+.checks__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap; }
+.checks__list { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.check { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair) solid var(--color-rule); align-items: start; }
+.check__icon { padding-top: 2px; color: var(--color-muted); }
+.check--ok .check__icon { color: var(--color-ok); }
+.check--warn .check__icon { color: var(--color-warn); }
+.check--danger .check__icon, .check--block .check__icon { color: var(--color-danger); }
+.check__title { font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.check--danger .check__title, .check--block .check__title { color: var(--color-danger); }
+.check__detail { font-size: var(--text-sm); color: var(--color-muted); }
+.check__ms { font-size: var(--text-xs); color: var(--color-muted); padding-top: 2px; }
+
+.confirm { display: grid; gap: var(--space-md); }
+.confirm__sheet { display: grid; gap: var(--space-xs); }
+.confirm__sheet .label { margin-top: var(--space-sm); }
+.confirm__sheet .label:first-of-type { margin-top: 0; }
+.confirm__amount { font-size: var(--text-amount); font-weight: var(--weight-display); letter-spacing: -0.02em; line-height: 1.1; font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.confirm__unit { font-size: var(--text-lg); font-weight: var(--weight-medium); color: var(--color-ink-2); }
+
+/* The signature: the first and last four characters set large, so a lookalike can't hide. */
+.bigaddr { font-family: var(--font-mono); font-size: var(--text-base); line-height: 1.5; overflow-wrap: anywhere; color: var(--color-ink-2); direction: ltr; unicode-bidi: isolate; }
+.bigaddr__key { background: var(--color-paper-3); color: var(--color-ink); font-size: var(--text-xl); font-weight: var(--weight-medium); padding: 0 var(--space-xs); border-radius: 4px; }
+.bigaddr__fix { color: var(--color-muted); }
+.compare { display: grid; gap: 2px; margin-top: var(--space-sm); padding: var(--space-sm); background: var(--color-paper); border-radius: var(--radius-input); color: var(--color-ink); }
+.compare .label { margin-top: var(--space-xs); }
+
+.facts { display: grid; gap: var(--space-sm); margin: var(--space-md) 0 0; padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+.facts div { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-sm); }
+.facts dt { font-size: var(--text-sm); color: var(--color-muted); }
+.facts dd { margin: 0; }
+
+.ack { display: flex; gap: var(--space-sm); align-items: flex-start; padding: var(--space-sm) var(--space-md); border: 2px solid var(--color-danger-rule); border-radius: var(--radius-card); background: var(--color-danger-bg); color: var(--color-danger); cursor: pointer; }
+.ack input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--color-danger); flex: none; }
+.ack input:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+.signflow { display: grid; gap: var(--space-md); }
+.steps { margin: 0; padding-inline-start: 1.25rem; display: grid; gap: 2px; color: var(--color-muted); font-size: var(--text-sm); }
+.steps li[aria-current="step"] { color: var(--color-ink); font-weight: var(--weight-medium); }
+.cmd { margin: 0; padding: var(--space-sm); background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-rule-2); border-radius: var(--radius-input); font-size: var(--text-xs); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 60rem) {
+  .review__grid { grid-template-columns: minmax(0, 1fr); }
+  .facts div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

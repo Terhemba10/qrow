@@ -8,7 +8,7 @@ import { TOKENS, tokenBySymbol, type TokenSymbol } from "../config/tokens";
 import { parseRecipient } from "../lib/address";
 import { displayAmount, parseAmount } from "../lib/amount";
 import { useTokenBalance } from "../lib/balances";
-import { NOTE_MAX, loadDraft, saveDraft } from "../lib/draft";
+import { loadDraft, saveDraft } from "../lib/draft";
 
 const AMOUNT_ERRORS = {
   empty: "Enter an amount.",
@@ -17,10 +17,10 @@ const AMOUNT_ERRORS = {
 } as const;
 
 const RECIPIENT_ERRORS = {
-  empty: "Enter the recipient's address.",
-  format: "That isn't a QoreChain address. It should start with 0x or qor1.",
+  empty: "Enter the recipient’s address.",
+  format: "That isn’t a QoreChain address. It should start with 0x or qor1.",
   checksum: "This 0x address has a capitalisation error, so it may be mistyped. Copy it again from the recipient.",
-  bech32: "This qor1 address has a typo: its checksum doesn't match. Copy it again from the recipient.",
+  bech32: "This qor1 address has a typo: its checksum doesn’t match. Copy it again from the recipient.",
 } as const;
 
 export function SendPage() {
@@ -28,14 +28,13 @@ export function SendPage() {
   const { openConnectModal } = useConnectModal();
   const { switchChain, isPending: switching } = useSwitchChain();
   const navigate = useNavigate();
-  const ids = { to: useId(), amount: useId(), note: useId(), toErr: useId(), amtErr: useId() };
+  const ids = { to: useId(), amount: useId(), toErr: useId(), amtErr: useId() };
 
   const prev = useMemo(() => loadDraft(), []);
   const [to, setTo] = useState(prev?.recipient ?? "");
   const [symbol, setSymbol] = useState<TokenSymbol>(prev?.token ?? "fUSD");
   const [amount, setAmount] = useState("");
   const [freelancer, setFreelancer] = useState(prev?.freelancer ?? false);
-  const [note, setNote] = useState(prev?.note ?? "");
   const [submitted, setSubmitted] = useState(false);
 
   const token = tokenBySymbol(symbol)!;
@@ -57,7 +56,7 @@ export function SendPage() {
       <section className="sheet" aria-labelledby="send-title">
         <div className="sheet__head">
           <h1 id="send-title">Send a payment</h1>
-          <p className="muted">The money waits in escrow until the recipient claims it. If they don't claim it within {REFUND_DAYS} days, it comes back to you.</p>
+          <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_DAYS} days, it comes back to you.</p>
         </div>
         <div className="panel empty">
           <h2>Connect your wallet to start</h2>
@@ -81,7 +80,7 @@ export function SendPage() {
       token: token.symbol,
       amountUnits: parsed.units.toString(),
       freelancer,
-      note: note.slice(0, NOTE_MAX),
+      note: "",
     });
     navigate("/review");
   }
@@ -90,7 +89,7 @@ export function SendPage() {
     <section className="sheet" aria-labelledby="send-title">
       <div className="sheet__head">
         <h1 id="send-title">Send a payment</h1>
-        <p className="muted">The money waits in escrow until the recipient claims it. If they don't claim it within {REFUND_DAYS} days, it comes back to you.</p>
+        <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_DAYS} days, it comes back to you.</p>
       </div>
 
       {wrongNetwork && (
@@ -107,7 +106,7 @@ export function SendPage() {
 
       <form className="panel" onSubmit={onSubmit} noValidate>
         <div className="field">
-          <label htmlFor={ids.to}>Recipient's address</label>
+          <label htmlFor={ids.to}>Recipient’s address</label>
           <input
             id={ids.to}
             className="input input--mono"
@@ -132,7 +131,7 @@ export function SendPage() {
           )}
           {(recipientError || selfSend) && (
             <p className="field-error" id={ids.toErr}>
-              {selfSend ? "That's your own address. Choose someone else to pay." : recipientError}
+              {selfSend ? "That’s your own address. Choose someone else to pay." : recipientError}
             </p>
           )}
         </div>
@@ -203,31 +202,22 @@ export function SendPage() {
           <label className="mode">
             <input type="radio" name="mode" checked={!freelancer} onChange={() => setFreelancer(false)} />
             <span className="mode__title">Recipient claims it</span>
-            <span className="mode__desc">They claim it whenever they're ready.</span>
+            <span className="mode__desc">They claim it whenever they’re ready.</span>
           </label>
           <label className="mode">
             <input type="radio" name="mode" checked={freelancer} onChange={() => setFreelancer(true)} />
             <span className="mode__title">I release it</span>
-            <span className="mode__desc">For work: you release it when it's delivered.</span>
+            <span className="mode__desc">For work: you release it when it’s delivered.</span>
           </label>
         </fieldset>
 
-        <div className="field">
-          <label htmlFor={ids.note}>Note for the recipient (optional)</label>
-          <textarea id={ids.note} className="input" value={note} maxLength={NOTE_MAX} onChange={(e) => setNote(e.target.value)} aria-describedby={`${ids.note}-hint`} />
-          <span className="counter" aria-live="polite">
-            {note.length}/{NOTE_MAX}
-          </span>
-          <p className="hint" id={`${ids.note}-hint`}>
-            Encrypted so only the recipient can read it.
-          </p>
-        </div>
+        {/* The encrypted note (QoreSeal, ML-KEM-1024) arrives in stage 5; it is hidden until it works end to end. */}
 
         <div className="actions">
           <button className="btn btn--block" type="submit" disabled={wrongNetwork}>
             Check this payment
           </button>
-          <p className="hint">Next, Qrow checks the address and the amount. You'll see every detail before you sign.</p>
+          <p className="hint">Next, Qrow checks the address and the amount. You’ll see every detail before you sign.</p>
         </div>
       </form>
     </section>
