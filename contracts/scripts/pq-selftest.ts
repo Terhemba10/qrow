@@ -11,8 +11,8 @@ import { messagePqSignBytes } from "@qorechain/qoresign";
 import { encodeAbiParameters, keccak256, toBytes, toHex, type Hex } from "viem";
 import { evmClients, loadAccount } from "./lib.js";
 
-const PQC_VERIFY = "0x0000000000000000000000000000000000000A01";
-const PQC_KEY_STATUS = "0x0000000000000000000000000000000000000A02";
+const PQC_VERIFY = "0x0000000000000000000000000000000000000a01";
+const PQC_KEY_STATUS = "0x0000000000000000000000000000000000000a02";
 
 const pqcAbi = [
   {

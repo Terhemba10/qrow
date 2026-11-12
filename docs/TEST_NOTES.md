@@ -50,3 +50,41 @@ These addresses are notes for manual testing. They are **not** defaults in code.
 | 3 | Cancel | sender sends #2, cancels before claim | PaymentCancelled; funds back | |
 | 4 | Refund | sender sends #3; wait 7 days (or use a short-deadline test deployment); anyone calls refundExpired | PaymentRefunded to sender | |
 | 5 | Lookalike | type an address with the same first and last 4 characters as the recipient | red "Possible scam" block | |
+
+## Testnet deployment (2026-11-12)
+
+| Item | Value |
+|---|---|
+| **QrowEscrow** | `0xcf36b836872a0b277919eac1fb976722e32d824b` |
+| Constructor | `nativeChainId = "qorechain-diana"`; no owner |
+| Deploy tx (EVM hash) | `0x9e1f7c2dd3a2ae004392680ad61217fc5490ec0a7e159f83597d6d2d6f6f07ec`, block 9,955,775, gas used 2,292,049 |
+| Deployer | `0xD517458c6b083B964342C604D35Be6afC2dCcb37` / `qor165t5trrtpqaevs6zcczdxklx4lpdejehs68qf9` |
+| Drill account | `0xdBA1B390218aF72ACFD5E262850C90c079F0e78d` / `qor1mwsm8ypp3tmj4n74uf3g2ryscpulpeud6v4el4` |
+
+**Verified on chain after the deploy:**
+- The runtime bytecode is byte-identical to the local `forge build` (9,731 bytes).
+- `nativeChainId() == "qorechain-diana"`, `paymentCount() == 0`, `REFUND_PERIOD == 604800`.
+- `hasPqKey`: deployer true, Drill true, **Wallet 2 false**.
+
+**Live ML-DSA self-test** (`npm run pq:selftest`, read-only, against the real 0x0A01/0x0A02 precompiles):
+- Deployer and Drill keys are registered (`hybrid`, possession proven, 2,592-byte key).
+- `escrow.pqMessage` matches QoreSign byte-for-byte.
+- A real signature verifies: `true`. A tampered one fails: `false`.
+
+**Transaction log (Cosmos hashes):**
+
+| Step | Tx hash | Result |
+|---|---|---|
+| Register deployer key | `5E3BB521A5F34277E8147D569F3933D5A7B2C53FD1924728D8E386931F5B489E` | code 0 |
+| Register Drill key | `949DE3FD612A514DF642559AA7B3BA98D94511705EFA2EB3A101FE9C5244BC23` | code 0 |
+| Open deployer window (1 tx, 120 blocks, no targets) | `BAD3DB15962D604907D5046D30D91D49A18D818EA235AC5CECAE5EEE20A213B9` | |
+| Close deployer window | `C10DEE2F689704E9CCC65D894682FA1036EA791BE7AFBA3F33AAE6E25AE60939` | |
+
+After closing, **no EVM window is open on the deployer or the Drill account**.
+
+**Explorer findings (for stage-6 alert links):**
+- explore.qore.network keeps the Mainnet/Testnet choice in the browser, not in the URL, so a fresh visitor lands on mainnet.
+- `/tx/<hash>` expects the **Cosmos** tx hash. The EVM hash isn't found.
+- Alerts will need the Cosmos hash of each EVM transaction, plus a note to switch the explorer to Testnet. An EVM-aware viewer is the other option.
+
+**Open:** Wallet 2's ML-DSA key is still not registered on chain (`found: false`). Its balance is 30 QOR and its sequence is 0, so it has never sent a transaction.

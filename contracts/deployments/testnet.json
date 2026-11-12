@@ -1,0 +1,8 @@
+{
+  "chain": "qorechain-diana",
+  "evmChainId": 9800,
+  "QrowEscrow": "0xcf36b836872a0b277919eac1fb976722e32d824b",
+  "deployTx": "0x9e1f7c2dd3a2ae004392680ad61217fc5490ec0a7e159f83597d6d2d6f6f07ec",
+  "block": 9955775,
+  "deployedAt": "2026-11-12T13:59:12.813Z"
+}

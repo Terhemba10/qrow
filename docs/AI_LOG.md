@@ -52,3 +52,18 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - `account-new.ts` writes fresh secrets straight to `.env` and prints only addresses.
 - **AI investigation of the owner's wallets** (read-only): verified `qor1↔0x` with the SDK. Found that Wallet 1 has a Cosmos-style secp256k1 account key, so it can't send EVM transactions; Wallet 2 isn't on chain yet. Recorded in `docs/TEST_NOTES.md`.
 - Tests: **90/90 pass**.
+
+## 2026-11-12 — Stage 3d: testnet deployment
+
+- **Human:** funded the deployer, the Drill account and Wallet 2 from Wallet 1 via QoreX, and authorised the registrations, the self-test, the deploy and closing the window.
+- **AI ran:**
+  - registered both ML-DSA keys
+  - ran the live `pqcVerify` self-test (pass)
+  - built and tested the contract (90/90)
+  - opened a 1-tx window, deployed `QrowEscrow` at `0xcf36…824b`, and closed the window at once
+  - verified that the on-chain bytecode matches the local build
+- **AI caught:**
+  - The faucet hadn't reached the fresh addresses. The AI checked the chain's sync and tx search before telling the human, then suggested funding from Wallet 1.
+  - Wallet 2's QoreX key registration never reached the chain.
+  - viem rejects the mixed-case precompile addresses. Fixed in the self-test.
+  - The explorer needs Cosmos hashes and a client-side Testnet switch.
