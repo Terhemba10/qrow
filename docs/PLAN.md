@@ -67,6 +67,14 @@ So "Triple-VM" in Qrow means the contracts run on EVM, staking runs on the hybri
 | D4 | Launch: AMM pool with locked creator liquidity | 100 QOR pool fee, token-pair registration, LP can't be locked by our contracts | **Drop** (it was optional). |
 | D5 | Strict order "each step works before the next" vs. the Drill (17 Nov) | Drill points at deployed contracts | Write, test and **deploy QrowGenesis, QrowMarket and QrowCoinFactory by 16 Nov**, ahead of their UI steps, so all four contracts are in the Drill. The UI steps stay in strict order. |
 
+## App layout (owner request, 2026-11-12)
+
+Everything lives inside the one Qrow dApp, each feature in its own tab in the top bar:
+**Send · Receive · NFT Shop · NFT Market · Portfolio · Staking · Market News · Launch · Admin**.
+- Admin only appears for the allowlisted address after Sign In With QoreChain.
+- A tab is added to the bar when its step works end to end, so the app never shows a feature that does nothing.
+- On phones the bar collapses into a menu.
+
 ## Build order and estimate
 
 Day 0 is 13 Nov. "Days" are working days of build time. Steps that need the owner (wallet actions, API keys, bot token) can wait on them.

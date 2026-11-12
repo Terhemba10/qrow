@@ -46,9 +46,9 @@ These addresses are notes for manual testing. They are **not** defaults in code.
 | # | Flow | Steps | Expected | Result / tx hash |
 |---|---|---|---|---|
 | 1 | Send | deployer → Wallet 2, **1 QOR**, Direct, via `npm run pay` (the same calls as the app) | PaymentCreated #1 | **Done 2026-11-12.** tx `0xba048ad3147cb7d88baccba87026b91fbfd07d979bf5e6977177a78118577df8`, block 9,958,584, gas 420,983, refundable after 2026-11-19 15:06 UTC. Window: 1 tx, escrow-only target, 1.75 QOR cap, opened `48B4E6FD…5B90` / closed `95D43BAF…04FF`. Note and alert pending stages 5/6. |
-| 2 | Claim | recipient claims #1 before deadline | PaymentClaimed; funds at recipient; receipt | |
-| 3 | Cancel | sender sends #2, cancels before claim | PaymentCancelled; funds back | |
-| 4 | Refund | sender sends #3; wait 7 days (or use a short-deadline test deployment); anyone calls refundExpired | PaymentRefunded to sender | |
+| 2 | Claim | deployer → Drill account 0.5 QOR (#2); the Drill account claims with ML-DSA via `npm run action` (the same calls as the app) | PaymentClaimed | **Done 2026-11-12.** #2 created tx `0x1184def88ffe5e94d8b5661519f5b54b87919788af650cd639b1a8bc086b0947`; claim tx `0x6bbc0e1cefd09cff18cd241b5c94cd6217ffae8c42f3c8711c5ca4b92c26eda0` (gas 273,435) → Claimed. Drill window: 1 tx, escrow only, closed `3F7D5475…1BE`. |
+| 3 | Cancel | deployer → Drill account 0.5 QOR (#3); the deployer cancels with ML-DSA | PaymentCancelled; funds back | **Done 2026-11-12.** #3 created tx `0x5d6496352a9683eee599383bfbc16f9ed9c0d1635c75e967e365bb14f9471393`; cancel tx `0xcb59dedeed81d543997350a5ccedcda16a5e19f6cac51918aae82f2de2a100e0` (gas 255,883) → Cancelled. Deployer window: 3 txs, escrow only, closed `A84CDEC8…9A98`. Afterwards the escrow holds exactly 1 QOR (#1, still pending). |
+| 4 | Refund | after 2026-11-19 16:06 UTC, anyone calls `npm run action -- refund --id 1` (or the app's "Refund to sender") | PaymentRefunded to the deployer | Pending: the 7 days must pass. Covered by Foundry tests until then. |
 | 5 | Lookalike | as the deployer (dev watch wallet, browser storage cleared), enter `0x5b2d00000000000000000000000000000000304a` | red "Possible scam" block | **Done 2026-11-12.** Caught from on-chain history alone (payment #1 logs): 10 checks in 689 ms; comparison shows `0x5B2d9c0F…304A` vs `0x5B2d0000…304A`. The real Wallet 2 then passes every check, including "You've paid this address before". |
 
 ## Testnet deployment (2026-11-12)
