@@ -114,6 +114,11 @@ contract RejectingSender {
         return ret;
     }
 
+    /// @dev Accepts NFTs (so it can mint and sell Genesis tokens) while still refusing QOR.
+    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+
     function setAccept(bool a) external {
         accept = a;
     }

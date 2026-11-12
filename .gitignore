@@ -31,3 +31,6 @@ contracts/lib/
 # Fontshare ITF Free Font License forbids redistribution: render locally, never commit
 brand/fonts/
 brand/node_modules/
+
+# Secret env files with other names (e.g. watcher.env holds the Telegram bot token)
+*.env
