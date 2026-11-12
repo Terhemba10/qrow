@@ -27,3 +27,11 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **AI:** dealt three Hallmark themes and picked Coral (warm stationery paper, near-black ink, coral only for the settled state). Hand-wrote three SVG directions in `brand/src/marks.mjs` (A Sealed, B Return, C Lattice) plus custom monoline wordmarks, and generated `brand/preview.html`.
 - **Checks:** impeccable detector (one cream-palette warning, waived because it's the dealt theme), Hallmark sloplint (3 FAIL for middle-dot score strings fixed; 1 REFLEX waived because there are no controls), and a logo-specific critique per direction, done in a single context rather than with dual sub-agents.
 - **AI revision after looking at the render:** slimmed the Return loop because it read as a speech bubble.
+
+## 2026-11-12 — Stage 2b: logo chosen, exports and tokens
+
+- **Human decision:** picked **B. Return** (the AI's recommendation).
+- **AI generated:** the export pipeline (`brand/src/export.mjs`, resvg rasteriser, a hand-written ICO writer), all logo files, the 1200×630 featured image, and `tokens.css`/`tokens.json` with a built-in WCAG contrast check (28/28 pairs pass AA in light and dark).
+- **AI caught:** the General Sans licence (ITF FFL) forbids redistribution, so the font files are git-ignored and the app will load them from the Fontshare CDN. Coral is kept apart from the safety colours (amber caution, crimson scam) so "settled" can't be mistaken for "danger".
+- **AI revisions after looking at the renders:** featured-image mark moved so it no longer overlapped the headline; a heavier stroke cut for 16/32 px.
+- **Open point for the human:** at large sizes the pointed tail can read as a speech bubble.

@@ -27,3 +27,7 @@ Thumbs.db
 
 # Vendored test lib (install with: cd contracts && npm run forge-std)
 contracts/lib/
+
+# Fontshare ITF Free Font License forbids redistribution: render locally, never commit
+brand/fonts/
+brand/node_modules/

@@ -36,7 +36,7 @@ const roundWord = (sw = 3.4) => `
 // B. Return
 // One continuous stroke: a Q whose tail runs out and loops back into the ring.
 // The payment goes out; if nobody claims it, it comes back.
-const returnPath = "M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z";
+export const returnPath = "M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z";
 export const returnSymbol = (accent = INK) => `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Qrow">
   <path d="${returnPath}" fill="none" stroke="${INK}" stroke-width="3.4" stroke-linejoin="round"/>
