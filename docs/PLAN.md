@@ -40,19 +40,27 @@ Approved 2026-11-12. Testnet only (`qorechain-diana`, EVM chain id 9800).
 ### Payload, version 1
 
 ```
-qrow:pay?v=1&chain=9800&to=<0x address>&amount=<decimal>&token=<symbol>&note=<text>
+qrow:pay?to=<0x address>&amount=<decimal>&token=<symbol>&note=<text>&chain=9800&v=1
 ```
+
+The parser reads parameters by name, so their order doesn't matter. The generator always writes them in the order above.
 
 | Field | Rule |
 |---|---|
 | `v` | Required. An unknown version is rejected and explained. |
-| `chain` | Required, and must be `9800`. Added to the brief's example so the app can reject a code made for the wrong network. |
+| `chain` | Required. The EVM chain id: `9800` = testnet `qorechain-diana`, `9801` = mainnet `qorechain-vladi`. It must match the network the app and wallet are on, otherwise the code is blocked (see the network rule below). Any other value is rejected as an unknown network. |
 | `to` | A checksummed `0x` address, validated with the custody-kit `validateAddress`. |
 | `amount` | Optional. A plain decimal: no exponent, no more decimals than the token has, greater than 0. |
 | `token` | Only `QOR`, `fUSD`, `fETH` or `fBTC`, mapped to fixed testnet addresses inside the app. A QR code can never name a contract address. Anything else is rejected. |
 | `note` | Optional, at most 140 characters. Shown as escaped plain text. **Never passed to the AI** as anything but quoted data, so a hostile note can't steer the explanation. |
 
-**Plain address codes:**
+**Network rule:**
+- If `chain` doesn't match the network the app and wallet are on, the code is blocked with a clear message naming both networks, for example: "This request is for mainnet, you're on testnet."
+- The app **never switches networks automatically**, and the blocked code fills in nothing.
+- The app runs on testnet only, so a `9801` code is always blocked.
+
+**Plain address codes** carry no chain:
+- They're treated as the current network, and every check still runs.
 - A `0x…` code is accepted as it is.
 - A `qor1…` code (for example from the QoreX Receive screen) is converted with `qorToEvm` from `@qorechain/sdk`. It's the same 20-byte account, and the screen shows both forms.
 
@@ -79,6 +87,7 @@ Unit tests for the parser, plus webapp-testing end to end:
 - a valid request code
 - a `qor1` address code
 - a malformed code
-- a wrong-chain code
+- a mainnet (`chain=9801`) code while on testnet: blocked with the "for mainnet, you're on testnet" message, no network switch, form left empty
+- an unknown chain id
 - an over-limit amount
 - a **lookalike-address code, which must show the red "Possible scam" block**
