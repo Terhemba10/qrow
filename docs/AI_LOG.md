@@ -97,3 +97,14 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **Sweep:** Hallmark sloplint (app scope) is clean apart from fixed items: the buzzword "Unlock", off-scale padding, typographic quotes.
 - **Human decision:** the note field is hidden until QoreSeal works (stage 5), following the rule that a feature fully works or isn't shown.
 - **Not yet done:** the one AI explanation call per send; an on-chain signing run with a real wallet.
+
+## 2026-11-12 — Stage 4c: first real escrow payment
+
+- **Human:** approved a real 1 QOR test payment from the deployer to Wallet 2.
+- **AI:**
+  - wrote `contracts/scripts/pay.ts`, which mirrors the web app's calls exactly (digest, pqMessage, ML-DSA, simulate, send)
+  - opened a 1-tx window scoped to the escrow only, with a 1.75 QOR cap
+  - sent payment #1, closed the window, and read the payment back (Pending, 1 QOR, deadline 19 Nov)
+- **Proven on chain:** the live `pqcVerify` precompile accepts the in-app signature format. Gas for a create with a 4,627-byte signature: 420,983.
+- **App check against real history:** with browser storage cleared, the agent found Wallet 2 in the escrow's `PaymentCreated` logs and flagged a lookalike in 689 ms. The real Wallet 2 passes every check.
+- **Fix from that run:** a doubled screen-reader prefix on danger checks.

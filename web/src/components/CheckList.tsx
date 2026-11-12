@@ -3,7 +3,7 @@ import { IconAlert, IconCheck, IconInfo, IconStop } from "./Icons";
 
 const ORDER: Level[] = ["block", "danger", "warn", "info", "ok"];
 const ICON: Record<Level, () => JSX.Element> = { block: IconStop, danger: IconStop, warn: IconAlert, info: IconInfo, ok: IconCheck };
-const WORD: Record<Level, string> = { block: "Can’t send", danger: "Possible scam", warn: "Check", info: "Note", ok: "Passed" };
+const WORD: Record<Level, string> = { block: "Can’t send", danger: "Danger", warn: "Check", info: "Note", ok: "Passed" };
 
 export function CheckList({ run }: { run: AgentRun }) {
   const sorted = [...run.results].sort((a, b) => ORDER.indexOf(a.level) - ORDER.indexOf(b.level));

@@ -45,11 +45,11 @@ These addresses are notes for manual testing. They are **not** defaults in code.
 
 | # | Flow | Steps | Expected | Result / tx hash |
 |---|---|---|---|---|
-| 1 | Send | sender → recipient, 1 fUSD, Direct | PaymentCreated; QoreSeal note in recipient Inbox; Telegram alert | |
+| 1 | Send | deployer → Wallet 2, **1 QOR**, Direct, via `npm run pay` (the same calls as the app) | PaymentCreated #1 | **Done 2026-11-12.** tx `0xba048ad3147cb7d88baccba87026b91fbfd07d979bf5e6977177a78118577df8`, block 9,958,584, gas 420,983, refundable after 2026-11-19 15:06 UTC. Window: 1 tx, escrow-only target, 1.75 QOR cap, opened `48B4E6FD…5B90` / closed `95D43BAF…04FF`. Note and alert pending stages 5/6. |
 | 2 | Claim | recipient claims #1 before deadline | PaymentClaimed; funds at recipient; receipt | |
 | 3 | Cancel | sender sends #2, cancels before claim | PaymentCancelled; funds back | |
 | 4 | Refund | sender sends #3; wait 7 days (or use a short-deadline test deployment); anyone calls refundExpired | PaymentRefunded to sender | |
-| 5 | Lookalike | type an address with the same first and last 4 characters as the recipient | red "Possible scam" block | |
+| 5 | Lookalike | as the deployer (dev watch wallet, browser storage cleared), enter `0x5b2d00000000000000000000000000000000304a` | red "Possible scam" block | **Done 2026-11-12.** Caught from on-chain history alone (payment #1 logs): 10 checks in 689 ms; comparison shows `0x5B2d9c0F…304A` vs `0x5B2d0000…304A`. The real Wallet 2 then passes every check, including "You've paid this address before". |
 
 ## Testnet deployment (2026-11-12)
 

@@ -15,7 +15,8 @@
     "deploy:testnet": "tsx --env-file=.env scripts/deploy.ts",
     "typecheck": "tsc --noEmit",
     "account:new": "tsx scripts/account-new.ts",
-    "check:pq-message": "tsx scripts/check/pq-message-compat.ts"
+    "check:pq-message": "tsx scripts/check/pq-message-compat.ts",
+    "pay": "tsx --env-file=.env scripts/pay.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
