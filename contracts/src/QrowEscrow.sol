@@ -115,6 +115,7 @@ contract QrowEscrow {
     error InvalidRecipient();
     error InvalidAmount();
     error InvalidToken();
+    error NonStandardToken();
     error BadValue();
     error UnknownPayment();
     error NotPending();
@@ -170,34 +171,32 @@ contract QrowEscrow {
             pqSig
         );
 
-        // Effects
-        uint256 received = amount;
-        if (token != address(0)) {
-            if (token.code.length == 0) revert InvalidToken();
-            // Interaction before final state write is safe: nonReentrant, and nothing is stored yet.
-            // Balance delta guards against fee-on-transfer tokens over-crediting the escrow.
-            uint256 beforeBal = IERC20Minimal(token).balanceOf(address(this));
-            _safeTransferFrom(token, msg.sender, address(this), amount);
-            received = IERC20Minimal(token).balanceOf(address(this)) - beforeBal;
-            if (received == 0) revert InvalidAmount();
-        }
-        _checkAndRecordLimits(msg.sender, token, received);
+        if (token != address(0) && token.code.length == 0) revert InvalidToken();
+        _checkAndRecordLimits(msg.sender, token, amount);
 
+        // Effects: the payment is fully recorded before any external call.
         id = ++paymentCount;
         uint64 deadline = uint64(block.timestamp) + REFUND_PERIOD;
         _payments[id] = Payment({
             sender: msg.sender,
             recipient: recipient,
             token: token,
-            amount: received,
+            amount: amount,
             createdAt: uint64(block.timestamp),
             deadline: deadline,
             mode: mode,
             status: Status.Pending
         });
-
-        emit PaymentCreated(id, msg.sender, recipient, token, received, deadline, mode);
+        emit PaymentCreated(id, msg.sender, recipient, token, amount, deadline, mode);
         if (sealedNote.length != 0) emit PaymentNote(id, recipient, sealedNote);
+
+        // Interaction last. The escrow must receive exactly `amount`: fee-on-transfer, rebasing or
+        // otherwise non-standard tokens revert the whole payment, so the escrow never owes more than it holds.
+        if (token != address(0)) {
+            uint256 beforeBal = IERC20Minimal(token).balanceOf(address(this));
+            _safeTransferFrom(token, msg.sender, address(this), amount);
+            if (IERC20Minimal(token).balanceOf(address(this)) - beforeBal != amount) revert NonStandardToken();
+        }
     }
 
     /// @notice Sender takes a pending payment back before it is claimed/released.

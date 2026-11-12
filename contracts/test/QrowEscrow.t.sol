@@ -60,14 +60,30 @@ contract CreateTest is Base {
         escrow.createPayment{value: ONE}(bob, address(0), ONE, QrowEscrow.Mode.Direct, note, v, sig);
     }
 
-    function test_CreateRecordsReceivedForFeeOnTransfer() public {
+    function test_RevertWhen_FeeOnTransferToken() public {
         FeeOnTransferToken fee = new FeeOnTransferToken();
         fee.mint(alice, 100 ether);
         vm.prank(alice);
         fee.approve(address(escrow), type(uint256).max);
-        uint256 id = _create(alice, bob, address(fee), 100 ether, DIRECT);
-        assertEq(escrow.getPayment(id).amount, 90 ether);
-        assertEq(fee.balanceOf(address(escrow)), 90 ether);
+        uint64 v = _validUntil();
+        bytes memory sig =
+            _sigFor(alice, escrow.ACTION_CREATE(), _createParams(bob, address(fee), 100 ether, DIRECT, ""), v);
+        vm.prank(alice);
+        vm.expectRevert(QrowEscrow.NonStandardToken.selector);
+        escrow.createPayment(bob, address(fee), 100 ether, QrowEscrow.Mode.Direct, "", v, sig);
+        // Whole payment rolled back: nothing recorded, nothing held, nonce and daily spend untouched.
+        assertEq(escrow.paymentCount(), 0);
+        assertEq(fee.balanceOf(address(escrow)), 0);
+        assertEq(fee.balanceOf(alice), 100 ether);
+        assertEq(escrow.pqNonce(alice), 0);
+        assertEq(escrow.spentToday(alice, address(fee)), 0);
+    }
+
+    function test_StateRecordedBeforeTokenPull() public {
+        // A token that reads the escrow during transferFrom sees the payment already stored (CEI).
+        uint256 id = _create(alice, bob, address(fusd), 10 ether, DIRECT);
+        assertEq(escrow.getPayment(id).amount, 10 ether);
+        assertEq(fusd.balanceOf(address(escrow)), 10 ether);
     }
 
     function test_RevertWhen_TokenReturnsFalse() public {
