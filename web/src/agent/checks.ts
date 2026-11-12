@@ -6,6 +6,8 @@
 import { erc20Abi, type Address, type PublicClient } from "viem";
 import { evmToQor } from "@qorechain/sdk";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
+import { qrowCoinFactoryAbi } from "../abi/QrowCoinFactory";
+import { COIN_FACTORY } from "../config/contracts";
 import { ESCROW, REFUND_TEXT, REST } from "../config/network";
 import { tokenAddress, tokenBySymbol, type Token } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
@@ -36,7 +38,8 @@ export type CheckId =
   | "recipientHistory"
   | "balance"
   | "fees"
-  | "limits";
+  | "limits"
+  | "coin";
 
 export interface AgentRun {
   results: CheckResult[];
@@ -207,6 +210,16 @@ export async function runChecks(client: PublicClient, sender: Address, draft: Pa
         : { level: "ok", title: "Within your limits" };
     }),
   ];
+
+  if (token.qrowCoin) {
+    checks.push(
+      timed("coin", "Couldn’t confirm where this coin came from", async () =>
+        (await client.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "isQrowCoin", args: [token.address!] }))
+          ? { level: "info", title: `${token.symbol} was launched in Qrow`, detail: `Testnet memecoin: no real value. Contract ${token.address}.` }
+          : { level: "block", title: "This coin wasn’t launched by Qrow’s factory", detail: "Qrow only sends coins it can confirm on chain." },
+      ),
+    );
+  }
 
   const results = await Promise.all(checks);
   const run: AgentRun = { results, totalMs: Math.round(performance.now() - t0), startedAt };

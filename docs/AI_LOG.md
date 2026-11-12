@@ -218,3 +218,10 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **Probed first:** CMC quotes work on the free plan (1 credit); `content/latest` is refused (error 1006), so news comes from RSS; QOR is not listed on CMC.
 - **Safety:** the API key stays on the server; headlines keep title, source, date and link only (no article text); links must be https and on the feed's own domain (unit test); labels "Market prices are real. Qrow balances are testnet tokens with no value." and "Data from CoinMarketCap".
 - **Checked:** agent 5 tests and web 29 tests pass; tab verified in the browser with live data; sloplint 0 FAIL (3 REFLEX on the deliberate pure-white QR background, waived).
+
+## Step 10: Launch tab (12 Nov)
+- **Built with Claude (Opus 5.5) in Claude Code:** `web/src/pages/LaunchPage.tsx`, `web/src/agent/launchChecks.ts` (+ 4 tests), `web/src/lib/coins.ts`, launched coins as sendable tokens (`config/tokens.ts` registry, filled only from `QrowCoinFactory.coins()`), a "coin" check in the send agent, coin rows in Portfolio.
+- **Checks before launch (no AI):** format, supply, creator share and description mirror the contract; on top, leetspeak and one-letter-off lookalikes of protected names (6+ letters, after "Ethel" tripped the rule on "ether"), ticker lookalikes, duplicate symbols and names, links and profit wording; plus the factory's own `checkNames` read from chain.
+- **On chain:** LANT launched and claimed with PQ signatures (see TEST_NOTES).
+- **Fixed during review:** positive badges used the coral "earned" colour (read as a warning), long contract address overflowed the card, Send didn't re-render when coins loaded.
+- **Checked:** web 33 tests pass, typecheck clean, sloplint 0 FAIL.

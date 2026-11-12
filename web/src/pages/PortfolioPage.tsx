@@ -9,6 +9,7 @@ import { tokenBySymbol } from "../config/tokens";
 import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { usePayments } from "../lib/payments";
+import { useCoins } from "../lib/coins";
 import { downloadCsv, useBalances, useNfts, type ActivityRow } from "../lib/portfolio";
 
 const STATUS_WORD: Record<string, string> = { Pending: "Waiting", Claimed: "Claimed", Released: "Released", Cancelled: "Cancelled", Refunded: "Refunded" };
@@ -21,6 +22,7 @@ export function PortfolioPage() {
   const balances = useBalances(me);
   const nfts = useNfts(me);
   const payments = usePayments(me);
+  const coins = useCoins(me);
   const referrals = useQuery({
     queryKey: ["referrals", me],
     enabled: !!me,
@@ -109,6 +111,17 @@ export function PortfolioPage() {
                     <td className="num fig">{displayAmount(c.balance, c.decimals)}</td>
                   </tr>
                 ))}
+                {coins.data
+                  ?.filter((c) => c.mine && c.mine.balance > 0n)
+                  .map((c) => (
+                    <tr key={c.address}>
+                      <th scope="row">
+                        {c.symbol} <span className="hint">launched in Qrow, testnet memecoin</span>
+                      </th>
+                      <td className="num fig">{displayAmount(c.mine!.balance, 18)}</td>
+                      <td className="num muted">n/a</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             {balances.data.rows.some((r) => r.token.address && r.evm === 0n && r.bank > 0n) && (

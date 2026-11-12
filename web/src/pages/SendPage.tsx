@@ -4,7 +4,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAccount, useSwitchChain } from "wagmi";
 import { IconAlert, IconInfo } from "../components/Icons";
 import { CHAIN, NETWORK_NAME, REFUND_TEXT, networkLabel } from "../config/network";
-import { TOKENS, tokenBySymbol, type TokenSymbol } from "../config/tokens";
+import { TOKENS, launchedCoins, tokenBySymbol, tokenKey, type TokenSymbol } from "../config/tokens";
+import { useCoins } from "../lib/coins";
 import { parseRecipient } from "../lib/address";
 import { displayAmount, parseAmount } from "../lib/amount";
 import { useTokenBalance } from "../lib/balances";
@@ -75,7 +76,8 @@ export function SendPage() {
   const [submitted, setSubmitted] = useState(false);
   const [note, setNote] = useState(prev?.note ?? "");
 
-  const token = tokenBySymbol(symbol)!;
+  const launched = useCoins().data; // also registers launched coins so they can be sent
+  const token = tokenBySymbol(symbol) ?? tokenBySymbol("fUSD")!;
   const recipient = parseRecipient(to);
   const parsed = parseAmount(amount, token.decimals);
   const balance = useTokenBalance(address, token);
@@ -115,7 +117,7 @@ export function SendPage() {
       recipient: recipient.evm,
       recipientQor: recipient.qor,
       source: req && recipient.ok && recipient.evm === req.to ? "qr" : "typed",
-      token: token.symbol,
+      token: tokenKey(token),
       amountUnits: parsed.units.toString(),
       freelancer,
       note: note.trim().slice(0, 140),
@@ -206,6 +208,21 @@ export function SendPage() {
               </span>
             ))}
           </div>
+          {(launched?.length ?? launchedCoins().length) > 0 && (
+            <div className="field" style={{ marginTop: "var(--space-sm)" }}>
+              <label htmlFor="tok-coin" className="hint">
+                Or a coin launched in Qrow (testnet memecoin, no value)
+              </label>
+              <select id="tok-coin" className="input" value={token.qrowCoin ? tokenKey(token) : ""} onChange={(e) => e.target.value && setSymbol(e.target.value)}>
+                <option value="">Choose a launched coin</option>
+                {launchedCoins().map((c) => (
+                  <option key={c.address} value={tokenKey(c)}>
+                    {c.symbol}, {c.name} ({c.address!.slice(0, 8)}…)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </fieldset>
 
         <div className="field">

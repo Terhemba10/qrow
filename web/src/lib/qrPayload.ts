@@ -4,7 +4,7 @@
  * Also accepted: a plain 0x or qor1 address (treated as the current network).
  * A parsed payload only FILLS the Send form; every check and the confirm screen still run.
  */
-import { tokenBySymbol, type TokenSymbol } from "../config/tokens";
+import { baseTokenBySymbol as tokenBySymbol, type BaseSymbol as TokenSymbol } from "../config/tokens";
 import { parseRecipient } from "./address";
 import { formatUnitsExact, parseAmount } from "./amount";
 
@@ -79,7 +79,7 @@ export function parsePayload(raw: string, currentChainId: number): ParseResult {
   if (fields.has("token")) {
     const t = tokenBySymbol(fields.get("token")!);
     if (!t) return { ok: false, error: { code: "token" } };
-    token = t.symbol;
+    token = t.symbol as TokenSymbol;
   }
   let amountUnits: bigint | undefined;
   if (fields.has("amount")) {

@@ -1,9 +1,13 @@
 import type { Address } from "viem";
 
-export type TokenSymbol = "QOR" | "fUSD" | "fETH" | "fBTC";
+export type BaseSymbol = "QOR" | "fUSD" | "fETH" | "fBTC";
+/** A base symbol, or a launched Qrow coin's key (its lowercase contract address). */
+export type TokenSymbol = string;
 
 export interface Token {
-  symbol: TokenSymbol;
+  symbol: string;
+  /** Set for coins from the Qrow launcher: testnet memecoins with no value. */
+  qrowCoin?: true;
   name: string;
   /** undefined = native QOR, sent as msg.value */
   address?: Address;
@@ -41,7 +45,40 @@ export const TOKENS: readonly Token[] = [
   },
 ];
 
-export const tokenBySymbol = (s: string): Token | undefined => TOKENS.find((t) => t.symbol === s);
+/** Only the configured tokens (QR codes and payment requests may name these and nothing else). */
+export const baseTokenBySymbol = (s: string): Token | undefined => TOKENS.find((t) => t.symbol === s);
+
+// Launched Qrow coins, registered at runtime from QrowCoinFactory.coins() (never from user input).
+const COIN_CACHE = "qrow.coins.v1";
+const coins = new Map<string, Token>();
+const coinToken = (c: { address: Address; symbol: string; name: string }): Token => ({
+  symbol: c.symbol,
+  name: c.name,
+  address: c.address,
+  decimals: 18,
+  bankDenom: `erc20:${c.address}`,
+  qrowCoin: true,
+});
+try {
+  const raw = JSON.parse(localStorage.getItem(COIN_CACHE) ?? "[]") as { address: string; symbol: string; name: string }[];
+  for (const c of raw) if (/^0x[0-9a-f]{40}$/.test(c.address) && /^[A-Z0-9]{2,8}$/.test(c.symbol)) coins.set(c.address, coinToken(c as never));
+} catch {
+  /* no cache: coins load from chain */
+}
+export function registerCoins(list: { address: Address; symbol: string; name: string }[]) {
+  for (const c of list) coins.set(c.address.toLowerCase(), coinToken({ ...c, address: c.address.toLowerCase() as Address }));
+  try {
+    localStorage.setItem(COIN_CACHE, JSON.stringify([...coins.values()].map((t) => ({ address: t.address, symbol: t.symbol, name: t.name }))));
+  } catch {
+    /* storage blocked: fine */
+  }
+}
+export const launchedCoins = (): Token[] => [...coins.values()];
+/** Key used in drafts and radio values: the symbol for base tokens, the address for launched coins. */
+export const tokenKey = (t: Token): string => (t.qrowCoin ? t.address!.toLowerCase() : t.symbol);
+export const tokenBySymbol = (s: string): Token | undefined => baseTokenBySymbol(s) ?? coins.get(s.toLowerCase());
+export const tokenByAddress = (a: string): Token | undefined =>
+  TOKENS.find((t) => (t.address ?? "0x0000000000000000000000000000000000000000").toLowerCase() === a.toLowerCase()) ?? coins.get(a.toLowerCase());
 
 /** Contract-side token address (address(0) for native QOR). */
 export const tokenAddress = (t: Token): Address => t.address ?? "0x0000000000000000000000000000000000000000";

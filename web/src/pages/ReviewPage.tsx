@@ -23,7 +23,7 @@ export function ReviewPage() {
 
   const checks = useQuery({
     queryKey: ["checks", address, draft],
-    enabled: !!draft && !!address && !!client && chainId === CHAIN.id,
+    enabled: !!draft && !!tokenBySymbol(draft.token) && !!address && !!client && chainId === CHAIN.id,
     staleTime: Infinity,
     gcTime: 0,
     retry: false,
@@ -40,7 +40,7 @@ export function ReviewPage() {
     queryFn: () => fetchExplanation(checks.data!, draft!, tokenBySymbol(draft!.token)!),
   });
 
-  if (!draft || !isConnected || chainId !== CHAIN.id) return <Navigate to="/send" replace />;
+  if (!draft || !tokenBySymbol(draft.token) || !isConnected || chainId !== CHAIN.id) return <Navigate to="/send" replace />;
   const token = tokenBySymbol(draft.token)!;
   const level = checks.data ? worst(checks.data.results) : undefined;
   const blocked = level === "block";

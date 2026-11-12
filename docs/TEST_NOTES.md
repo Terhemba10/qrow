@@ -133,3 +133,11 @@ After closing, **no EVM window is open on the deployer or the Drill account**.
 | Buy listing #1 (ML-DSA, price bound in the signature) | Drill account | `0xfaabbc6edcb37f41dd8925b52f62050fb32b1cbed0ea24690c730067c45a7a9c` (312,659 gas) | Sold; Drill account owns #1; 2 QOR to the seller in the same tx; market holds 0 QOR, 0 listings |
 
 Each step used a 1-tx window scoped to the one contract, closed straight after.
+
+## Launch (step 10), 12 Nov
+- Coin launched with `npm run pq -- launch` (deployer, PQ-signed): Paper Lantern (LANT), 1,000,000 supply, creator 5%.
+  Coin `0xd7C48A7220D8EE176a152a7a5DC1E6A025E90b84`, tx `0xb1fbeeb289ba7b147540b2575f26f5af89224d9f1229c7d919bf5ab203d5a191` (block 9966315, gas 1,956,662).
+- Public claim (PQ-signed): 950 LANT to the deployer, tx `0xae5f0dce0ba10a4f6b71f247d46dce115582a76c3c4c834c84f484e27373589e` (block 9966346). Each window held 1 tx, scoped to one target, and was closed.
+- In the app: the list shows LANT with safety badges read from chain; the Drill account sees "Claim 950 LANT"; Send offers LANT, and the checking agent adds "LANT was launched in Qrow" (factory `isQrowCoin` read) and blocks on a 0 balance.
+- Checks seen in the browser: "B1tc0in Cat" / "B7C" pass the factory's on-chain rules but the agent blocks both as lookalikes.
+- Not shown on chain: an escrow payment in LANT (the escrow accepts any standard ERC-20; covered by the Foundry tests).

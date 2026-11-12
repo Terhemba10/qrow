@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import { useEffect, useId, useMemo, useState } from "react";
 import type { Address } from "viem";
 import { CHAIN } from "../config/network";
-import { TOKENS, tokenBySymbol, type TokenSymbol } from "../config/tokens";
+import { TOKENS, baseTokenBySymbol as tokenBySymbol, type BaseSymbol as TokenSymbol } from "../config/tokens";
 import { parseAmount } from "../lib/amount";
 import { buildPayload, NOTE_LIMIT } from "../lib/qrPayload";
 import { evmToQor } from "@qorechain/sdk";
@@ -64,7 +64,7 @@ export function RequestPayment({ me }: { me: Address }) {
             <div className="seg">
               {TOKENS.map((t) => (
                 <span key={t.symbol}>
-                  <input type="radio" name="req-token" id={`req-${t.symbol}`} checked={symbol === t.symbol} onChange={() => setSymbol(t.symbol)} />
+                  <input type="radio" name="req-token" id={`req-${t.symbol}`} checked={symbol === t.symbol} onChange={() => setSymbol(t.symbol as TokenSymbol)} />
                   <label htmlFor={`req-${t.symbol}`}>{t.symbol}</label>
                 </span>
               ))}

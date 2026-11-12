@@ -281,3 +281,15 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
   .topbar__inner .brand { margin-inline-end: auto; }
   .nav { order: 3; flex-basis: 100%; margin-inline-end: 0; }
 }
+
+/* Launch */
+.coinlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); }
+.coin { border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-card); padding: var(--space-md); display: grid; gap: var(--space-sm); }
+.coin__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap; }
+.coin__name { font-weight: 600; margin: 0; }
+.coin__desc { margin: 0; overflow-wrap: anywhere; }
+.coin .facts { margin-top: 0; }
+.badges { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.badge--warn { border-color: var(--color-warn-rule); color: var(--color-warn); }
+.badge--safe { border-color: var(--color-ok); color: var(--color-ok); }
+.coin .facts dd { overflow-wrap: anywhere; min-width: 0; }

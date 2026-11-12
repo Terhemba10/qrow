@@ -4,7 +4,7 @@ import { usePublicClient } from "wagmi";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
 import { ESCROW_DEPLOY_BLOCK } from "../agent/recipients";
 import { CHAIN, ESCROW } from "../config/network";
-import { TOKENS, type Token } from "../config/tokens";
+import { tokenByAddress, type Token } from "../config/tokens";
 
 export const STATUS = ["None", "Pending", "Claimed", "Released", "Cancelled", "Refunded"] as const;
 export type Status = (typeof STATUS)[number];
@@ -31,7 +31,7 @@ const created = parseAbiItem(
 );
 
 const tokenFor = (addr: string): Token =>
-  TOKENS.find((t) => (t.address ?? "0x0000000000000000000000000000000000000000").toLowerCase() === addr.toLowerCase()) ??
+  tokenByAddress(addr) ??
   // Unknown token (e.g. a launched coin): still shown, with 18 decimals and its address as symbol.
   ({ symbol: addr.slice(0, 8) as never, name: addr, address: addr as Address, decimals: 18, bankDenom: "" } as Token);
 
