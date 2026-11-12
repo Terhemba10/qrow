@@ -55,7 +55,9 @@ So "Triple-VM" in Qrow means the contracts run on EVM, staking runs on the hybri
 - EVM transactions are signed by an injected wallet, and ML-DSA messages come from the recovery code, until QoreX ships `eth_sendTransaction` and `signArbitrary`.
 - The contracts already verify the QoreSign message format, so that switch needs no redeploy.
 
-## Decisions requested from the owner (each conflicts with what the chain allows)
+## Decisions (each conflicts with what the chain allows)
+
+**Owner decisions, 2026-11-12:** D1, D2, D3 and D5 approved as recommended. D4 not answered yet; the recommendation (drop) stands until the owner decides.
 
 | # | Request | What the chain allows | Recommendation |
 |---|---|---|---|
