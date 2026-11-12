@@ -87,4 +87,9 @@ After closing, **no EVM window is open on the deployer or the Drill account**.
 - `/tx/<hash>` expects the **Cosmos** tx hash. The EVM hash isn't found.
 - Alerts will need the Cosmos hash of each EVM transaction, plus a note to switch the explorer to Testnet. An EVM-aware viewer is the other option.
 
-**Open:** Wallet 2's ML-DSA key is still not registered on chain (`found: false`). Its balance is 30 QOR and its sequence is 0, so it has never sent a transaction.
+**Wallet 2, re-checked 2026-11-12:**
+- ML-DSA key **registered**: `hybrid`, algorithm 1, possession proven, at height 9,956,381.
+- Registration tx: `744CCAB7C216ADEC3FED4ADEF693C4E6B4B0BB8CCE38CC4148F9C62CE8F75BF0`. A second `MsgRegisterPQCKeyV2` tx, `5351117A…B114A2`, also returned code 0.
+- The account key is **`ethsecp256k1`** (Ethereum-style), so the account can send EVM transactions.
+- Sequence 4, balance 22.775 QOR, no EVM window.
+- `QrowEscrow.hasPqKey(Wallet 2) == true`, so it can claim once it can sign.
