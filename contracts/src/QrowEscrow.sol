@@ -114,6 +114,7 @@ contract QrowEscrow {
     error Reentrancy();
     error InvalidRecipient();
     error InvalidAmount();
+    error InvalidToken();
     error BadValue();
     error UnknownPayment();
     error NotPending();
@@ -172,6 +173,7 @@ contract QrowEscrow {
         // Effects
         uint256 received = amount;
         if (token != address(0)) {
+            if (token.code.length == 0) revert InvalidToken();
             // Interaction before final state write is safe: nonReentrant, and nothing is stored yet.
             // Balance delta guards against fee-on-transfer tokens over-crediting the escrow.
             uint256 beforeBal = IERC20Minimal(token).balanceOf(address(this));

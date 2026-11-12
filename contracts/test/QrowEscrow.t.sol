@@ -20,9 +20,14 @@ contract CreateTest is Base {
 
     function test_CreateNative() public {
         uint64 expectedDeadline = uint64(block.timestamp) + 7 days;
+        uint64 v = _validUntil();
+        bytes memory sig =
+            _sigFor(alice, escrow.ACTION_CREATE(), _createParams(bob, address(0), 5 ether, DIRECT, ""), v);
         vm.expectEmit(address(escrow));
         emit PaymentCreated(1, alice, bob, address(0), 5 ether, expectedDeadline, QrowEscrow.Mode.Direct);
-        uint256 id = _createNative(5 ether);
+        vm.prank(alice);
+        uint256 id =
+            escrow.createPayment{value: 5 ether}(bob, address(0), 5 ether, QrowEscrow.Mode.Direct, "", v, sig);
 
         assertEq(id, 1);
         assertEq(address(escrow).balance, 5 ether);
@@ -80,7 +85,7 @@ contract CreateTest is Base {
         bytes memory sig =
             _sigFor(alice, escrow.ACTION_CREATE(), _createParams(bob, notAToken, ONE, DIRECT, ""), v);
         vm.prank(alice);
-        vm.expectRevert(QrowEscrow.TransferFailed.selector);
+        vm.expectRevert(QrowEscrow.InvalidToken.selector);
         escrow.createPayment(bob, notAToken, ONE, QrowEscrow.Mode.Direct, "", v, sig);
     }
 

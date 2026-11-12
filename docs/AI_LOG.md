@@ -35,3 +35,9 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **AI caught:** the General Sans licence (ITF FFL) forbids redistribution, so the font files are git-ignored and the app will load them from the Fontshare CDN. Coral is kept apart from the safety colours (amber caution, crimson scam) so "settled" can't be mistaken for "danger".
 - **AI revisions after looking at the renders:** featured-image mark moved so it no longer overlapped the headline; a heavier stroke cut for 16/32 px.
 - **Open point for the human:** at large sizes the pointed tail can read as a speech bubble.
+
+## 2026-11-12 — Stage 3b: tests run (Foundry 1.9.0, installed by the human)
+
+- First run: 82/84 passed. AI fixes: (1) a test bug, where `expectEmit` was armed before the helper's own calls; (2) the contract now reverts with a clear `InvalidToken` error for a token address with no code (before, it was an empty revert). The behaviour is unchanged.
+- Result: **84/84 pass**. Coverage of src: 100% lines, 98.9% statements, 95.2% branches, 100% functions.
+- `forge lint` triage by AI: block-timestamp, unsafe-typecast and arbitrary-send-eth were reviewed and dismissed (7-day deadlines; uint64 time; payouts only go to the recorded sender or recipient). The reentrancy-eth/no-eth warnings are false positives: every state-changing function holds the same lock. **One real point:** in `createPayment` the token is pulled before state is written (to support fee-on-transfer tokens). Proposed a strict checks-effects-interactions change, awaiting the human's decision.
