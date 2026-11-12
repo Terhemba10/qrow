@@ -243,7 +243,7 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 }
 
 .note-closed, .note-open { grid-column: 1 / -1; }
-.note-open { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-inline-start: 3px solid var(--color-rule-2); background: var(--color-paper-2); border-radius: var(--radius-input); }
+.note-open { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-rule-2); background: var(--color-paper-2); border-radius: var(--radius-input); }
 
 /* ---------------------------------------------------------------- tables, portfolio, NFTs */
 .table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
