@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAccount, usePublicClient } from "wagmi";
 import { runChecks, worst } from "../agent/checks";
+import { fetchExplanation } from "../agent/explain";
+import { Explanation } from "../components/Explanation";
 import { CheckList, CheckListSkeleton } from "../components/CheckList";
 import { ConfirmSheet } from "../components/ConfirmSheet";
 import { IconAlert } from "../components/Icons";
@@ -26,6 +28,16 @@ export function ReviewPage() {
     gcTime: 0,
     retry: false,
     queryFn: () => runChecks(client!, address!, draft!),
+  });
+
+  // The one AI call per send: only after the checks finish, never blocking them or the buttons.
+  const explanation = useQuery({
+    queryKey: ["explain", checks.data?.startedAt],
+    enabled: !!checks.data,
+    staleTime: Infinity,
+    gcTime: 0,
+    retry: false,
+    queryFn: () => fetchExplanation(checks.data!, draft!, tokenBySymbol(draft!.token)!),
   });
 
   if (!draft || !isConnected || chainId !== CHAIN.id) return <Navigate to="/send" replace />;
@@ -57,6 +69,9 @@ export function ReviewPage() {
           )}
           {checks.data && (
             <ConfirmSheet draft={draft} token={token} warnings={checks.data.results.filter((r) => r.level !== "ok" && r.level !== "info")} />
+          )}
+          {checks.data && (
+            <Explanation state={explanation.data ? { pending: false, ex: explanation.data } : { pending: true }} />
           )}
 
           {checks.data && !signing && (

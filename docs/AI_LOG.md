@@ -108,3 +108,24 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **Proven on chain:** the live `pqcVerify` precompile accepts the in-app signature format. Gas for a create with a 4,627-byte signature: 420,983.
 - **App check against real history:** with browser storage cleared, the agent found Wallet 2 in the escrow's `PaymentCreated` logs and flagged a lookalike in 689 ms. The real Wallet 2 passes every check.
 - **Fix from that run:** a doubled screen-reader prefix on danger checks.
+
+## 2026-11-12 — Stage 4d: the one AI explanation call per send
+
+- **Human:** chose to add the AI explanation next.
+- **AI (using the claude-api skill):**
+  - `agent/` is a local Node server (127.0.0.1 only, reached through the Vite proxy at `/agent`). It makes one `messages.create` call per send:
+    - model `claude-haiku-5-5`, the "small, fast model" from the brief
+    - effort `low`
+    - a frozen system prompt with `cache_control` (long enough to clear the 512-token cache minimum)
+    - 4 s SDK timeout, no retries
+    - typed error handling; `refusal` handled
+  - Strict input schema: only known check ids and levels, token, amount, mode. Unknown fields are dropped, so the note never reaches the model.
+  - The browser replaces every address with `[address]` before sending, and the round trip is capped at 5 s.
+- **Rule kept:** the AI only rewords finished check results. Warnings render first and the summary sits below them. Confirm & Send never waits for it.
+- **Tested in the browser (live testnet checks), with no real key used:**
+  - (1) agent server off → "service isn't reachable"
+  - (2) no key → "turned off on this server"
+  - (3) a fake key aimed at a local never-answering server → server timeout at 4,029 ms, UI message at 4.9 s, while **Confirm was usable at 933 ms**
+  - Unit tests: 4 pass (schema, note dropped, no-key path).
+- **AI fix from testing:** the summary was first placed above the warnings, but its text says "every warning above". Moved below.
+- **Not yet verified:** a real successful call, which needs the human's `ANTHROPIC_API_KEY` in `agent/.env`.
