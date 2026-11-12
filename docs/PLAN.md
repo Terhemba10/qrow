@@ -332,7 +332,8 @@ wallet on desktop and phone before the 28 Nov freeze.
 
 #### Open questions for the owner
 
-- **A. Blocker: per-action ML-DSA signatures for QoreX users.** Qrow's contracts verify an ML-DSA signature
+- **A. DECIDED 2026-11-13: Qrow app key (option 1).** Implemented as `QrowKeys` (shared registry). Original question:
+  per-action ML-DSA signatures for QoreX users. Qrow's contracts verify an ML-DSA signature
   (`pqcVerify`) against the key registered on chain. QoreX holds that key and won't sign messages, so a QoreX user
   can't authorise Send, Claim, Mint, List, Buy or Launch today. Only accounts with a QRC1 code (Qrow's script
   accounts) can. Options:
@@ -351,3 +352,34 @@ wallet on desktop and phone before the 28 Nov freeze.
   fee dust, never the deployer or Drill keys. Needs the owner's yes.
 - **D. Sign In With QoreChain** for Admin: to check how SIWQ proves ownership when QoreX has no message signing
   (likely a signed native transaction); confirmed when Admin is built.
+
+
+## Launch priority (owner, 2026-11-13; overrides earlier ordering)
+
+Goal: real people using Qrow on QoreChain testnet as early as possible, to grow usage and collect feedback.
+
+1. **App key + redeploy.** `QrowKeys` registry; escrow, Genesis, Market and Coin Factory take its address and check the
+   app key first, then the chain key. Status 13 Nov: contracts and 14 new tests done (150 pass). Next: deploy all
+   five contracts, on-chain smoke tests, new addresses to the owner for the Drill (registration closes 17 Nov 23:59 UTC).
+2. **Public beta v0.1** as soon as Send and Receive work end to end for a normal QoreX user (connect → readiness
+   checklist → app key → send → claim, cancel or refund → alerts), on the approved hosting, labelled
+   **"Public beta: testnet"**. Unfinished tabs show "Coming soon", never hidden or broken.
+3. **Ship tabs live as they finish:** Portfolio, NFT Shop, NFT Market, Staking, Market News, Launch, Admin & Analytics,
+   each deployed the day it passes its tests. The live link must always work.
+4. **Feedback loop:** Feedback button → GitHub issue template; reviewed daily, top issues first; public changelog page.
+5. **Usage stats** (Admin & Analytics, README): unique wallets, payments, claims, NFTs minted and listed, stakes,
+   coins launched. Public on-chain events only.
+6. **Launch kit for the owner** (Claude posts nothing): an X post with #BuildBeforeQDay and the link, a message for
+   QoreChain's Discord and Telegram, a 30-second screen recording of send → claim, and the How to test Qrow guide.
+
+### Dates (estimate, 13 Nov)
+
+| When | What |
+| --- | --- |
+| Fri 14 Nov | Redeploy all Qrow contracts with the app key; on-chain smoke tests; addresses to the owner for the Drill |
+| Fri 14 to Sat 15 Nov | Web: app-key setup, readiness card, beta banner, Coming soon tabs, Feedback, How to test, Privacy |
+| **Sun 16 Nov** | **Public beta v0.1 live**, if by Sat 15 Nov the owner has the GitHub repo, Cloudflare and Render accounts ready and has done one real QoreX + MetaMask send → claim on the staging link |
+| Then daily | One tab live per passing day; feedback triage |
+
+Risks: QoreX or MetaMask behaving differently from the docs on a real account (only testable by the owner); Render disk
+permissions on the first deploy.

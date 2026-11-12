@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {QorePQC} from "./IQorePQC.sol";
+import {IQrowKeys} from "./PqAuth.sol";
 
 interface IERC20Minimal {
     function balanceOf(address) external view returns (uint256);
@@ -93,6 +94,8 @@ contract QrowEscrow {
     /// @dev "qorechain-msg-v1|" + nativeChainId + "|": QoreSign's message-signing domain
     ///      (messagePqSignBytes), the same bytes QoreX's planned signArbitrary will sign.
     bytes private _msgPrefix;
+    /// @notice Shared key registry: a signer's Qrow app key, else its chain key (address(0): chain keys only).
+    IQrowKeys public immutable KEYS;
 
     bytes16 private constant HEX = "0123456789abcdef";
 
@@ -100,7 +103,8 @@ contract QrowEscrow {
 
     /// @param nativeChainId_ the QoreChain native chain id matching this EVM chain
     ///        ("qorechain-diana" for EVM chain id 9800). Fixed for the contract's lifetime.
-    constructor(string memory nativeChainId_) {
+    constructor(string memory nativeChainId_, address keys_) {
+        KEYS = IQrowKeys(keys_);
         bytes memory id = bytes(nativeChainId_);
         if (id.length == 0 || id.length > 64) revert InvalidChainId();
         for (uint256 i = 0; i < id.length; i++) {
@@ -317,8 +321,13 @@ contract QrowEscrow {
     }
 
     /// @notice Whether `account` has an ML-DSA-87 key registered with proof of possession.
+    function pqKeyOf(address account) public view returns (bytes memory) {
+        if (address(KEYS) == address(0)) return QorePQC.provenKey(account);
+        return KEYS.keyOf(account);
+    }
+
     function hasPqKey(address account) external view returns (bool) {
-        return QorePQC.provenKey(account).length != 0;
+        return pqKeyOf(account).length != 0;
     }
 
     /// @notice The 32-byte digest of an action. The ML-DSA-87 key signs pqMessage(digest).
@@ -363,7 +372,7 @@ contract QrowEscrow {
         if (block.timestamp > validUntil) revert SignatureExpired();
         if (validUntil > block.timestamp + MAX_SIG_VALIDITY) revert SignatureTooLong();
 
-        bytes memory pubkey = QorePQC.provenKey(signer);
+        bytes memory pubkey = pqKeyOf(signer);
         if (pubkey.length == 0) revert NoPqKey();
 
         uint256 nonce = pqNonce[signer];

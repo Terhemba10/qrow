@@ -17,8 +17,8 @@ abstract contract NftBase is PqBase {
     function setUp() public virtual override {
         super.setUp();
         address predictedMarket = vm.computeCreateAddress(address(this), vm.getNonce(address(this)) + 1);
-        genesis = new QrowGenesis(predictedMarket, beneficiary, address(fusd), PRICE_QOR, PRICE_FUSD, "qorechain-diana");
-        market = new QrowMarket(address(genesis), address(fusd), "qorechain-diana");
+        genesis = new QrowGenesis(predictedMarket, beneficiary, address(fusd), PRICE_QOR, PRICE_FUSD, "qorechain-diana", address(0));
+        market = new QrowMarket(address(genesis), address(fusd), "qorechain-diana", address(0));
         assertEq(address(market), predictedMarket);
 
         fusd.mint(bob, 1_000 ether);
@@ -322,7 +322,7 @@ contract MarketTest is NftBase {
 
     function test_RevertWhen_MarketNotNamedByCollection() public {
         vm.expectRevert(QrowMarket.MarketMismatch.selector);
-        new QrowMarket(address(genesis), address(fusd), "qorechain-diana");
+        new QrowMarket(address(genesis), address(fusd), "qorechain-diana", address(0));
     }
 
     // ---------------------------------------------------------------- Q-Day: leaked ECDSA key

@@ -40,7 +40,7 @@ contract PqMessageTest is Base {
         uint256 id = _createNative(ONE);
         uint64 v = _validUntil();
         bytes32 digest = escrow.actionDigest(escrow.ACTION_CLAIM(), bob, escrow.pqNonce(bob), v, _idParams(id));
-        QrowEscrow mainnetStyle = new QrowEscrow("qorechain-vladi");
+        QrowEscrow mainnetStyle = new QrowEscrow("qorechain-vladi", address(0));
         bytes memory sig = new bytes(4627);
         sig[0] = 0x55;
         verifier.record(_pubkey(bob), sig, mainnetStyle.pqMessage(digest));
@@ -51,10 +51,10 @@ contract PqMessageTest is Base {
 
     function test_RevertWhen_BadNativeChainId() public {
         vm.expectRevert(QrowEscrow.InvalidChainId.selector);
-        new QrowEscrow("");
+        new QrowEscrow("", address(0));
         vm.expectRevert(QrowEscrow.InvalidChainId.selector);
-        new QrowEscrow("qorechain diana");
+        new QrowEscrow("qorechain diana", address(0));
         vm.expectRevert(QrowEscrow.InvalidChainId.selector);
-        new QrowEscrow("qorechain-diana|x");
+        new QrowEscrow("qorechain-diana|x", address(0));
     }
 }

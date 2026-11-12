@@ -21,8 +21,8 @@ contract DemoEscrowTest is Test {
         vm.warp(1_800_000_000);
         vm.etch(QorePQC.PQC_KEY_STATUS, type(MockPQCKeyStatus).runtimeCode);
         vm.etch(QorePQC.PQC_VERIFY, type(MockPQCVerify).runtimeCode);
-        demo = new QrowEscrowDemo("qorechain-diana");
-        real = new QrowEscrow("qorechain-diana");
+        demo = new QrowEscrowDemo("qorechain-diana", address(0));
+        real = new QrowEscrow("qorechain-diana", address(0));
         bytes memory pk = new bytes(2592);
         pk[0] = 0x01;
         keyStatus.setKey(alice, true, 1, pk, true);

@@ -68,8 +68,8 @@ contract QrowMarket is ReentrancyGuard, PqAuth {
     error NothingOwed();
     error MarketMismatch();
 
-    constructor(address genesis_, address fusd_, string memory nativeChainId_)
-        PqAuth(keccak256("QROW_MARKET_V1"), nativeChainId_)
+    constructor(address genesis_, address fusd_, string memory nativeChainId_, address keys_)
+        PqAuth(keccak256("QROW_MARKET_V1"), nativeChainId_, keys_)
     {
         genesis = IQrowGenesis(genesis_);
         fusd = fusd_;

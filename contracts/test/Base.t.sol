@@ -28,7 +28,7 @@ abstract contract Base is Test {
         vm.etch(QorePQC.PQC_KEY_STATUS, type(MockPQCKeyStatus).runtimeCode);
         vm.etch(QorePQC.PQC_VERIFY, type(MockPQCVerify).runtimeCode);
 
-        escrow = new QrowEscrow("qorechain-diana");
+        escrow = new QrowEscrow("qorechain-diana", address(0));
         fusd = new MockERC20("Faucet USD", "fUSD");
 
         _registerKey(alice);

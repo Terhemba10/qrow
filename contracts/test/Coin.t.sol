@@ -11,7 +11,7 @@ contract CoinTest is PqBase {
 
     function setUp() public override {
         super.setUp();
-        factory = new QrowCoinFactory("qorechain-diana");
+        factory = new QrowCoinFactory("qorechain-diana", address(0));
     }
 
     function _launch(address who, string memory name, string memory symbol, uint256 supply, uint16 bps)

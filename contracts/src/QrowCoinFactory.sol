@@ -41,7 +41,7 @@ contract QrowCoinFactory is ReentrancyGuard, PqAuth {
     error DescriptionTooLong();
     error Impersonation(string matched);
 
-    constructor(string memory nativeChainId_) PqAuth(keccak256("QROW_COIN_FACTORY_V1"), nativeChainId_) {}
+    constructor(string memory nativeChainId_, address keys_) PqAuth(keccak256("QROW_COIN_FACTORY_V1"), nativeChainId_, keys_) {}
 
     function launch(
         string calldata name,
@@ -66,7 +66,7 @@ contract QrowCoinFactory is ReentrancyGuard, PqAuth {
             pqSig
         );
 
-        coin = address(new QrowCoin(name, symbol, supplyWhole * 1e18, msg.sender, creatorBps, description, nativeChainId));
+        coin = address(new QrowCoin(name, symbol, supplyWhole * 1e18, msg.sender, creatorBps, description, nativeChainId, address(KEYS)));
         _coins.push(coin);
         isQrowCoin[coin] = true;
         symbolCount[keccak256(bytes(symbol))] += 1;

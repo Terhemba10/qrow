@@ -66,8 +66,9 @@ contract QrowGenesis is ERC721, ReentrancyGuard, PqAuth {
         address fusd_,
         uint256 priceQor_,
         uint256 priceFusd_,
-        string memory nativeChainId_
-    ) ERC721("Qrow Genesis", "QROWG") PqAuth(keccak256("QROW_GENESIS_V1"), nativeChainId_) {
+        string memory nativeChainId_,
+        address keys_
+    ) ERC721("Qrow Genesis", "QROWG") PqAuth(keccak256("QROW_GENESIS_V1"), nativeChainId_, keys_) {
         if (market_ == address(0) || beneficiary_ == address(0) || fusd_ == address(0)) revert BadRecipient();
         if (priceQor_ == 0 || priceFusd_ == 0) revert BadValue();
         market = market_;

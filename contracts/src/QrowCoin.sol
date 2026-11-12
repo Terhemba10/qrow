@@ -42,8 +42,9 @@ contract QrowCoin is ERC20, ReentrancyGuard, PqAuth {
         address creator_,
         uint16 creatorBps_,
         string memory description_,
-        string memory nativeChainId_
-    ) ERC20(name_, symbol_) PqAuth(keccak256("QROW_COIN_V1"), nativeChainId_) {
+        string memory nativeChainId_,
+        address keys_
+    ) ERC20(name_, symbol_) PqAuth(keccak256("QROW_COIN_V1"), nativeChainId_, keys_) {
         creator = creator_;
         factory = msg.sender;
         creatorBps = creatorBps_;
