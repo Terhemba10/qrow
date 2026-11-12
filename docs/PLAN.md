@@ -100,10 +100,12 @@ Day 0 is 13 Nov. "Days" are working days of build time. Steps that need the owne
 
 | Contract | Status | In the Drill |
 |---|---|---|
-| QrowEscrow | deployed `0xcf36b836872a0b277919eac1fb976722e32d824b`, 90 tests | yes |
-| QrowGenesis (ERC-721) | sprint | yes, if deployed by 16 Nov |
-| QrowMarket | sprint | yes, if deployed by 16 Nov |
-| QrowCoinFactory (and the coins it deploys) | sprint | yes, if deployed by 16 Nov |
+| QrowEscrow | deployed `0xcf36b836872a0b277919eac1fb976722e32d824b` | yes |
+
+All contracts: **133 Foundry tests pass** (2026-11-12).
+| QrowGenesis (ERC-721) | **deployed** `0xb82ba02428506ad69be84ee932c844e0d99bc67f` (1 QOR or 1 fUSD mint, max 256, 5 per wallet) | yes |
+| QrowMarket | **deployed** `0x92da580048b7cedfd6d834a0f839d38121fc347b` | yes |
+| QrowCoinFactory (and the coins it deploys) | **deployed** `0x3571ac216de6fd72ce8e1d9ecebf79d030142f12`. Supply beyond the creator's ≤10% share is a PQ-signed public claim (0.1% of the pool per address, once) | yes |
 
 Shared rules:
 - Every sensitive action takes an ML-DSA-87 signature over QoreSign's message format, bound to chain, contract, action, nonce, expiry and params.

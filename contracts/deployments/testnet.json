@@ -4,5 +4,34 @@
   "QrowEscrow": "0xcf36b836872a0b277919eac1fb976722e32d824b",
   "deployTx": "0x9e1f7c2dd3a2ae004392680ad61217fc5490ec0a7e159f83597d6d2d6f6f07ec",
   "block": 9955775,
-  "deployedAt": "2026-11-12T13:59:12.813Z"
+  "deployedAt": "2026-11-12T13:59:12.813Z",
+  "QrowGenesis": "0xb82ba02428506ad69be84ee932c844e0d99bc67f",
+  "QrowMarket": "0x92da580048b7cedfd6d834a0f839d38121fc347b",
+  "QrowCoinFactory": "0x3571ac216de6fd72ce8e1d9ecebf79d030142f12",
+  "sprint": {
+    "deployedAt": "2026-11-12T16:23:52.441Z",
+    "genesis": {
+      "address": "0xb82ba02428506ad69be84ee932c844e0d99bc67f",
+      "tx": "0xeb2a4d3bec382485fbc68dae404be3080dc6d37d9550198a5d810712c0e68ae7",
+      "block": 9961854,
+      "gas": 2885174
+    },
+    "market": {
+      "address": "0x92da580048b7cedfd6d834a0f839d38121fc347b",
+      "tx": "0xd3af09ae0aa79efac47de585fa6089f36506735d002d5c2c4ec7127472a67fa6",
+      "block": 9961856,
+      "gas": 1936508
+    },
+    "factory": {
+      "address": "0x3571ac216de6fd72ce8e1d9ecebf79d030142f12",
+      "tx": "0x07736635cf539007a3c211f0399495e24b51fd3d667f5cd6db25eb59756249e0",
+      "block": 9961858,
+      "gas": 3918260
+    },
+    "genesisPrices": {
+      "qorWei": "1000000000000000000",
+      "fusdUnits": "1000000"
+    },
+    "beneficiary": "0xD517458c6b083B964342C604D35Be6afC2dCcb37"
+  }
 }

@@ -93,3 +93,24 @@ After closing, **no EVM window is open on the deployer or the Drill account**.
 - The account key is **`ethsecp256k1`** (Ethereum-style), so the account can send EVM transactions.
 - Sequence 4, balance 22.775 QOR, no EVM window.
 - `QrowEscrow.hasPqKey(Wallet 2) == true`, so it can claim once it can sign.
+
+## Contract sprint deployment (2026-11-12)
+
+| Contract | Address | Deploy tx | Gas |
+|---|---|---|---|
+| QrowGenesis | `0xb82ba02428506ad69be84ee932c844e0d99bc67f` | `0xeb2a4d3bec382485fbc68dae404be3080dc6d37d9550198a5d810712c0e68ae7` | 2,885,174 |
+| QrowMarket | `0x92da580048b7cedfd6d834a0f839d38121fc347b` (predicted from nonce 9, matched) | `0xd3af09ae0aa79efac47de585fa6089f36506735d002d5c2c4ec7127472a67fa6` | 1,936,508 |
+| QrowCoinFactory | `0x3571ac216de6fd72ce8e1d9ecebf79d030142f12` | `0x07736635cf539007a3c211f0399495e24b51fd3d667f5cd6db25eb59756249e0` | 3,918,260 |
+
+- Window: 3 txs, 200 blocks, no targets (contract creation). Opened, used and closed (`3D8CDE1B…2402`). No window open afterwards.
+- Read back on chain:
+  - Genesis names the market as its only mover; the beneficiary is the deployer; prices are 1 QOR and 1 fUSD; `nativeChainId` is `qorechain-diana`.
+  - The factory refuses "Bitcoin Cash" (`bitcoin`) and accepts "Paper Lantern".
+  - All three see the Drill account's ML-DSA key.
+
+### Q-Day Drill registration: contract addresses (4 of 5)
+
+1. QrowEscrow `0xcf36b836872a0b277919eac1fb976722e32d824b`
+2. QrowGenesis `0xb82ba02428506ad69be84ee932c844e0d99bc67f`
+3. QrowMarket `0x92da580048b7cedfd6d834a0f839d38121fc347b`
+4. QrowCoinFactory `0x3571ac216de6fd72ce8e1d9ecebf79d030142f12`

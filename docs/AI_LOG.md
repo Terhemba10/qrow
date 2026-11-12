@@ -129,3 +129,15 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
   - Unit tests: 4 pass (schema, note dropped, no-key path).
 - **AI fix from testing:** the summary was first placed above the warnings, but its text says "every warning above". Moved below.
 - **Not yet verified:** a real successful call, which needs the human's `ANTHROPIC_API_KEY` in `agent/.env`.
+
+## 2026-11-12 — Contract sprint (D5): NFT, Market and Coin Factory deployed
+
+- **Human:** approved D1–D5 and dropped D4. Said "we are doing everything today". Saved the Telegram and CoinMarketCap keys.
+- **AI caught:** the human first described the env files as `qrow/watcher.env` and `qrow/agent.env`. Those names aren't covered by `.gitignore`, so the AI added `*.env` before any commit. Verified the actual files (`watcher/.env`, `agent/.env`) are ignored and never committed, by reading variable names only.
+- **AI generated:** PqAuth, QrowGenesis, QrowMarket, QrowCoin and QrowCoinFactory, with 43 new tests (133 total, all pass), and the deploy script with nonce-predicted market wiring. Licences checked: OpenZeppelin 5.6.1 is MIT, with no GPL text.
+- **AI design choices to flag to the human:**
+  - Genesis disables approvals and plain transfers, so an NFT moves only with ML-DSA.
+  - The public share of a launched coin is a PQ-signed one-time claim.
+  - The Genesis mint price is 1 QOR or 1 fUSD.
+- **Test fixes, not contract bugs:** fUSD decimals in the test fixtures; a receiver hook on a mock.
+- **Deployed:** Genesis `0xb82b…c67f`, Market `0x92da…347b`, Factory `0x3571…2f12`. Window closed. Configuration read back.
