@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import { pqcSign } from "@qorechain/sdk";
 import { type Abi, encodeAbiParameters, getAddress, keccak256, parseEther, parseEventLogs, toBytes, toHex, type Address, type Hex } from "viem";
 import { evmClients, loadAccount, network } from "./lib.js";
+import { contractSecretKey } from "./lib.js";
 import { seal } from "@qorechain/qoreseal";
 import { fetchKemKey } from "@qorechain/qoreseal/network";
 import { formatEther } from "viem";
@@ -57,7 +58,7 @@ async function main() {
   );
   const digest = await read<Hex>("actionDigest", [action, sender, nonce, validUntil, paramsHash]);
   const message = await read<Hex>("pqMessage", [digest]);
-  const signature = toHex(pqcSign(acc.pqc.secretKey, toBytes(message)));
+  const signature = toHex(pqcSign(contractSecretKey(acc), toBytes(message)));
   console.log(`ML-DSA-87 signature: ${(signature.length - 2) / 2} bytes over ${(message.length - 2) / 2}-byte QoreSign message (nonce ${nonce})`);
 
   const callArgs = [to, "0x0000000000000000000000000000000000000000", amount, mode, sealedNote, validUntil, signature] as const;

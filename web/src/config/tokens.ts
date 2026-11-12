@@ -49,7 +49,7 @@ export const TOKENS: readonly Token[] = [
 export const baseTokenBySymbol = (s: string): Token | undefined => TOKENS.find((t) => t.symbol === s);
 
 // Launched Qrow coins, registered at runtime from QrowCoinFactory.coins() (never from user input).
-const COIN_CACHE = "qrow.coins.v1";
+const COIN_CACHE = "qrow.coins.v2"; // v2 factory (app key); v1 coins are no longer offered
 const coins = new Map<string, Token>();
 const coinToken = (c: { address: Address; symbol: string; name: string }): Token => ({
   symbol: c.symbol,

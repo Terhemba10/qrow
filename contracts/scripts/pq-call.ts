@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { pqcSign } from "@qorechain/sdk";
 import { encodeAbiParameters, keccak256, parseEther, parseEventLogs, toBytes, toHex, type Abi, type Address, type Hex } from "viem";
 import { evmClients, loadAccount } from "./lib.js";
+import { contractSecretKey } from "./lib.js";
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -98,7 +99,7 @@ async function main() {
   const validUntil = block.timestamp + 30n * 60n;
   const digest = await read<Hex>("actionDigest", [action, me, nonce, validUntil, params]);
   const message = await read<Hex>("pqMessage", [digest]);
-  const signature = toHex(pqcSign(acc.pqc.secretKey, toBytes(message)));
+  const signature = toHex(pqcSign(contractSecretKey(acc), toBytes(message)));
   console.log(`${cmd} on ${contract} as ${me}: ML-DSA-87 signature ${(signature.length - 2) / 2} bytes (nonce ${nonce})`);
   const callArgs = build(validUntil, signature);
   const sim = await c.simulateContract({ account, address: contract, abi, functionName: fn, args: callArgs, value });

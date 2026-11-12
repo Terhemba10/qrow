@@ -19,7 +19,7 @@ const WS = process.env.QROW_EVM_WS ?? "wss://evm-ws-testnet.qore.host";
 const HTTP = process.env.QROW_EVM_HTTP ?? "https://evm-testnet.qore.host";
 const REST = process.env.QROW_REST ?? "https://api-testnet.qore.host";
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
-const DEPLOY_BLOCK = 9_955_775n;
+const DEPLOY_BLOCK = 9_974_922n; // QrowEscrow v2 (app key)
 const DATA = new URL("../data/", import.meta.url);
 
 const TOKENS: Record<string, { symbol: string; decimals: number }> = {
@@ -57,12 +57,17 @@ interface State {
   sent: string[]; // idempotency keys, most recent last
   pending: Record<string, PaymentInfo & { createdAt: number; idStr?: string }>;
   tgOffset: number;
+  escrow?: string; // which escrow lastBlock/sent/pending belong to
 }
 mkdirSync(DATA, { recursive: true });
 const statePath = new URL("state.json", DATA);
 const state: State = existsSync(statePath)
   ? JSON.parse(readFileSync(statePath, "utf8"), (k, v) => (k === "id" && typeof v === "string" ? BigInt(v) : v))
   : { subs: {}, lastBlock: (DEPLOY_BLOCK - 1n).toString(), sent: [], pending: {}, tgOffset: 0 };
+// A new escrow (redeploy) starts its own history: keep subscriptions and the Telegram offset only.
+if (state.escrow !== ESCROW) {
+  Object.assign(state, { escrow: ESCROW, lastBlock: (DEPLOY_BLOCK - 1n).toString(), sent: [], pending: {} });
+}
 const save = () => writeFileSync(statePath, JSON.stringify(state, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
 
 // ---------------------------------------------------------------- notifier (Telegram; email fits the same interface)

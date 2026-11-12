@@ -18,11 +18,11 @@ export const REST = `${API_BASE}/lcd-testnet`;
 
 /** The deployed escrow (see contracts/deployments/testnet.json). Override with VITE_QROW_ESCROW. */
 export const ESCROW: Address =
-  (import.meta.env.VITE_QROW_ESCROW as Address | undefined) ?? "0xcf36b836872a0b277919eac1fb976722e32d824b";
+  (import.meta.env.VITE_QROW_ESCROW as Address | undefined) ?? "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da";
 
 /** The production escrow, and the demo copy (10-minute refunds, for showing a refund in a video). */
-export const ESCROW_REAL: Address = "0xcf36b836872a0b277919eac1fb976722e32d824b";
-export const ESCROW_DEMO: Address = "0x5005f0efa49ae70e7d785983a610c997c80d3bb4";
+export const ESCROW_REAL: Address = "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da";
+export const ESCROW_DEMO: Address = "0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09";
 export const IS_DEMO = ESCROW.toLowerCase() === ESCROW_DEMO.toLowerCase();
 /** Refund period of the escrow in use (read from the contract's constant at deploy time). */
 export const REFUND_SECONDS = IS_DEMO ? 600 : 7 * 86_400;

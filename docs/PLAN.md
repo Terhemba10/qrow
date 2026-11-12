@@ -383,3 +383,18 @@ Goal: real people using Qrow on QoreChain testnet as early as possible, to grow 
 
 Risks: QoreX or MetaMask behaving differently from the docs on a real account (only testable by the owner); Render disk
 permissions on the first deploy.
+
+
+### Hosting change (owner, 2026-11-13): Vercel instead of Cloudflare Pages
+
+The owner has a Vercel account. Supersedes the Pages row and the Render web service above.
+
+| Part | Host | Notes |
+| --- | --- | --- |
+| Frontend (`web/`) | **Vercel** (Hobby) | Auto-deploy from `main`, a preview URL per pull request, HTTPS, instant rollback, security headers in `vercel.json`. |
+| Agent API + REST relay (`/agent/*`, `/lcd-testnet/*`) | **Vercel Functions**, same domain as the app | Stateless request/response, so they fit. Same origin, so no CORS and the CSP stays `'self'`. CoinMarketCap and news cached at Vercel's edge (`s-maxage`), so prices cost one call per 10 minutes per region, not per visitor. In-memory rate limits only last per function instance, so the hard AI ceiling is the Anthropic Console spend limit (owner sets it) plus a per-instance cap. |
+| Watcher (Telegram alerts) | **Render background worker** (Starter, $7/month + 1 GB disk) | Vercel can't run it: it holds a WebSocket and long-polls Telegram all the time. |
+
+Owner accounts: GitHub (repo), Vercel (import the repo), Render (worker only), Anthropic Console (spend limit).
+Order (owner, 13 Nov): v2 redeploy ✓ → Send + Receive for a QoreX user → push to GitHub after the owner's OK →
+Vercel deploy → live URL to the owner.

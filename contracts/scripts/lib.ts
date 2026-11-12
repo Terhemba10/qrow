@@ -10,6 +10,7 @@ import {
   deriveUnifiedAccount,
   getNetwork,
   isValidRecoveryCode,
+  pqcKeyFromRecoveryCode,
   unifiedAccountFromSeed,
   type UnifiedAccount,
 } from "@qorechain/sdk";
@@ -37,6 +38,28 @@ export function network() {
 
 /** Load an account from a given env prefix ("" = deployer, e.g. "DRILL_" for the drill account). */
 export async function loadAccount(prefix = ""): Promise<UnifiedAccount> {
+  const acc = await loadAccountInner(prefix);
+  prefixes.set(acc, prefix);
+  return acc;
+}
+
+const prefixes = new WeakMap<UnifiedAccount, string>();
+
+/** Env name of an account's Qrow app-key recovery code (QRC1), kept only in .env. */
+export const appKeyEnv = (prefix: string) => `${prefix}QROW_APP_KEY_CODE`;
+
+/**
+ * The ML-DSA-87 secret key that signs Qrow contract actions: the account's Qrow app key if
+ * ${prefix}QROW_APP_KEY_CODE is set (registered in QrowKeys), else its chain-registered key.
+ */
+export function contractSecretKey(acc: UnifiedAccount): Uint8Array {
+  const code = process.env[appKeyEnv(prefixes.get(acc) ?? "")]?.trim();
+  if (!code) return acc.pqc.secretKey;
+  if (!isValidRecoveryCode(code)) throw new Error("QROW_APP_KEY_CODE is not a valid QRC1 code");
+  return pqcKeyFromRecoveryCode(code, acc.cosmos).secretKey;
+}
+
+async function loadAccountInner(prefix: string): Promise<UnifiedAccount> {
   const mnemonic = process.env[`${prefix}QORE_MNEMONIC`]?.trim();
   if (mnemonic) return deriveUnifiedAccount(mnemonic, 0);
   const key = process.env[`${prefix}PRIVATE_KEY`]?.trim();

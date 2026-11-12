@@ -3,7 +3,7 @@
  * Pure functions (no I/O) so they are unit-tested. Plain text only: nothing from the chain is
  * ever interpreted as markup.
  */
-export const ESCROW = "0xcf36b836872a0b277919eac1fb976722e32d824b";
+export const ESCROW = "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da";
 export const EXPLORER = "https://explore.qore.network";
 
 export type Role = "sender" | "receiver";

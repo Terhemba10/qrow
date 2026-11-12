@@ -141,3 +141,23 @@ Each step used a 1-tx window scoped to the one contract, closed straight after.
 - In the app: the list shows LANT with safety badges read from chain; the Drill account sees "Claim 950 LANT"; Send offers LANT, and the checking agent adds "LANT was launched in Qrow" (factory `isQrowCoin` read) and blocks on a 0 balance.
 - Checks seen in the browser: "B1tc0in Cat" / "B7C" pass the factory's on-chain rules but the agent blocks both as lookalikes.
 - Not shown on chain: an escrow payment in LANT (the escrow accepts any standard ERC-20; covered by the Foundry tests).
+
+## v2 redeploy: Qrow app key (13 Nov)
+Deployer `0xD517…cb37`, one creation window (6 txs, 200 blocks), closed afterwards. Wiring read back from chain:
+every contract's `KEYS` is QrowKeys; Genesis's `market` is the new Market.
+
+| Contract | Address | Tx | Block | Gas |
+| --- | --- | --- | --- | --- |
+| QrowKeys | `0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8` | `0x9a0ca8bf047a90bc9d7881c4ef6edd8864ce964709d2fe3df07a48bbea00a073` | 9974920 | 1,625,081 |
+| QrowEscrow | `0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da` | `0x5ff16c40a2ee2c4b67384d75a1d4655425fd81bd9e59ec29fa5f75fc037cc6ca` | 9974922 | 2,383,619 |
+| QrowEscrowDemo | `0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09` | `0xcf0578377f74e1e31fe4c4771d95cfa4b1d162e1804d3a077274e2536b906eb2` | 9974924 | 2,383,175 |
+| QrowGenesis | `0x73fe0fb443962c1e1503f57aba3cc6e895117287` | `0x5b38b603c15c8457342acdff78996a37a3a179b9763339d1885d08643efce549` | 9974926 | 2,967,974 |
+| QrowMarket | `0xc9c9dab84f368d879aa8f96b5dbf5c22062da373` | `0x93b330c200800b2e4618b872e8d1231238535f72fdc79f6a19b3c72ad0698866` | 9974928 | 2,024,592 |
+| QrowCoinFactory | `0x7ff6a8a047d9558c6b152a3cffe1adea19407836` | `0xee52e2270c857913c85d7cd63b1b15ad164c8a24cde76b1f84e28fc0b36578bb` | 9974930 | 4,101,232 |
+
+On-chain smoke tests (each in its own 1-tx window scoped to one contract, closed after):
+- App key registered for the deployer (`npm run appkey -- register`): tx `0x9a6d0ff9cd69413de030fc0c4f3905e680115d94716aa40724df8a6aa0a0535f`, block 9975032; `keyOf` returns it.
+- Payment #1, 0.1 QOR deployer → Drill, **signed with the app key**: tx `0xf229788c5d911eeaafa862031512176ae8488978aee3b1dc8300d86d558b4c68`, block 9975066.
+- Claimed by the Drill account with its **chain key** (no app key: fallback path): tx `0xf6df00552cda814765dd9fdacf94f49b3f71c2387f76cc4cc2c6f12ca75185fd`, block 9975099.
+- Watcher back-filled the three events from the v2 escrow and produced the created, notified and claimed alerts.
+- v1 addresses stay in `deployments/testnet.json` under `v1`; LANT and the v1 NFTs live on the v1 contracts.

@@ -12,6 +12,7 @@ import { readFileSync } from "node:fs";
 import { pqcSign } from "@qorechain/sdk";
 import { encodeAbiParameters, formatEther, keccak256, toBytes, toHex, type Abi, type Address, type Hex } from "viem";
 import { evmClients, loadAccount } from "./lib.js";
+import { contractSecretKey } from "./lib.js";
 
 const STATUS = ["None", "Pending", "Claimed", "Released", "Cancelled", "Refunded"];
 const args = process.argv.slice(2);
@@ -42,7 +43,7 @@ async function main() {
     const paramsHash = keccak256(encodeAbiParameters([{ type: "uint256" }], [id]));
     const digest = await read<Hex>("actionDigest", [action, me, nonce, validUntil, paramsHash]);
     const message = await read<Hex>("pqMessage", [digest]);
-    const signature = toHex(pqcSign(acc.pqc.secretKey, toBytes(message)));
+    const signature = toHex(pqcSign(contractSecretKey(acc), toBytes(message)));
     console.log(`ML-DSA-87 signature: ${(signature.length - 2) / 2} bytes (nonce ${nonce})`);
     callArgs = [id, validUntil, signature];
   }
