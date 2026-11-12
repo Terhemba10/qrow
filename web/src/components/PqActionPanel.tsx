@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { BaseError, ContractFunctionRevertedError, type Abi, type Address, type Hex } from "viem";
+import { BaseError, ContractFunctionRevertedError, erc20Abi, type Abi, type Address, type Hex } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { CHAIN, REFUND_TEXT } from "../config/network";
 import { forget, readWindow, unlockPqKey, type PqKey } from "../lib/pq";
@@ -16,6 +16,7 @@ export interface PqCall {
 type Step =
   | { s: "key" }
   | { s: "window"; key?: PqKey; live: boolean }
+  | { s: "approve"; key?: PqKey }
   | { s: "review"; call: PqCall; simulated: string }
   | { s: "sending"; hash?: Hex }
   | { s: "done"; hash: Hex };
@@ -58,6 +59,8 @@ export function PqActionPanel(props: {
   summary: ReactNode;
   contract: Address;
   pq?: { actionName: string; paramsHash: Hex };
+  /** An ERC-20 the contract will pull: Qrow asks for an approval of exactly this amount first. */
+  approve?: { token: Address; amount: bigint; label: string };
   build: (auth?: { validUntil: bigint; signature: Hex }) => PqCall;
   describeSimulation: (result: unknown) => string;
   confirmLabel: string;
@@ -84,14 +87,36 @@ export function PqActionPanel(props: {
     }
   }
 
+  const needsApproval = async () =>
+    !!props.approve &&
+    (await client.readContract({ address: props.approve.token, abi: erc20Abi, functionName: "allowance", args: [props.sender, props.contract] })) < props.approve.amount;
+
   const prepare = async (key?: PqKey) => {
+    const approve = await needsApproval();
     const w = await readWindow(props.sender);
-    const targetsOk = w.allowedTargets.length === 0 || w.allowedTargets.includes(props.contract.toLowerCase());
-    if (!(w.live && w.remainingTxs >= 1 && targetsOk)) {
+    const targets = [props.contract, ...(approve && props.approve ? [props.approve.token] : [])].map((t) => t.toLowerCase());
+    const targetsOk = w.allowedTargets.length === 0 || targets.every((t) => w.allowedTargets.includes(t));
+    if (!(w.live && w.remainingTxs >= (approve ? 2 : 1) && targetsOk)) {
       setStep({ s: "window", key, live: w.live });
       setCheckedOnce(true);
       return;
     }
+    if (approve) {
+      setStep({ s: "approve", key });
+      return;
+    }
+    await signAndSimulate(key);
+  };
+
+  const approveExact = (key?: PqKey) =>
+    run(async () => {
+      if (!wallet || !props.approve) throw new Error("Connect a wallet that can sign.");
+      const hash = await wallet.writeContract({ address: props.approve.token, abi: erc20Abi, functionName: "approve", args: [props.contract, props.approve.amount], chain: CHAIN, account: props.sender });
+      await client.waitForTransactionReceipt({ hash });
+      await signAndSimulate(key);
+    });
+
+  const signAndSimulate = async (key?: PqKey) => {
     let auth: { validUntil: bigint; signature: Hex } | undefined;
     if (props.pq) {
       if (!key) throw new Error("The quantum-safe key isn’t loaded.");
@@ -138,12 +163,14 @@ export function PqActionPanel(props: {
     });
 
   const abandon = () => {
-    if (step.s === "window") forget(step.key);
+    if (step.s === "window" || step.s === "approve") forget(step.key);
     setCode("");
     props.onCancel();
   };
 
-  const cmd = `npm.cmd run window -- open --txs 1 --blocks 120 --targets ${props.contract}`;
+  const cmd = props.approve
+    ? `npm.cmd run window -- open --txs 2 --blocks 120 --targets ${props.contract},${props.approve.token}`
+    : `npm.cmd run window -- open --txs 1 --blocks 120 --targets ${props.contract}`;
 
   return (
     <section className="panel signflow" aria-live="polite" aria-label={props.title}>
@@ -187,6 +214,22 @@ export function PqActionPanel(props: {
           <div className="row">
             <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void run(() => prepare(step.key))}>
               {busy ? "Checking…" : checkedOnce ? "I’ve opened it, check again" : "Check and continue"}
+            </button>
+            <button className="btn btn--quiet" type="button" onClick={abandon}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step.s === "approve" && props.approve && (
+        <div className="field">
+          <p>
+            First, allow this contract to take exactly <span className="fig">{props.approve.label}</span> from your wallet, and not a token more.
+          </p>
+          <div className="row">
+            <button className="btn" type="button" disabled={busy} aria-busy={busy} onClick={() => void approveExact(step.key)}>
+              {busy ? "Waiting for your wallet…" : "Approve exact amount in wallet"}
             </button>
             <button className="btn btn--quiet" type="button" onClick={abandon}>
               Cancel

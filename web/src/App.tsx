@@ -4,6 +4,7 @@ import { WalletButton } from "./components/WalletButton";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
+import { ShopPage } from "./pages/ShopPage";
 import { ReviewPage } from "./pages/ReviewPage";
 import { SendPage } from "./pages/SendPage";
 
@@ -18,6 +19,7 @@ export function App() {
           <nav className="nav" aria-label="Main">
             <NavLink to="/send">Send</NavLink>
             <NavLink to="/receive">Receive</NavLink>
+            <NavLink to="/shop">NFT Shop</NavLink>
             <NavLink to="/portfolio">Portfolio</NavLink>
           </nav>
           <span className="net">{NETWORK_NAME}</span>
@@ -36,6 +38,7 @@ export function App() {
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/receive" element={<ReceivePage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/shop" element={<ShopPage />} />
           <Route path="*" element={<Navigate to="/send" replace />} />
         </Routes>
       </main>

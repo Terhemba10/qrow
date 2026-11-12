@@ -21,7 +21,8 @@
     "deploy:sprint": "tsx --env-file=.env scripts/deploy-sprint.ts",
     "action": "tsx --env-file=.env scripts/action.ts",
     "seal": "tsx --env-file=.env scripts/seal.ts",
-    "deploy:demo": "tsx --env-file=.env scripts/deploy-demo.ts"
+    "deploy:demo": "tsx --env-file=.env scripts/deploy-demo.ts",
+    "pq": "tsx --env-file=.env scripts/pq-call.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
