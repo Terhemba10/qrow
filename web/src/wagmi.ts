@@ -23,7 +23,7 @@ const connectors = connectorsForWallets(
       wallets: [() => qorexWallet({ pollAccountsOnFocus: true }), injectedWallet],
     },
   ],
-  { appName: "Qrow", projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? "unused" },
+  { appName: "Qrow", projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "unused" },
 );
 
 // Testnet only: any other chain is "wrong network" and the app never switches by itself.

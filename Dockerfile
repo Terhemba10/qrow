@@ -9,6 +9,9 @@ WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web/ ./
+# Public build-time value (a WalletConnect project ID is not a secret); empty disables WalletConnect.
+ARG VITE_WALLETCONNECT_PROJECT_ID=""
+ENV VITE_WALLETCONNECT_PROJECT_ID=$VITE_WALLETCONNECT_PROJECT_ID
 RUN npm run build
 
 # ---- runtime

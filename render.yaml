@@ -1,0 +1,24 @@
+# Render Blueprint for Qrow (public testnet). New > Blueprint in the Render dashboard, pick this repo.
+# Secrets marked sync: false are asked for in the dashboard and never stored in the repo.
+services:
+  - type: web
+    name: qrow
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free # sleeps when idle; switch to an always-on plan before People's Choice voting (6 Dec)
+    healthCheckPath: /agent/health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: CMC_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: VITE_WALLETCONNECT_PROJECT_ID
+        sync: false
+      - key: QROW_DAILY_AI_CAP
+        value: "2000"
+# The Telegram alerts watcher needs a paid background worker with a disk, so it isn't here by default.
+# See docs/DEPLOY.md, section 2.

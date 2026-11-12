@@ -4,6 +4,14 @@ Qrow runs as one small Node process from the `Dockerfile` at the repo root. It s
 agent API at `/agent` and a read-only relay to QoreChain's REST API at `/lcd-testnet` (that API sends no
 CORS headers, so browsers can't call it directly). Any host that runs a Docker image and gives HTTPS works.
 
+## On Render (what Qrow uses)
+
+1. Render dashboard: **New > Blueprint**, connect the GitHub repo. Render reads `render.yaml`.
+2. Fill in the secrets it asks for (`CMC_API_KEY`; `ANTHROPIC_API_KEY` and `VITE_WALLETCONNECT_PROJECT_ID` can stay empty).
+3. Apply. The first build takes a few minutes; the link is `https://qrow-xxxx.onrender.com` (or your own domain).
+4. The free plan sleeps after a while without visitors, so the first visit afterwards is slow. Move to an
+   always-on plan before the People's Choice vote (6 to 15 December).
+
 ## 1. Service: web app + agent API
 
 - Build from the repo root with the `Dockerfile`. It listens on `$PORT` (default 8080) and has a health check at `/agent/health`.
