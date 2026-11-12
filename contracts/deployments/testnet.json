@@ -33,5 +33,11 @@
       "fusdUnits": "1000000"
     },
     "beneficiary": "0xD517458c6b083B964342C604D35Be6afC2dCcb37"
+  },
+  "QrowEscrowDemo": "0x5005f0efa49ae70e7d785983a610c997c80d3bb4",
+  "demo": {
+    "note": "DEMO ONLY: QrowEscrow with a 10-minute refund period, to show refunds in the video",
+    "tx": "0xab46e5843e76f33c8bdfb9c407c76e480c0788d1bd033b934e954c25be93d5a5",
+    "block": 9964369
   }
 }

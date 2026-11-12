@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { encodeAbiParameters, keccak256, type Address } from "viem";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
-import { ESCROW, REFUND_DAYS } from "../config/network";
+import { ESCROW, REFUND_TEXT } from "../config/network";
 import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { actionsFor, type Payment } from "../lib/payments";
@@ -93,7 +93,7 @@ export function PaymentList({
             {direction === "in" && p.sealedNote && <NoteReader me={me} envelope={p.sealedNote} />}
             {a.claim && hasPqKey === false && (
               <p className="field-error paylist__note">
-                <IconAlert /> You need a registered quantum-safe (ML-DSA-87) key to claim. Set it up in QoreX. If you don’t claim within {REFUND_DAYS} days, it goes back to the sender.
+                <IconAlert /> You need a registered quantum-safe (ML-DSA-87) key to claim. Set it up in QoreX. If you don’t claim within {REFUND_TEXT}, it goes back to the sender.
               </p>
             )}
             {open?.id === p.id && (
@@ -114,7 +114,7 @@ export function PaymentList({
                     {open.act === "claim" && <>The money moves from the escrow to you. Signed with your quantum-safe key.</>}
                     {open.act === "release" && <>The money moves from the escrow to the recipient. Signed with your quantum-safe key.</>}
                     {open.act === "cancel" && <>The money comes back to you before the recipient claims it. Signed with your quantum-safe key.</>}
-                    {open.act === "refund" && <>The 7 days are over, so anyone can return it. It can only go to the sender, so no quantum-safe signature is needed.</>}
+                    {open.act === "refund" && <>The {REFUND_TEXT} are over, so anyone can return it. It can only go to the sender, so no quantum-safe signature is needed.</>}
                   </p>
                 }
                 pq={

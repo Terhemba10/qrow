@@ -1,7 +1,7 @@
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
-import { NETWORK_NAME } from "./config/network";
+import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
 import { ReviewPage } from "./pages/ReviewPage";
@@ -24,6 +24,11 @@ export function App() {
           <WalletButton />
         </div>
       </header>
+      {IS_DEMO && (
+        <p className="demo-banner" role="note">
+          Demo escrow (<span className="mono">{ESCROW.slice(0, 10)}…</span>): refunds after 10 minutes so they can be shown live. The real Qrow escrow keeps the 7-day rule.
+        </p>
+      )}
       <main id="main">
         <Routes>
           <Route path="/" element={<Navigate to="/send" replace />} />

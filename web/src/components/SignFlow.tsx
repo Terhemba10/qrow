@@ -3,7 +3,7 @@ import { BaseError, ContractFunctionRevertedError, erc20Abi, parseEventLogs, typ
 import { usePublicClient, useWalletClient } from "wagmi";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
 import { rememberRecipient } from "../agent/recipients";
-import { CHAIN, ESCROW } from "../config/network";
+import { CHAIN, ESCROW, REFUND_SECONDS, REFUND_TEXT } from "../config/network";
 import { tokenAddress, type Token } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
 import { clearDraft, type PaymentDraft } from "../lib/draft";
@@ -133,7 +133,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
         amount: formatUnitsExact(amount, token.decimals),
         token: token.symbol,
         from: sender,
-        claimBefore: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+        claimBefore: new Date(Date.now() + REFUND_SECONDS * 1000).toISOString(),
         ...(draft.note ? { note: draft.note } : {}),
       });
     }
@@ -258,7 +258,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
               <IconCheck /> Simulation passed
             </p>
             <p>
-              The transaction you’re about to sign creates payment <span className="fig">#{step.simulatedId.toString()}</span>: <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span> leaves your wallet into the escrow at <span className="mono">{ESCROW}</span>, for <span className="mono">{draft.recipient}</span>, refundable to you after 7 days. It carries a {((step.args[6].length - 2) / 2).toLocaleString()}-byte ML-DSA-87 signature.
+              The transaction you’re about to sign creates payment <span className="fig">#{step.simulatedId.toString()}</span>: <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span> leaves your wallet into the escrow at <span className="mono">{ESCROW}</span>, for <span className="mono">{draft.recipient}</span>, refundable to you after {REFUND_TEXT}. It carries a {((step.args[6].length - 2) / 2).toLocaleString()}-byte ML-DSA-87 signature.
             </p>
           </div>
           <div className="row">
@@ -290,7 +290,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
             <IconCheck /> Payment #{step.id.toString()} is in escrow
           </p>
           <p>
-            The recipient can claim it now. If they don’t within 7 days, anyone can return it to you. Transaction <span className="mono">{step.hash}</span>.
+            The recipient can claim it now. If they don’t within {REFUND_TEXT}, anyone can return it to you. Transaction <span className="mono">{step.hash}</span>.
           </p>
         </div>
       )}

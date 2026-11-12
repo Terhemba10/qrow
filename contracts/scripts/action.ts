@@ -21,8 +21,11 @@ const idArg = args[args.indexOf("--id") + 1];
 async function main() {
   if (!["claim", "cancel", "release", "refund"].includes(act) || !idArg) throw new Error("Use: claim|cancel|release|refund --id N [--drill]");
   const id = BigInt(idArg);
-  const escrow = (JSON.parse(readFileSync("deployments/testnet.json", "utf8")) as { QrowEscrow: Address }).QrowEscrow;
-  const { abi } = JSON.parse(readFileSync("out/QrowEscrow.sol/QrowEscrow.json", "utf8")) as { abi: Abi };
+  const demo = args.includes("--demo");
+  const dep = JSON.parse(readFileSync("deployments/testnet.json", "utf8")) as { QrowEscrow: Address; QrowEscrowDemo?: Address };
+  const escrow = demo ? dep.QrowEscrowDemo! : dep.QrowEscrow;
+  if (demo) console.log(`DEMO escrow ${escrow} (10-minute refund period)`);
+  const { abi } = JSON.parse(readFileSync(demo ? "out/QrowEscrowDemo.sol/QrowEscrowDemo.json" : "out/QrowEscrow.sol/QrowEscrow.json", "utf8")) as { abi: Abi };
   const acc = await loadAccount(args.includes("--drill") ? "DRILL_" : "");
   const { publicClient: c, walletClient: w, account } = evmClients(acc);
   const me = account.address;

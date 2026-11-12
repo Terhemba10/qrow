@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { BaseError, ContractFunctionRevertedError, type Abi, type Address, type Hex } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
-import { CHAIN } from "../config/network";
+import { CHAIN, REFUND_TEXT } from "../config/network";
 import { forget, readWindow, unlockPqKey, type PqKey } from "../lib/pq";
 import { signPqAction } from "../lib/pqAction";
 import { IconAlert, IconCheck } from "./Icons";
@@ -27,8 +27,8 @@ const FRIENDLY: Record<string, string> = {
   NotRecipient: "Only the recipient can claim this payment.",
   NotSender: "Only the sender can do this.",
   NotPending: "This payment is no longer pending.",
-  Expired: "The 7 days are over. It can only be refunded now.",
-  NotExpired: "The 7 days aren’t over yet.",
+  Expired: `The ${REFUND_TEXT} are over. It can only be refunded now.`,
+  NotExpired: `The ${REFUND_TEXT} aren’t over yet.`,
   WrongMode: "This payment uses the other release mode.",
   TransferFailed: "The transfer failed.",
 };

@@ -1,6 +1,6 @@
 import { getAddress } from "viem";
 import type { CheckResult } from "../agent/checks";
-import { REFUND_DAYS } from "../config/network";
+import { REFUND_SECONDS, REFUND_TEXT } from "../config/network";
 import type { Token } from "../config/tokens";
 import { splitForDisplay } from "../lib/address";
 import { displayAmount } from "../lib/amount";
@@ -33,7 +33,7 @@ export function ConfirmSheet({
   token: Token;
   warnings: CheckResult[];
 }) {
-  const refundBy = new Date(Date.now() + REFUND_DAYS * 86_400_000);
+  const refundBy = new Date(Date.now() + REFUND_SECONDS * 1000);
   const danger = warnings.filter((w) => w.level === "danger" || w.level === "block");
   const warn = warnings.filter((w) => w.level === "warn");
   return (
@@ -83,7 +83,7 @@ export function ConfirmSheet({
             <dt>Refundable until</dt>
             <dd>
               {dateFmt.format(refundBy)}
-              <span className="hint"> (about {REFUND_DAYS} days; the exact time is set by the block)</span>
+              <span className="hint"> (about {REFUND_TEXT}; the exact time is set by the block)</span>
             </dd>
           </div>
         </dl>

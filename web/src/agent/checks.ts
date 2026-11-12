@@ -6,7 +6,7 @@
 import { erc20Abi, type Address, type PublicClient } from "viem";
 import { evmToQor } from "@qorechain/sdk";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
-import { ESCROW, REST } from "../config/network";
+import { ESCROW, REFUND_TEXT, REST } from "../config/network";
 import { tokenAddress, tokenBySymbol, type Token } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
 import type { PaymentDraft } from "../lib/draft";
@@ -129,7 +129,7 @@ export async function runChecks(client: PublicClient, sender: Address, draft: Pa
         : {
             level: "warn",
             title: "The recipient can’t claim it yet",
-            detail: "They must set up a quantum-safe (ML-DSA-87) key in QoreX first. If they don’t claim it within 7 days, it comes back to you.",
+            detail: `They must set up a quantum-safe (ML-DSA-87) key in QoreX first. If they don’t claim it within ${REFUND_TEXT}, it comes back to you.`,
           };
     }),
 

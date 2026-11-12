@@ -4,7 +4,7 @@ import { useAccount, usePublicClient } from "wagmi";
 import { IconAlert } from "../components/Icons";
 import { PaymentList } from "../components/PaymentList";
 import { RequestPayment } from "../components/RequestPayment";
-import { CHAIN, ESCROW } from "../config/network";
+import { CHAIN, ESCROW, REFUND_TEXT } from "../config/network";
 import { pqAuthAbi } from "../lib/pqAction";
 import { usePayments } from "../lib/payments";
 
@@ -50,7 +50,7 @@ export function ReceivePage() {
           <p className="notice__title">
             <IconAlert /> You can’t claim payments yet
           </p>
-          <p>Claiming needs a registered quantum-safe (ML-DSA-87) key. Register one in QoreX. Until then, anything sent to you goes back to the sender after 7 days.</p>
+          <p>Claiming needs a registered quantum-safe (ML-DSA-87) key. Register one in QoreX. Until then, anything sent to you goes back to the sender after {REFUND_TEXT}.</p>
         </div>
       )}
 

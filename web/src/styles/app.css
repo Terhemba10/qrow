@@ -257,3 +257,5 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .nftcard img { width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-input); display: block; }
 .nftcard__name { font-weight: var(--weight-medium); }
 @media (max-width: 40rem) { .table { display: block; overflow-x: auto; } }
+
+.demo-banner { margin: 0; padding: var(--space-sm) var(--gutter); text-align: center; font-size: var(--text-sm); background: var(--color-warn-bg); color: var(--color-warn); border-bottom: 1px solid var(--color-warn-rule); }

@@ -22,9 +22,11 @@ const flag = (n: string) => {
 };
 
 async function main() {
-  const dep = JSON.parse(readFileSync("deployments/testnet.json", "utf8")) as { QrowEscrow: Address };
-  const { abi } = JSON.parse(readFileSync("out/QrowEscrow.sol/QrowEscrow.json", "utf8")) as { abi: Abi };
-  const escrow = dep.QrowEscrow;
+  const demo = process.argv.includes("--demo");
+  const dep = JSON.parse(readFileSync("deployments/testnet.json", "utf8")) as { QrowEscrow: Address; QrowEscrowDemo?: Address };
+  const { abi } = JSON.parse(readFileSync(demo ? "out/QrowEscrowDemo.sol/QrowEscrowDemo.json" : "out/QrowEscrow.sol/QrowEscrow.json", "utf8")) as { abi: Abi };
+  const escrow = demo ? dep.QrowEscrowDemo! : dep.QrowEscrow;
+  if (demo) console.log(`DEMO escrow ${escrow} (10-minute refund period)`);
   const to = getAddress(flag("to") ?? "");
   const amount = parseEther(flag("amount") ?? "");
   const mode = args.includes("--freelancer") ? 1 : 0;

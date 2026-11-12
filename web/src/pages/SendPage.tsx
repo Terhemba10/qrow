@@ -3,7 +3,7 @@ import { useId, useMemo, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAccount, useSwitchChain } from "wagmi";
 import { IconAlert, IconInfo } from "../components/Icons";
-import { CHAIN, NETWORK_NAME, REFUND_DAYS, networkLabel } from "../config/network";
+import { CHAIN, NETWORK_NAME, REFUND_TEXT, networkLabel } from "../config/network";
 import { TOKENS, tokenBySymbol, type TokenSymbol } from "../config/tokens";
 import { parseRecipient } from "../lib/address";
 import { displayAmount, parseAmount } from "../lib/amount";
@@ -94,7 +94,7 @@ export function SendPage() {
       <section className="sheet" aria-labelledby="send-title">
         <div className="sheet__head">
           <h1 id="send-title">Send a payment</h1>
-          <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_DAYS} days, it comes back to you.</p>
+          <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>
         </div>
         <div className="panel empty">
           <h2>Connect your wallet to start</h2>
@@ -127,7 +127,7 @@ export function SendPage() {
     <section className="sheet" aria-labelledby="send-title">
       <div className="sheet__head">
         <h1 id="send-title">Send a payment</h1>
-        <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_DAYS} days, it comes back to you.</p>
+        <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>
       </div>
 
       {wrongNetwork && (
