@@ -60,12 +60,28 @@ The parser reads parameters by name, so their order doesn't matter. The generato
 
 | Field | Rule |
 |---|---|
-| `v` | Required. An unknown version is rejected and explained. |
+| `v` | Required. Only `1` is accepted. Any other value gives **"Unsupported QR version"** and nothing is filled in. |
 | `chain` | Required. The EVM chain id: `9800` = testnet `qorechain-diana`, `9801` = mainnet `qorechain-vladi`. It must match the network the app and wallet are on, otherwise the code is blocked (see the network rule below). Any other value is rejected as an unknown network. |
 | `to` | A checksummed `0x` address, validated with the custody-kit `validateAddress`. |
-| `amount` | Optional. A plain decimal: no exponent, no more decimals than the token has, greater than 0. |
-| `token` | Only `QOR`, `fUSD`, `fETH` or `fBTC`, mapped to fixed testnet addresses inside the app. A QR code can never name a contract address. Anything else is rejected. |
-| `note` | Optional, at most 140 characters. Shown as escaped plain text. **Never passed to the AI** as anything but quoted data, so a hostile note can't steer the explanation. |
+| `amount` | Optional. A positive plain decimal (digits with at most one `.`; no sign, exponent, spaces or thousands separators), with no more decimals than the token allows (see the token table below). It's parsed into the token's smallest units as an exact integer, never as a floating-point number. It must be within the sender's per-payment limit and remaining daily limit. If `amount` is present, `token` is required. |
+| `token` | Optional, and required when `amount` is present. Only a symbol known on the current network: `QOR`, `fUSD`, `fETH` or `fBTC`, matched exactly. The contract address comes from **our own config**, never from the QR. Anything else is rejected as an unknown token. |
+| `note` | Optional. URL-decoded once; malformed percent-encoding is rejected. At most 140 characters after decoding. Shown as **plain text only**: set with `textContent` or React text, never as HTML, Markdown or a link. **Never passed to the AI** as anything but quoted data, so a hostile note can't steer the explanation. |
+
+**Structure:**
+- The code is rejected, with nothing filled in, if:
+  - any parameter appears twice, for example two `to=`
+  - a required field is missing: `to`, `chain` or `v`
+  - the scheme isn't `qrow:pay`
+- Unknown extra parameters are also rejected, so nothing is silently ignored.
+
+**Tokens:** from our config (`src/config/tokens.ts`). Decimals were confirmed on chain with `decimals()` on 2026-11-12.
+
+| Symbol | Testnet contract (chain 9800) | Decimals |
+|---|---|---|
+| QOR | native, sent as `msg.value` | 18 |
+| fUSD | `0x97143B771D34ddb9130b807b135Ae675A5a963CA` | 6 |
+| fETH | `0x02292293c13880a26242690eb70a0e42B8E91c28` | 18 |
+| fBTC | `0x4604e7E45b2ecdbfbDc157103f5B2b62cb16451A` | 8 |
 
 **Network rule:**
 - If `chain` doesn't match the network the app and wallet are on, the code is blocked with a clear message naming both networks, for example: "This request is for mainnet, you're on testnet."
@@ -102,5 +118,12 @@ Unit tests for the parser, plus webapp-testing end to end:
 - a malformed code
 - a mainnet (`chain=9801`) code while on testnet: blocked with the "for mainnet, you're on testnet" message, no network switch, form left empty
 - an unknown chain id
+- wrong version (`v=2`, and `v` missing): "Unsupported QR version", or rejected as missing, with nothing filled in
+- an unknown token (`token=USDT`, and a code giving a contract address as the token)
+- too many decimals (`amount=1.1234567&token=fUSD`, and `amount=0.000000001&token=fBTC`)
+- a zero or negative amount, or one in exponent form (`0`, `-1`, `1e3`)
+- an overlong note (141 characters after decoding)
+- a note containing HTML or script (`<img src=x onerror=alert(1)>`, `<script>…</script>`): shown literally as text, never run, and nothing injected into the page
+- duplicate fields (two `to=`) and missing required fields (`to`, `chain`)
 - an over-limit amount
 - a **lookalike-address code, which must show the red "Possible scam" block**
