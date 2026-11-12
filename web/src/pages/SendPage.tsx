@@ -1,3 +1,4 @@
+import { Readiness } from "../components/Readiness";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useId, useMemo, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -127,6 +128,7 @@ export function SendPage() {
 
   return (
     <section className="sheet" aria-labelledby="send-title">
+      <Readiness compact />
       <div className="sheet__head">
         <h1 id="send-title">Send a payment</h1>
         <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>

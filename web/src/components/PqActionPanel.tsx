@@ -25,7 +25,7 @@ type Step =
 const FRIENDLY: Record<string, string> = {
   BadPqSignature: "The quantum-safe signature didn’t verify. Start again.",
   SignatureExpired: "The quantum-safe signature expired. Sign again.",
-  NoPqKey: "This account has no registered quantum-safe key.",
+  NoPqKey: "Set up your Qrow key on the Start page first.",
   NotRecipient: "Only the recipient can claim this payment.",
   NotSender: "Only the sender can do this.",
   NotPending: "This payment is no longer pending.",
@@ -138,8 +138,8 @@ export function PqActionPanel(props: {
           r.reason === "format"
             ? "That isn’t a valid recovery code. It starts with QRC1."
             : r.reason === "mismatch"
-              ? "That code makes a different key from the one registered for this account."
-              : "This account has no registered quantum-safe key.",
+              ? "That code makes a different key from your registered Qrow key. Check you copied the whole code for this account."
+              : "Set up your Qrow key on the Start page first.",
         );
         return;
       }
@@ -182,7 +182,7 @@ export function PqActionPanel(props: {
             void unlock();
           }}
         >
-          <label htmlFor="pq-code-action">Your PQC recovery code</label>
+          <label htmlFor="pq-code-action">Your Qrow key recovery code</label>
           <input id="pq-code-action" className="input input--mono" type="password" autoComplete="off" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} placeholder="QRC1-…" />
           <p className="hint">Signs this with your quantum-safe key. Kept in this tab’s memory only and cleared right after.</p>
           <div className="row">

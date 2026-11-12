@@ -12,6 +12,8 @@ import { isValidRecoveryCode, pqcKeyFromRecoveryCode, pqcSign } from "@qorechain
 import { encodeAbiParameters, keccak256, toBytes, toHex, type Address, type Hex, type PublicClient } from "viem";
 import { evmToQor } from "@qorechain/sdk";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
+import { qrowKeysAbi } from "../abi/QrowKeys";
+import { KEYS } from "../config/contracts";
 import { ESCROW, REST } from "../config/network";
 
 const PQC_KEY_STATUS: Address = "0x0000000000000000000000000000000000000a02";
@@ -37,22 +39,26 @@ export interface PqKey {
 
 export type UnlockError = "format" | "mismatch" | "noKey";
 
-/** Derive the account's ML-DSA-87 key from its recovery code and check it's the registered one. */
+/** The account's ML-DSA-87 key registered on QoreChain (QoreX registers it with the first transfer). */
+export async function chainKeyRegistered(client: PublicClient, account: Address): Promise<boolean> {
+  const [registered, alg, , proven] = await client.readContract({ address: PQC_KEY_STATUS, abi: keyStatusAbi, functionName: "pqcKeyStatus", args: [account] });
+  return registered && alg === 1 && proven;
+}
+
+/**
+ * Derive the key from a QRC1 recovery code and check it's the one Qrow's contracts verify for this
+ * account: its Qrow app key (QrowKeys) if it has one, else its chain-registered key.
+ */
 export async function unlockPqKey(
   client: PublicClient,
   account: Address,
   code: string,
 ): Promise<{ ok: true; key: PqKey } | { ok: false; reason: UnlockError }> {
   if (!isValidRecoveryCode(code.trim())) return { ok: false, reason: "format" };
-  const [registered, alg, pubkey, proven] = await client.readContract({
-    address: PQC_KEY_STATUS,
-    abi: keyStatusAbi,
-    functionName: "pqcKeyStatus",
-    args: [account],
-  });
-  if (!registered || alg !== 1 || !proven) return { ok: false, reason: "noKey" };
+  const expected = await client.readContract({ address: KEYS, abi: qrowKeysAbi, functionName: "keyOf", args: [account] });
+  if (!expected || expected === "0x") return { ok: false, reason: "noKey" };
   const kp = pqcKeyFromRecoveryCode(code.trim(), evmToQor(account));
-  if (toHex(kp.publicKey).toLowerCase() !== pubkey.toLowerCase()) {
+  if (toHex(kp.publicKey).toLowerCase() !== expected.toLowerCase()) {
     kp.secretKey.fill(0);
     return { ok: false, reason: "mismatch" };
   }

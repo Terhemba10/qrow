@@ -27,7 +27,7 @@ type CreateArgs = readonly [Address, Address, bigint, number, Hex, bigint, Hex];
 const ESCROW_ERRORS: Record<string, string> = {
   BadPqSignature: "The quantum-safe signature didn’t verify. Start again.",
   SignatureExpired: "The quantum-safe signature expired. Sign again.",
-  NoPqKey: "Your account has no registered quantum-safe key.",
+  NoPqKey: "Set up your Qrow key on the Start page first.",
   OverPaymentLimit: "This is above your limit per payment.",
   OverDailyLimit: "This is above your daily limit.",
   InvalidRecipient: "The recipient address isn’t allowed.",
@@ -94,8 +94,8 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
           r.reason === "format"
             ? "That isn’t a valid recovery code. It starts with QRC1."
             : r.reason === "mismatch"
-              ? "That code makes a different key from the one registered for this account."
-              : "This account has no registered quantum-safe key. Register one first.",
+              ? "That code makes a different key from your registered Qrow key. Check you copied the whole code for this account."
+              : "Set up your Qrow key on the Start page first.",
         );
         return;
       }
@@ -196,7 +196,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
             void unlock();
           }}
         >
-          <label htmlFor="pq-code">Your PQC recovery code</label>
+          <label htmlFor="pq-code">Your Qrow key recovery code</label>
           <input id="pq-code" className="input input--mono" type="password" autoComplete="off" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} placeholder="QRC1-…" />
           <p className="hint">
             It signs this payment with your quantum-safe key. It stays in this tab’s memory and is cleared as soon as you’ve signed. Qrow never stores or sends it. When QoreX can sign messages, this step moves into your wallet.

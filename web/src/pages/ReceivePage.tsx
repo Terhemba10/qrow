@@ -1,3 +1,4 @@
+import { Readiness } from "../components/Readiness";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, usePublicClient } from "wagmi";
@@ -40,6 +41,7 @@ export function ReceivePage() {
   const waiting = incoming.filter((p) => p.status === "Pending");
   return (
     <section className="page" aria-labelledby="recv-title">
+      <Readiness compact />
       <div className="sheet__head">
         <h1 id="recv-title">Receive</h1>
         <p className="muted">Payments sent to you wait in escrow. Claim them before the countdown ends, or they go back to the sender.</p>

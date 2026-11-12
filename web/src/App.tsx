@@ -1,42 +1,52 @@
+import type { ReactElement } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
+import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
+import { captureReferral } from "./lib/staking";
+import { HowToTestPage, PrivacyPage } from "./pages/InfoPages";
+import { LaunchPage } from "./pages/LaunchPage";
 import { MarketPage } from "./pages/MarketPage";
 import { NewsPage } from "./pages/NewsPage";
-import { LaunchPage } from "./pages/LaunchPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReceivePage } from "./pages/ReceivePage";
-import { ShopPage } from "./pages/ShopPage";
-import { StakingPage } from "./pages/StakingPage";
-import { captureReferral } from "./lib/staking";
-
-captureReferral(window.location.search);
 import { ReviewPage } from "./pages/ReviewPage";
 import { SendPage } from "./pages/SendPage";
+import { ShopPage } from "./pages/ShopPage";
+import { StakingPage } from "./pages/StakingPage";
+import { StartPage } from "./pages/StartPage";
+
+captureReferral(window.location.search);
+
+const live = (id: TabId, page: ReactElement) => (isLive(id) ? page : <ComingSoon id={id} />);
 
 export function App() {
   return (
     <>
       <header className="topbar">
         <div className="topbar__inner">
-          <NavLink to="/send" className="brand" aria-label="Qrow, home">
+          <NavLink to="/" className="brand" aria-label="Qrow, home">
             <Logo />
           </NavLink>
           <nav className="nav" aria-label="Main">
-            <NavLink to="/send">Send</NavLink>
-            <NavLink to="/receive">Receive</NavLink>
-            <NavLink to="/shop">NFT Shop</NavLink>
-            <NavLink to="/market">NFT Market</NavLink>
-            <NavLink to="/portfolio">Portfolio</NavLink>
-            <NavLink to="/staking">Staking</NavLink>
-            <NavLink to="/news">Market News</NavLink>
-            <NavLink to="/launch">Launch</NavLink>
+            <NavLink to="/" end>
+              Start
+            </NavLink>
+            {TABS.map((t) => (
+              <NavLink key={t.id} to={t.path}>
+                {t.label}
+              </NavLink>
+            ))}
           </nav>
           <span className="net">{NETWORK_NAME}</span>
           <WalletButton />
         </div>
       </header>
+      <p className="beta-banner" role="note">
+        <strong>Public beta: testnet.</strong> Tokens have no real value.
+      </p>
       {IS_DEMO && (
         <p className="demo-banner" role="note">
           Demo escrow (<span className="mono">{ESCROW.slice(0, 10)}…</span>): refunds after 10 minutes so they can be shown live. The real Qrow escrow keeps the 7-day rule.
@@ -44,19 +54,29 @@ export function App() {
       )}
       <main id="main">
         <Routes>
-          <Route path="/" element={<Navigate to="/send" replace />} />
-          <Route path="/send" element={<SendPage />} />
-          <Route path="/review" element={<ReviewPage />} />
-          <Route path="/receive" element={<ReceivePage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/market" element={<MarketPage />} />
-          <Route path="/staking" element={<StakingPage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/launch" element={<LaunchPage />} />
-          <Route path="*" element={<Navigate to="/send" replace />} />
+          <Route path="/" element={<StartPage />} />
+          <Route path="/send" element={live("send", <SendPage />)} />
+          <Route path="/review" element={live("send", <ReviewPage />)} />
+          <Route path="/receive" element={live("receive", <ReceivePage />)} />
+          <Route path="/portfolio" element={live("portfolio", <PortfolioPage />)} />
+          <Route path="/shop" element={live("shop", <ShopPage />)} />
+          <Route path="/market" element={live("market", <MarketPage />)} />
+          <Route path="/staking" element={live("staking", <StakingPage />)} />
+          <Route path="/news" element={live("news", <NewsPage />)} />
+          <Route path="/launch" element={live("launch", <LaunchPage />)} />
+          <Route path="/how-to-test" element={<HowToTestPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <footer className="footer">
+        <a className="btn btn--quiet" href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
+          Feedback
+        </a>
+        <p className="hint">
+          Qrow is open source (MIT). Testnet only: never send real funds. <NavLink to="/how-to-test">How to test</NavLink>, <NavLink to="/privacy">Privacy and testnet</NavLink>.
+        </p>
+      </footer>
     </>
   );
 }

@@ -1,0 +1,33 @@
+name: Feedback or problem
+description: Tell us what you tried in Qrow (public beta, testnet) and what happened.
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Qrow. No personal details needed. Never paste a recovery code, your 24 words or a private key here.
+  - type: dropdown
+    id: tab
+    attributes:
+      label: Where were you?
+      options: [Start / setup, Send, Receive, Portfolio, NFT Shop, NFT Market, Staking, Market News, Launch, Telegram alerts, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you try, and what happened?
+      placeholder: "I sent 1 QOR to a friend, then..."
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and wallet (optional)
+      placeholder: "Chrome on Windows, QoreX extension + MetaMask"
+  - type: input
+    id: tx
+    attributes:
+      label: Transaction hash, if any (optional)
+      placeholder: "0x..."
