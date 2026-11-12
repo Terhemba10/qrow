@@ -293,3 +293,9 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .badge--warn { border-color: var(--color-warn-rule); color: var(--color-warn); }
 .badge--safe { border-color: var(--color-ok); color: var(--color-ok); }
 .coin .facts dd { overflow-wrap: anywhere; min-width: 0; }
+
+/* Phones: every tab visible without sideways scrolling. */
+@media (max-width: 640px) {
+  .nav { flex-wrap: wrap; overflow-x: visible; row-gap: 0; gap: 0; }
+  .nav a { padding: 0 var(--space-xs); min-height: 40px; font-size: var(--text-sm); }
+}

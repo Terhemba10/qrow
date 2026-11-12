@@ -5,6 +5,7 @@ import { CHAIN, REFUND_TEXT } from "../config/network";
 import { forget, readWindow, unlockPqKey, type PqKey } from "../lib/pq";
 import { signPqAction } from "../lib/pqAction";
 import { IconAlert, IconCheck } from "./Icons";
+import { WindowCloser, WindowOpener } from "./WindowOpener";
 
 export interface PqCall {
   abi: Abi;
@@ -168,10 +169,6 @@ export function PqActionPanel(props: {
     props.onCancel();
   };
 
-  const cmd = props.approve
-    ? `npm.cmd run window -- open --txs 2 --blocks 120 --targets ${props.contract},${props.approve.token}`
-    : `npm.cmd run window -- open --txs 1 --blocks 120 --targets ${props.contract}`;
-
   return (
     <section className="panel signflow" aria-live="polite" aria-label={props.title}>
       <h3>{props.title}</h3>
@@ -199,28 +196,26 @@ export function PqActionPanel(props: {
         </form>
       )}
 
-      {step.s === "window" && (
-        <div className="notice notice--warn">
-          <p className="notice__title">
-            <IconAlert /> {checkedOnce ? "Open an EVM window first" : "Check your EVM window"}
-          </p>
-          {checkedOnce && (
-            <>
-              <p>QoreChain only accepts this inside a window you open with your quantum-safe key. {step.live ? "Your current one is used up or doesn’t cover this contract." : "You have none open."}</p>
-              <p className="label">From the Qrow contracts folder:</p>
-              <pre className="cmd mono">{cmd}</pre>
-            </>
-          )}
+      {step.s === "window" &&
+        (checkedOnce ? (
+          <WindowOpener
+            account={props.sender}
+            txs={props.approve ? 2 : 1}
+            targets={props.approve ? [props.contract, props.approve.token] : [props.contract]}
+            live={step.live}
+            onOpened={() => void run(() => prepare(step.key))}
+            onCancel={abandon}
+          />
+        ) : (
           <div className="row">
             <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void run(() => prepare(step.key))}>
-              {busy ? "Checking…" : checkedOnce ? "I’ve opened it, check again" : "Check and continue"}
+              {busy ? "Checking…" : "Check and continue"}
             </button>
             <button className="btn btn--quiet" type="button" onClick={abandon}>
               Cancel
             </button>
           </div>
-        </div>
-      )}
+        ))}
 
       {step.s === "approve" && props.approve && (
         <div className="field">
@@ -279,6 +274,7 @@ export function PqActionPanel(props: {
           <p>
             Transaction <span className="mono">{step.hash}</span>
           </p>
+          <WindowCloser account={props.sender} />
         </div>
       )}
 

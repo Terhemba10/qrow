@@ -225,3 +225,8 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **On chain:** LANT launched and claimed with PQ signatures (see TEST_NOTES).
 - **Fixed during review:** positive badges used the coral "earned" colour (read as a warning), long contract address overflowed the card, Send didn't re-render when coins loaded.
 - **Checked:** web 33 tests pass, typecheck clean, sloplint 0 FAIL.
+
+## Going public (12 Nov)
+- **User direction:** Qrow is a public testnet launch for anyone, anywhere, on PC or phone, not a demo.
+- **Built with Claude (Opus 5.5) in Claude Code:** in-app EVM windows signed in QoreX (`WindowOpener`, `WindowCloser`; no command line for users), a public Node server (`agent/src/server.ts`: static app, allowlisted GET-only REST relay, agent API, per-IP rate limits, daily AI cap, strict CSP), `Dockerfile`, `docs/DEPLOY.md`, phone layout for 9 tabs.
+- **Checked:** production build served by the new server in the browser with no console errors (News, Staking via the relay, Launch via EVM RPC); relay refuses POST and `..` paths; no sideways scroll at 375 px; agent 7 and web 33 tests pass. Not checked: the Docker build (Docker Desktop wasn't running) and opening a window through QoreX (needs the extension).

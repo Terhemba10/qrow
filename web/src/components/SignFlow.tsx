@@ -8,6 +8,7 @@ import { tokenAddress, type Token } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
 import { clearDraft, type PaymentDraft } from "../lib/draft";
 import { forget, readWindow, signCreate, unlockPqKey, type PqKey, type WindowStatus } from "../lib/pq";
+import { WindowCloser, WindowOpener } from "./WindowOpener";
 import { IconAlert, IconCheck } from "./Icons";
 import { recipientKemKey, sealNotice } from "../lib/seal";
 import { formatUnitsExact } from "../lib/amount";
@@ -176,9 +177,6 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
       if (r === undefined) setStep((s) => (s.s === "sending" ? { s: "failed", message: "" } : s));
     });
 
-  const windowCmd = (need: number) =>
-    `npm.cmd run window -- open --txs ${need} --blocks 120 --targets ${ESCROW}${token.address && need === 2 ? "," + token.address : ""}`;
-
   return (
     <section className="panel signflow" aria-labelledby="sign-title" aria-live="polite">
       <h2 id="sign-title">Confirm and send</h2>
@@ -215,24 +213,14 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
       )}
 
       {step.s === "window" && (
-        <div className="notice notice--warn">
-          <p className="notice__title">
-            <IconAlert /> Open an EVM window first
-          </p>
-          <p>
-            QoreChain only accepts an EVM transaction inside a window you open with your quantum-safe key. Open the smallest one: {(step.status?.live ? "your current one is used up or doesn’t cover the escrow" : "you have none open")}.
-          </p>
-          <p className="label">From the Qrow contracts folder:</p>
-          <pre className="cmd mono">{windowCmd(token.address ? 2 : 1)}</pre>
-          <div className="row">
-            <button className="btn" type="button" aria-busy={busy} onClick={() => void run(() => checkWindow(step.key))}>
-              {busy ? "Checking…" : "I’ve opened it, check again"}
-            </button>
-            <button className="btn btn--quiet" type="button" onClick={abandon}>
-              Cancel
-            </button>
-          </div>
-        </div>
+        <WindowOpener
+          account={sender}
+          txs={token.address ? 2 : 1}
+          targets={token.address ? [ESCROW, token.address] : [ESCROW]}
+          live={!!step.status?.live}
+          onOpened={() => void run(() => checkWindow(step.key))}
+          onCancel={abandon}
+        />
       )}
 
       {step.s === "approve" && (
@@ -292,6 +280,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
           <p>
             The recipient can claim it now. If they don’t within {REFUND_TEXT}, anyone can return it to you. Transaction <span className="mono">{step.hash}</span>.
           </p>
+          <WindowCloser account={sender} />
         </div>
       )}
 

@@ -8,15 +8,16 @@
   "scripts": {
     "start": "tsx --env-file-if-exists=.env src/main.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start:prod": "tsx src/main.ts"
   },
   "dependencies": {
     "@qorechain/sdk": "0.14.0",
-    "viem": "~2.53.1"
+    "viem": "~2.53.1",
+    "tsx": "^4.19.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",
-    "tsx": "^4.19.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.0"
   }

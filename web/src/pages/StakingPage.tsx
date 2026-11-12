@@ -131,7 +131,7 @@ export function StakingPage() {
             <IconAlert /> Staking is signed in QoreX
           </p>
           <p>
-            QoreX isn’t available in this browser, so you can view staking but not sign. Script accounts can stake with the <span className="mono">stake</span> command in the Qrow contracts folder (see its README).
+            QoreX isn’t available in this browser, so you can view staking but not sign. <a href="https://build.qorechain.io/start" target="_blank" rel="noopener noreferrer">Install QoreX</a> to stake.
           </p>
         </div>
       )}

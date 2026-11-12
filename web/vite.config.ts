@@ -10,11 +10,8 @@ const proxy = {
     changeOrigin: true,
     rewrite: (p: string) => p.replace(/^\/lcd-testnet/, ""),
   },
-  // Local agent server (qrow/agent): one AI explanation call per send. Keys stay server-side.
-  "/agent": {
-    target: "http://127.0.0.1:8787",
-    rewrite: (p: string) => p.replace(/^\/agent/, ""),
-  },
+  // Qrow server (qrow/agent, npm run start): the same /agent API it serves in production.
+  "/agent": { target: "http://127.0.0.1:8787" },
 };
 
 export default defineConfig({
