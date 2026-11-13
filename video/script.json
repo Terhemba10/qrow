@@ -1,0 +1,80 @@
+{
+  "title": "Qrow: payments that stay safe after Q-Day",
+  "note": "One clip per shot. `caption` is what viewers read (captions match it exactly). `tts` is what the voice is given: the same words with phonetic spellings so names are said right (Qrow = crow, QoreChain = core-chain, QoreX = core-ex, QOR = core, fUSD = F-U-S-D, ML-DSA spelled out). Target pace about 150 words per minute; `seconds` is the scene's planned length.",
+  "pronunciations": {
+    "Qrow": "Crow",
+    "QoreChain": "Core-chain",
+    "QoreX": "Core-X",
+    "QOR": "core",
+    "fUSD": "F-U-S-D",
+    "ML-DSA-87": "M-L-D-S-A eighty-seven",
+    "ML-DSA": "M-L-D-S-A"
+  },
+  "shots": [
+    {
+      "id": "s01-hook",
+      "seconds": 12,
+      "visual": "Black, then the Qrow logo resolves. Title: Payments that stay safe after Q-Day.",
+      "caption": "One day, quantum computers will break the signatures that protect today's crypto payments. Qrow is built for that day."
+    },
+    {
+      "id": "s02-what",
+      "seconds": 16,
+      "visual": "The Start page on qrow-app.vercel.app, slow scroll over 'What you can try'.",
+      "caption": "Qrow is an escrow payments app on QoreChain testnet. Every payment waits safely in escrow until it's claimed, and every step is signed with a quantum-safe key, ML-DSA-87."
+    },
+    {
+      "id": "s03-connect-faucet",
+      "seconds": 15,
+      "visual": "Press Connect QoreX in the header, approve in QoreX. Open the Faucet tab: the qor1 address, Copy, Open QoreChain Faucet, then 'Tokens received'.",
+      "caption": "You connect QoreX once. New here? The Faucet tab gets you free test QOR and fUSD from QoreChain's official faucet."
+    },
+    {
+      "id": "s04-swap",
+      "seconds": 20,
+      "visual": "Swap 1 QOR for fUSD: live quote, Review swap, the confirm panel, one approval in QoreX, the receipt with its hash.",
+      "caption": "Swap trades on QoreChain's built-in exchange. Qrow quotes from the chain itself, checks your balance and the price impact before you sign, then asks for one approval in QoreX."
+    },
+    {
+      "id": "s05-send",
+      "seconds": 26,
+      "requires": "QoreX signs the combined approval (owner's QoreX tests 4 and 5). If not, record s05-alt instead.",
+      "visual": "Send 1 fUSD: paste an address, Review payment, the big-address confirm sheet, Send in QoreX, one approval, the fingerprint prompt, the receipt.",
+      "caption": "Sending is two clicks and one approval. Qrow checks the address for lookalikes, then the money waits in escrow for up to seven days. The first time, that same approval also sets up this device's quantum-safe key. Nothing to write down, nothing to save."
+    },
+    {
+      "id": "s06-claim",
+      "seconds": 14,
+      "requires": "Same as s05.",
+      "visual": "Second browser as the recipient: Receive, Claim, Claim in QoreX, receipt.",
+      "caption": "The recipient claims it with their own quantum-safe signature. If nobody claims it in time, it goes back to the sender."
+    },
+    {
+      "id": "s07-verify",
+      "seconds": 20,
+      "visual": "Press Verify on testnet on a receipt: the Verify page shows Confirmed, the signer, 'ML-DSA-87 hybrid signature, verified by the chain', the decoded step.",
+      "caption": "Every action ends with a receipt and its transaction hash. Paste any hash into Verify, and Qrow reads it straight from the testnet: who signed, the quantum-safe check the chain ran, and what the contract did."
+    },
+    {
+      "id": "s08-more",
+      "seconds": 12,
+      "visual": "Quick cuts: Portfolio receipts, NFT Shop, Staking, Launch.",
+      "caption": "Portfolio, NFTs, staking and a coin launcher with anti-scam checks round it out."
+    },
+    {
+      "id": "s09-end",
+      "seconds": 12,
+      "visual": "End card: Qrow logo, qrow-app.vercel.app, github.com/Terhemba10/qrow, 'Built in Doha, Qatar', 'Public beta: QoreChain testnet, tokens have no value', 'Voiceover: AI-generated'.",
+      "caption": "Qrow. Payments that stay safe after Q-Day. Built in Doha, Qatar, for QoreChain's Build Before Q-Day fest. Try it free on testnet."
+    }
+  ],
+  "alternates": [
+    {
+      "id": "s05-alt",
+      "seconds": 22,
+      "use_if": "Send and Receive are still 'Coming soon' when recording.",
+      "visual": "The Send tab's form and the Verify page reading payment QRW-PAY-000003 from the testnet smoke test.",
+      "caption": "Payments go live as soon as QoreX can approve them in one step. They already run on testnet: here is a real Qrow payment, made and cancelled with one approval each, checked straight from the chain."
+    }
+  ]
+}

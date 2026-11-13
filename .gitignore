@@ -38,3 +38,7 @@ brand/node_modules/
 # Watcher runtime state (Telegram chat ids and subscriptions)
 watcher/data/
 .vercel
+
+# Demo video: generated audio and renders stay local (the script is in git)
+video/audio/
+video/out/
