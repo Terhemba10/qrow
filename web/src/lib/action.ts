@@ -129,7 +129,18 @@ export async function preflight(client: PublicClient, plan: ActionPlan): Promise
 const windowTargets = (plan: ActionPlan, firstTime: boolean, needsApproval: boolean): Address[] =>
   [...new Set([...(firstTime ? [KEYS] : []), ...(needsApproval && plan.approve ? [plan.approve.token] : []), plan.contract].map((t) => t.toLowerCase() as Address))];
 
-export type Phase = "qorex" | "device" | "setup" | "convert" | "sending";
+/**
+ * What a QoreX refusal means. Careful: message type URLs contain "pqc" (/qorechain.pqc.v1.MsgOpenEVMWindow),
+ * so "can't show /qorechain.pqc…" is a display refusal, not a missing key (bug found in the owner's demo run).
+ */
+export function qorexRefusal(text: string): "cancelled" | "no-key" | "cannot-show" | "other" {
+  if (/reject|denied|cancel/i.test(text)) return "cancelled";
+  if (/cannot show|can'?t show|not supported|unsupported|does not support/i.test(text)) return "cannot-show";
+  if (/(pqc|quantum[- ]safe)?\s*(key|account)[^.]{0,30}not (registered|found)|no (pqc|quantum-safe) key|not registered/i.test(text)) return "no-key";
+  return "other";
+}
+
+export type Phase ="qorex" | "device" | "setup" | "convert" | "sending";
 
 /** Thrown when QoreX won't open the window from the page: the one blocker, with a manual route. */
 export class WindowBlocker extends XvmError {
@@ -168,12 +179,20 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
         hash = (await signInQorex(bundle, "Qrow", 250_000 * bundle.length + 100_000)).txHash;
       } catch (e) {
         const t = e instanceof Error ? e.message : String(e);
-        if (/reject|denied|cancel/i.test(t)) throw new XvmError("You cancelled in QoreX. Nothing was sent.");
-        if (/pqc|quantum|not registered/i.test(t)) throw new XvmError("QoreX hasn’t registered your quantum-safe key yet. In QoreX, send yourself 0.01 QOR once, then try again.");
-        // QoreX may refuse to show one message type: send what it can, then ask for the window by hand.
+        const kind = qorexRefusal(t);
+        if (kind === "cancelled") throw new XvmError("You cancelled in QoreX. Nothing was sent.");
+        if (kind === "no-key") throw new XvmError("QoreX hasn’t registered your quantum-safe key yet. In QoreX, send yourself 0.01 QOR once, then try again.");
+        // QoreX refused to show one message type (e.g. the window): send what it can, then ask for the window by hand.
         const rest = bundle.filter((m) => m !== window);
         if (window && rest.length) {
-          const r = await signInQorex(rest, "Qrow", 250_000 * rest.length + 100_000);
+          let r: { txHash: string };
+          try {
+            r = await signInQorex(rest, "Qrow", 250_000 * rest.length + 100_000);
+          } catch (e2) {
+            const t2 = e2 instanceof Error ? e2.message : String(e2);
+            if (qorexRefusal(t2) === "cancelled") throw new XvmError("You cancelled in QoreX. Nothing was sent.");
+            throw new XvmError(`QoreX can’t approve Qrow’s contract permission yet, so this action can’t run from Qrow today. Swaps and staking work. (QoreX said: ${t2.slice(0, 120)})`);
+          }
           await waitForNativeTx(r.txHash);
           steps.push({ label: "QoreX: device fees and permission", hash: r.txHash });
         }
