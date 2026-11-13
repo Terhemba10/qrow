@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { lazy, Suspense, type ReactElement } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
@@ -17,9 +17,11 @@ import { SendPage } from "./pages/SendPage";
 import { ShopPage } from "./pages/ShopPage";
 import { StakingPage } from "./pages/StakingPage";
 import { StartPage } from "./pages/StartPage";
-import { QorexCheckPage } from "./pages/QorexCheckPage";
 
 captureReferral(window.location.search);
+
+// Dev-only research page: import.meta.env.DEV is false in production builds, so this chunk isn't emitted.
+const QorexCheckPage = import.meta.env.DEV ? lazy(() => import("./pages/QorexCheckPage").then((m) => ({ default: m.QorexCheckPage }))) : null;
 
 const live = (id: TabId, page: ReactElement) => (isLive(id) ? page : <ComingSoon id={id} />);
 
@@ -46,7 +48,7 @@ export function App() {
         </div>
       </header>
       <p className="beta-banner" role="note">
-        <strong>Public beta: testnet.</strong> Tokens have no real value.
+        <strong>Public beta: QoreChain testnet,</strong> tokens have no value.
       </p>
       {IS_DEMO && (
         <p className="demo-banner" role="note">
@@ -67,7 +69,16 @@ export function App() {
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
           <Route path="/how-to-test" element={<HowToTestPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
-          {import.meta.env.DEV && <Route path="/dev/qorex-check" element={<QorexCheckPage />} />}
+          {QorexCheckPage && (
+            <Route
+              path="/dev/qorex-check"
+              element={
+                <Suspense fallback={null}>
+                  <QorexCheckPage />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

@@ -5,6 +5,7 @@ import type { Address } from "viem";
 import { displayAmount } from "../lib/amount";
 import { MIN_QOR, useReadiness, type Item, type ItemId } from "../lib/readiness";
 import { DeviceSetup } from "./DeviceSetup";
+import { SIGNING_LIVE } from "../config/tabs";
 import { IconAlert, IconCheck, IconInfo } from "./Icons";
 
 export const QOREX_URL = "https://qorechain.io/qorex";
@@ -92,6 +93,7 @@ export function Readiness({ compact = false }: { compact?: boolean }) {
       case "chainKey":
         return <p>QoreX registers your quantum-safe key with your first transfer. In QoreX, send yourself a tiny amount (0.01 QOR), then come back here.</p>;
       case "device":
+        if (!SIGNING_LIVE) return <p>Coming soon: payments, claims and other contract actions open here as soon as QoreX can authorise them. Swap, Staking and Market News don’t need this step.</p>;
         return me ? <DeviceSetup account={me as Address} state={device} onDone={refetch} /> : null;
     }
   };

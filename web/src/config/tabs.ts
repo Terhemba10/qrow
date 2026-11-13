@@ -16,7 +16,12 @@ export const TABS: { id: TabId; path: string; label: string; blurb: string }[] =
   { id: "launch", path: "/launch", label: "Launch", blurb: "Launch a testnet memecoin with anti-scam rules built in." },
 ];
 
-const DEFAULT_LIVE: TabId[] = ["send", "receive", "portfolio", "news"];
+/**
+ * Live by default in the public beta (13 Nov): only what works for a normal QoreX user today. Send and
+ * Receive (and every contract action) go live once QoreX passes the grant and window checks for the
+ * device-account fallback; set VITE_LIVE_TABS then.
+ */
+const DEFAULT_LIVE: TabId[] = ["portfolio", "news"];
 const fromEnv = (import.meta.env.VITE_LIVE_TABS as string | undefined)
   ?.split(",")
   .map((s) => s.trim())
@@ -26,3 +31,6 @@ export const isLive = (id: TabId) => LIVE.has(id);
 
 /** Where feedback goes: a GitHub issue form (no personal data needed). */
 export const FEEDBACK_URL = "https://github.com/Terhemba10/qrow/issues/new?template=feedback.yml";
+
+/** Contract actions (device setup, send, claim, mint, …) are on only when Send is live. */
+export const SIGNING_LIVE = isLive("send");
