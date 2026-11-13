@@ -56,7 +56,7 @@ def main():
     timing = json.loads((HERE / "audio" / "shots" / "timing.json").read_text(encoding="utf-8"))
     edit = json.loads((HERE / "edit.json").read_text(encoding="utf-8"))["shots"]
     TMP.mkdir(parents=True, exist_ok=True)
-    parts, report, missing = [], [], []
+    parts, report, missing, edl = [], [], [], []
     total = 0.0
     for shot in shot_list(script):
         sid = shot["id"]
@@ -83,8 +83,14 @@ def main():
                     cut = min(overflow, slots[i] - 1.5)
                     slots[i] -= cut
                     overflow -= cut
+        scene_edl = {"id": sid, "start": round(total, 3), "dur": round(scene, 3), "segments": []}
+        edl.append(scene_edl)
+        seg_start = total
         for i, (s, slot) in enumerate(zip(segs, slots)):
             out = TMP / f"{sid}-{i}.mp4"
+            entry = {"file": s["file"], "segment": out.name, "start": round(seg_start, 3), "slot": round(slot, 3), "in": s.get("in", 0.0), "speed": 1.0, "owner": bool(s.get("owner")), "missing": s["avail"] is None}
+            scene_edl["segments"].append(entry)
+            seg_start += slot
             if s["avail"] is None:
                 slate(out, slot, f"Owner recording: {s['file']}  ({slot:.0f} s)")
                 report.append(f"{sid}: slate for {s['file']} ({slot:.1f} s)")
@@ -94,10 +100,15 @@ def main():
                     speed = min(MAX_SPEED, s["avail"] / slot)
                 take = min(s["avail"], slot * speed)
                 segment(out, RAW / s["file"], s.get("in", 0.0), take, slot, speed)
+                entry["speed"] = round(speed, 4)
                 note = f"speed x{speed:.2f}" if speed > 1.001 else ("trimmed" if s["avail"] > slot + 0.05 else ("held last frame" if s["avail"] < slot - 0.05 else "exact"))
                 report.append(f"{sid}: {s['file']} {slot:.1f} s ({note})")
             parts.append(out)
         total += scene
+
+    # The edit decision list for the HyperFrames build: where every segment sits, so recorded events
+    # (clip time) map to composition time: t = start + (t_clip - in) / speed.
+    (OUT / ("edl-alt.json" if ALT else "edl.json")).write_text(json.dumps({"total": total, "scenes": edl}, indent=1), encoding="utf-8")
 
     concat = TMP / "list.txt"
     concat.write_text("".join(f"file '{p.as_posix()}'\n" for p in parts), encoding="utf-8")

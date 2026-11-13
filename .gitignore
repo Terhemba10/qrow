@@ -46,3 +46,6 @@ video/.venv/
 video/raw/
 video/hf/renders/
 video/hf/node_modules/
+video/hf/assets/
+video/hf/.hyperframes/
+video/hf/snapshots/

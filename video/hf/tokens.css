@@ -1,0 +1,41 @@
+/* Qrow demo tokens: Kallaway "aurora glass" (Herk Edit Kit style library) re-tinted to Qrow's brand. */
+/* Fonts: General Sans via local @font-face in index.html (git-ignored files); Geist Mono embedded by the HyperFrames compiler by name. */
+
+:root {
+  --canvas: #14162c;
+  --canvas-deep: #0d0f22;
+  --text: #eef0ff;
+  --text-dim: #b9bde0;
+  --text-faint: rgba(238, 240, 255, 0.42);
+  --accent: #3ef0d2;
+  --accent-2: #9b4dff;
+  --ok: #4ade80;
+  --accent-rgb: 62, 240, 210;
+  --accent2-rgb: 155, 77, 255;
+  --gradient: linear-gradient(90deg, var(--accent), var(--accent-2));
+
+  --font-display: "General Sans", system-ui, sans-serif;
+  --font-body: "General Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --size-title: 84px;
+  --size-headline: 54px;
+  --size-body: 32px;
+  --size-label: 26px;
+  --size-tiny: 20px;
+
+  --glow-accent: 0 0 22px rgba(var(--accent-rgb), 0.55), 0 0 56px rgba(var(--accent-rgb), 0.3);
+  --textglow: 0 0 18px rgba(238, 240, 255, 0.35), 0 0 40px rgba(var(--accent-rgb), 0.25);
+
+  --glass-bg-dark: rgba(13, 15, 34, 0.78);
+  --glass-border: rgba(238, 240, 255, 0.16);
+  --glass-hi: rgba(238, 240, 255, 0.26);
+  --glass-blur: blur(18px) saturate(135%);
+  --glass-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+
+  --radius: 26px;
+  --radius-sm: 14px;
+  --pad: 80px;
+
+  --vignette: radial-gradient(125% 125% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+}
