@@ -409,13 +409,13 @@ const units = (raw: bigint, decimals: number) => {
 };
 
 /** Turn a "Token" address and raw "Amount" into "1 XLANE" (token read from chain when not in config). */
-async function withTokenNames(client: PublicClient, steps: Step[]): Promise<void> {
+export async function withTokenNames(client: PublicClient, steps: Step[]): Promise<void> {
   for (const s of steps) {
     const tok = s.lines.find((l) => l.name === "Token" && /^0x[0-9a-fA-F]{40}$/.test(l.value));
     if (!tok) continue;
     const info = await tokenInfo(client, tok.value as Address);
     if (!info) continue;
-    const amt = s.lines.find((l) => l.name === "Amount" && /^d+$/.test(l.value));
+    const amt = s.lines.find((l) => l.name === "Amount" && /^\d+$/.test(l.value));
     if (amt) amt.value = `${units(BigInt(amt.value), info.decimals)} ${info.symbol}`;
     tok.value = `${info.symbol} (${tok.value})`;
   }

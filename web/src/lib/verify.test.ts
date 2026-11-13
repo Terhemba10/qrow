@@ -2,7 +2,7 @@ import { encodeFunctionData, erc20Abi } from "viem";
 import { describe, expect, it } from "vitest";
 import { qrowKeysAbi } from "../abi/QrowKeys";
 import { KEYS } from "../config/contracts";
-import { describeCall, describeNative, nftRef, parseVerifyInput, paymentRef } from "./verify";
+import { describeCall, describeNative, nftRef, parseVerifyInput, paymentRef, withTokenNames } from "./verify";
 
 const H = "4A676D5F2346E9958211407068819C534FBB87164A11273B52F09E2DF7C8E3CD";
 const FUSD = "0x97143B771D34ddb9130b807b135Ae675A5a963CA";
@@ -56,5 +56,13 @@ describe("describeNative", () => {
     expect(r.signer).toBe("qor1device");
     expect(r.quantumSafe).toEqual({ algorithm: "ML-DSA-87 (Dilithium5)", verified: true });
     expect(r.steps[0]).toMatchObject({ title: "Remove a device key", asUser: "qor1user" });
+  });
+});
+
+describe("withTokenNames", () => {
+  it("shows a step's raw amount in the token's own units (regression: 10000 → 0.01 fUSD)", async () => {
+    const steps = [{ title: "Create a payment", qrow: true, lines: [{ name: "Token", value: FUSD }, { name: "Amount", value: "10000" }] }];
+    await withTokenNames({} as never, steps);
+    expect(steps[0].lines).toEqual([{ name: "Token", value: `fUSD (${FUSD})` }, { name: "Amount", value: "0.01 fUSD" }]);
   });
 });
