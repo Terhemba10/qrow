@@ -123,7 +123,7 @@ export function earlyUnlockQuote(lock: Lock, penaltyBps: number, nowSec: number)
 }
 
 // ---------------------------------------------------------------- signing in QoreX
-const registry = qorechainRegistry();
+export const registry = qorechainRegistry();
 type Eo = { typeUrl: string; value: unknown };
 
 export function qorexAvailable(): boolean {

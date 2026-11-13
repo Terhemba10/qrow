@@ -86,6 +86,7 @@ Every library below is used under its own licence; Qrow's own code is MIT.
 | forge-std | MIT / Apache-2.0 | Contract tests |
 | viem, wagmi, RainbowKit, TanStack Query, React, React Router | MIT | Web app |
 | qrcode | MIT | QR codes |
+| @bufbuild/protobuf | Apache-2.0 / BSD-3-Clause | Encoding the token-convert messages the SDK doesn't build |
 | Anthropic TypeScript SDK | Apache-2.0 | The one AI explanation per send |
 | tsx | MIT | Running the servers |
 | CosmJS (`@cosmjs/stargate`) | Apache-2.0 | Native-lane scripts |
