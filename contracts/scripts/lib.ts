@@ -89,6 +89,7 @@ export async function broadcastNative(
   mode: "hybrid" | "classical",
   messages: Parameters<EthNativeSigner["sign"]>[0]["messages"],
   memo?: string,
+  gas?: number,
 ): Promise<string> {
   const net = network();
   const { accountNumber, sequence } = await accountSequence(net.rest, acc.cosmos);
@@ -99,7 +100,12 @@ export async function broadcastNative(
       chainId: net.chainId,
       accountNumber,
       sequence,
-      fee: messages.length > 1 ? { amount: [{ denom: "uqor", amount: String(100_000 * messages.length) }], gas: String(800_000 * messages.length) } : FEE,
+      // The chain minimum is 0.1 uqor per gas and the whole limit is charged, so callers size it closely.
+      fee: gas
+        ? { amount: [{ denom: "uqor", amount: String(Math.ceil(gas / 10)) }], gas: String(gas) }
+        : messages.length > 1
+          ? { amount: [{ denom: "uqor", amount: String(100_000 * messages.length) }], gas: String(800_000 * messages.length) }
+          : FEE,
       messages,
       ...(memo ? { memo } : {}),
     });

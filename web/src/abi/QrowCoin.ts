@@ -411,25 +411,6 @@ export const qrowCoinAbi = [
   },
   {
     "type": "function",
-    "name": "pqKeyOf",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "pqMessage",
     "inputs": [
       {

@@ -1,56 +1,109 @@
 {
   "chain": "qorechain-diana",
   "evmChainId": 9800,
-  "version": 2,
-  "QrowKeys": "0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8",
-  "QrowEscrow": "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da",
-  "QrowEscrowDemo": "0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09",
-  "QrowGenesis": "0x73fe0fb443962c1e1503f57aba3cc6e895117287",
-  "QrowMarket": "0xc9c9dab84f368d879aa8f96b5dbf5c22062da373",
-  "QrowCoinFactory": "0x7ff6a8a047d9558c6b152a3cffe1adea19407836",
-  "v2": {
-    "deployedAt": "2026-11-12T21:34:22.324Z",
+  "version": 3,
+  "QrowKeys": "0xa5242cb348eddef0deb9599f81e55a64d186fd14",
+  "QrowEscrow": "0x332937d1918a0f85eacc5167ab87ba91c48a4655",
+  "QrowEscrowDemo": "0xe27ad71e9b476518240e71ff4a4d97e1f93264f4",
+  "QrowGenesis": "0x5f03380be788bbd17eb3529b77ee27bed879602d",
+  "QrowMarket": "0x10e2e663ebb1fdd290b8cabbe6e2634852d65fa9",
+  "QrowCoinFactory": "0x764a8586e7a7e9e2b511bf79d9f9c8b3ae7e7c5e",
+  "v3": {
+    "deployedAt": "2026-11-12T22:48:43.706Z",
     "keys": {
-      "address": "0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8",
-      "tx": "0x9a0ca8bf047a90bc9d7881c4ef6edd8864ce964709d2fe3df07a48bbea00a073",
-      "block": 9974920,
-      "gas": 1625081
+      "address": "0xa5242cb348eddef0deb9599f81e55a64d186fd14",
+      "tx": "0x3a4ea1e8452cbd0c8c385da881b1b344fb269dda98ceda296a507fd2a72f8b4d",
+      "block": 9978059,
+      "gas": 1927794
     },
     "escrow": {
-      "address": "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da",
-      "tx": "0x5ff16c40a2ee2c4b67384d75a1d4655425fd81bd9e59ec29fa5f75fc037cc6ca",
-      "block": 9974922,
-      "gas": 2383619
+      "address": "0x332937d1918a0f85eacc5167ab87ba91c48a4655",
+      "tx": "0xd92b3cd9f704a67b4e7dfd1de814e7c18250f198157546a72c4f3c405c861101",
+      "block": 9978060,
+      "gas": 2441945
     },
     "demo": {
-      "address": "0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09",
-      "tx": "0xcf0578377f74e1e31fe4c4771d95cfa4b1d162e1804d3a077274e2536b906eb2",
-      "block": 9974924,
-      "gas": 2383175
+      "address": "0xe27ad71e9b476518240e71ff4a4d97e1f93264f4",
+      "tx": "0xf64640af68d0054d36e13ac10343d024636bda4c78b8b2b675d38a100210caf3",
+      "block": 9978061,
+      "gas": 2441501
     },
     "genesis": {
-      "address": "0x73fe0fb443962c1e1503f57aba3cc6e895117287",
-      "tx": "0x5b38b603c15c8457342acdff78996a37a3a179b9763339d1885d08643efce549",
-      "block": 9974926,
-      "gas": 2967974
+      "address": "0x5f03380be788bbd17eb3529b77ee27bed879602d",
+      "tx": "0x8fc8d2f4d94dbdccc3fc6a7059c40c1ebf2e3e4029f5ea6bea79f15ed650e20b",
+      "block": 9978062,
+      "gas": 3036208
     },
     "market": {
-      "address": "0xc9c9dab84f368d879aa8f96b5dbf5c22062da373",
-      "tx": "0x93b330c200800b2e4618b872e8d1231238535f72fdc79f6a19b3c72ad0698866",
-      "block": 9974928,
-      "gas": 2024592
+      "address": "0x10e2e663ebb1fdd290b8cabbe6e2634852d65fa9",
+      "tx": "0x6698dee8c26947a20fe8ba96484b239f8d06b7c75ad4e941147d7e4d31c57471",
+      "block": 9978063,
+      "gas": 2091366
     },
     "factory": {
-      "address": "0x7ff6a8a047d9558c6b152a3cffe1adea19407836",
-      "tx": "0xee52e2270c857913c85d7cd63b1b15ad164c8a24cde76b1f84e28fc0b36578bb",
-      "block": 9974930,
-      "gas": 4101232
+      "address": "0x764a8586e7a7e9e2b511bf79d9f9c8b3ae7e7c5e",
+      "tx": "0xdeaf2a52e39e83a0b0e64aad247caa8d10a53e681c2b302b7d1f6843cf44c86e",
+      "block": 9978065,
+      "gas": 4249004
     },
     "genesisPrices": {
       "qorWei": "1000000000000000000",
       "fusdUnits": "1000000"
     },
     "beneficiary": "0xD517458c6b083B964342C604D35Be6afC2dCcb37"
+  },
+  "v2": {
+    "QrowKeys": "0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8",
+    "QrowEscrow": "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da",
+    "QrowEscrowDemo": "0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09",
+    "QrowGenesis": "0x73fe0fb443962c1e1503f57aba3cc6e895117287",
+    "QrowMarket": "0xc9c9dab84f368d879aa8f96b5dbf5c22062da373",
+    "QrowCoinFactory": "0x7ff6a8a047d9558c6b152a3cffe1adea19407836",
+    "details": {
+      "deployedAt": "2026-11-12T21:34:22.324Z",
+      "keys": {
+        "address": "0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8",
+        "tx": "0x9a0ca8bf047a90bc9d7881c4ef6edd8864ce964709d2fe3df07a48bbea00a073",
+        "block": 9974920,
+        "gas": 1625081
+      },
+      "escrow": {
+        "address": "0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da",
+        "tx": "0x5ff16c40a2ee2c4b67384d75a1d4655425fd81bd9e59ec29fa5f75fc037cc6ca",
+        "block": 9974922,
+        "gas": 2383619
+      },
+      "demo": {
+        "address": "0xc985a2bf1e87409ff63433e29d2e9a8b891a1d09",
+        "tx": "0xcf0578377f74e1e31fe4c4771d95cfa4b1d162e1804d3a077274e2536b906eb2",
+        "block": 9974924,
+        "gas": 2383175
+      },
+      "genesis": {
+        "address": "0x73fe0fb443962c1e1503f57aba3cc6e895117287",
+        "tx": "0x5b38b603c15c8457342acdff78996a37a3a179b9763339d1885d08643efce549",
+        "block": 9974926,
+        "gas": 2967974
+      },
+      "market": {
+        "address": "0xc9c9dab84f368d879aa8f96b5dbf5c22062da373",
+        "tx": "0x93b330c200800b2e4618b872e8d1231238535f72fdc79f6a19b3c72ad0698866",
+        "block": 9974928,
+        "gas": 2024592
+      },
+      "factory": {
+        "address": "0x7ff6a8a047d9558c6b152a3cffe1adea19407836",
+        "tx": "0xee52e2270c857913c85d7cd63b1b15ad164c8a24cde76b1f84e28fc0b36578bb",
+        "block": 9974930,
+        "gas": 4101232
+      },
+      "genesisPrices": {
+        "qorWei": "1000000000000000000",
+        "fusdUnits": "1000000"
+      },
+      "beneficiary": "0xD517458c6b083B964342C604D35Be6afC2dCcb37"
+    },
+    "note": "v2 (single app key per account). Superseded by v3 (device keys) on 2026-11-12"
   },
   "v1": {
     "QrowEscrow": "0xcf36b836872a0b277919eac1fb976722e32d824b",

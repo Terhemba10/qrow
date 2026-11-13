@@ -1,7 +1,7 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
-import { encodeAbiParameters, keccak256, parseEventLogs, toBytes, type Address } from "viem";
+import { encodeAbiParameters, keccak256, toBytes, type Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { qrowCoinAbi } from "../abi/QrowCoin";
 import { qrowCoinFactoryAbi } from "../abi/QrowCoinFactory";
@@ -152,7 +152,7 @@ export function LaunchPage() {
                       pq={{ actionName: "ACTION_CLAIM", paramsHash: keccak256(encodeAbiParameters([{ type: "address" }], [c.address])) }}
                       build={(auth) => ({ abi: qrowCoinAbi, functionName: "claim", args: [auth!.validUntil, auth!.signature] })}
                       describeSimulation={(r) => `You receive ${whole(r as bigint)} ${c.symbol}.`}
-                      confirmLabel="Sign in wallet and claim"
+                      confirmLabel="Confirm in QoreX and claim"
                       onDone={() => void coins.refetch()}
                       onCancel={() => setClaiming(undefined)}
                     />
@@ -237,11 +237,11 @@ export function LaunchPage() {
               pq={{ actionName: "ACTION_LAUNCH", paramsHash }}
               build={(auth) => ({ abi: qrowCoinFactoryAbi, functionName: "launch", args: [form.name, form.symbol, supply, bps, form.description, auth!.validUntil, auth!.signature] })}
               describeSimulation={(r) => `The factory creates ${form.symbol} at ${String(r)}.`}
-              confirmLabel="Sign in wallet and launch"
-              onDone={async (hash) => {
-                const rc = await client!.getTransactionReceipt({ hash });
-                const [ev] = parseEventLogs({ abi: qrowCoinFactoryAbi, logs: rc.logs, eventName: "CoinLaunched" });
-                if (ev) setLaunched({ coin: ev.args.coin, symbol: form.symbol });
+              confirmLabel="Confirm in QoreX and launch"
+              onDone={async () => {
+                const n = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coinCount" });
+                const [coin] = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coins", args: [n - 1n, 1n] });
+                if (coin) setLaunched({ coin, symbol: form.symbol });
                 setForm({ name: "", symbol: "", supply: "1000000", creatorPct: "0", description: "" });
                 void coins.refetch();
               }}

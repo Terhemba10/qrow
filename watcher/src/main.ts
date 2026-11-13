@@ -19,7 +19,7 @@ const WS = process.env.QROW_EVM_WS ?? "wss://evm-ws-testnet.qore.host";
 const HTTP = process.env.QROW_EVM_HTTP ?? "https://evm-testnet.qore.host";
 const REST = process.env.QROW_REST ?? "https://api-testnet.qore.host";
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
-const DEPLOY_BLOCK = 9_974_922n; // QrowEscrow v2 (app key)
+const DEPLOY_BLOCK = 9_978_060n; // QrowEscrow v3 (device keys)
 const DATA = new URL("../data/", import.meta.url);
 
 const TOKENS: Record<string, { symbol: string; decimals: number }> = {

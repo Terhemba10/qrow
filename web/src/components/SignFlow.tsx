@@ -1,131 +1,93 @@
 import { useState } from "react";
-import { BaseError, ContractFunctionRevertedError, erc20Abi, parseEventLogs, type Address, type Hex } from "viem";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { BaseError, ContractFunctionRevertedError, encodeFunctionData, erc20Abi, type Address, type Hex } from "viem";
+import { usePublicClient } from "wagmi";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
 import { rememberRecipient } from "../agent/recipients";
 import { CHAIN, ESCROW, REFUND_SECONDS, REFUND_TEXT } from "../config/network";
 import { tokenAddress, type Token } from "../config/tokens";
-import { displayAmount } from "../lib/amount";
+import { displayAmount, formatUnitsExact } from "../lib/amount";
+import { unlockForSigning, withSlot } from "../lib/appKey";
 import { clearDraft, type PaymentDraft } from "../lib/draft";
-import { forget, readWindow, signCreate, unlockPqKey, type PqKey, type WindowStatus } from "../lib/pq";
-import { WindowCloser, WindowOpener } from "./WindowOpener";
-import { IconAlert, IconCheck } from "./Icons";
+import { forget, signCreate } from "../lib/pq";
 import { recipientKemKey, sealNotice } from "../lib/seal";
-import { formatUnitsExact } from "../lib/amount";
+import { sendViaQorex, XvmError } from "../lib/xvm";
+import { IconAlert, IconCheck } from "./Icons";
 
 type Step =
-  | { s: "key" }
-  | { s: "window"; key: PqKey; status?: WindowStatus }
-  | { s: "approve"; key: PqKey }
-  | { s: "review"; key: PqKey; args: CreateArgs; simulatedId: bigint }
-  | { s: "sending"; hash?: Hex }
-  | { s: "done"; id: bigint; hash: Hex }
-  | { s: "failed"; message: string };
+  | { s: "start" }
+  | { s: "approve" }
+  | { s: "review"; args: CreateArgs; simulatedId: bigint }
+  | { s: "sending" }
+  | { s: "done"; id: bigint; hash: string };
 
 type CreateArgs = readonly [Address, Address, bigint, number, Hex, bigint, Hex];
 
 const ESCROW_ERRORS: Record<string, string> = {
   BadPqSignature: "The quantum-safe signature didn’t verify. Start again.",
   SignatureExpired: "The quantum-safe signature expired. Sign again.",
-  NoPqKey: "Set up your Qrow key on the Start page first.",
+  NoPqKey: "Set up this device on the Start page first.",
   OverPaymentLimit: "This is above your limit per payment.",
   OverDailyLimit: "This is above your daily limit.",
   InvalidRecipient: "The recipient address isn’t allowed.",
   NonStandardToken: "This token doesn’t transfer exact amounts, so the escrow refuses it.",
-  TransferFailed: "The token transfer failed. Check your balance and approval.",
-  BadValue: "The amount of QOR sent doesn’t match the payment.",
+  TransferFailed: "The token transfer failed. Check your balance.",
 };
 
-function explain(e: unknown): string {
+export function explainSendError(e: unknown): string {
+  if (e instanceof XvmError) return e.message;
   if (e instanceof BaseError) {
     const rev = e.walk((x) => x instanceof ContractFunctionRevertedError);
-    if (rev instanceof ContractFunctionRevertedError && rev.data?.errorName) {
-      return ESCROW_ERRORS[rev.data.errorName] ?? `The escrow refused it (${rev.data.errorName}).`;
-    }
-    if (/User rejected|denied/i.test(e.message)) return "You cancelled the request in your wallet. Nothing was sent.";
-    if (/not yet supported/i.test(e.message)) {
-      return "This wallet can’t sign EVM transactions yet (QoreX adds this soon). Connect an injected wallet that holds this account.";
-    }
-    if (/window|authori[sz]ation/i.test(e.message)) return "The chain refused it: your EVM window is closed or used up. Open a new one and try again.";
+    if (rev instanceof ContractFunctionRevertedError && rev.data?.errorName) return ESCROW_ERRORS[rev.data.errorName] ?? `The contract refused it (${rev.data.errorName}).`;
     return e.shortMessage;
   }
+  if (e instanceof DOMException && e.name === "NotAllowedError") return "You cancelled the passkey prompt. Nothing was signed.";
   return e instanceof Error ? e.message : "Something went wrong.";
 }
 
+/**
+ * Confirm and send a payment. Every transaction is signed in QoreX (a MsgCrossVMCall, no MetaMask, no
+ * EVM window); the escrow's quantum-safe authorisation is signed by this device's key after a
+ * passkey prompt. Nothing moves without the user confirming in QoreX.
+ */
 export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; draft: PaymentDraft; token: Token; onCancel: () => void }) {
   const client = usePublicClient({ chainId: CHAIN.id })!;
-  const { data: wallet } = useWalletClient();
-  const [step, setStep] = useState<Step>({ s: "key" });
-  const [code, setCode] = useState("");
+  const [step, setStep] = useState<Step>({ s: "start" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const amount = BigInt(draft.amountUnits);
   const tokenAddr = tokenAddress(token);
 
-  const needsApproval = async () =>
-    !!token.address &&
-    (await client.readContract({ address: token.address, abi: erc20Abi, functionName: "allowance", args: [sender, ESCROW] })) < amount;
-
-  async function run<T>(fn: () => Promise<T>) {
+  async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError(undefined);
     try {
-      return await fn();
+      await fn();
     } catch (e) {
-      setError(explain(e));
+      setError(explainSendError(e));
     } finally {
       setBusy(false);
     }
   }
 
-  const abandon = () => {
-    if ("key" in step) forget((step as { key: PqKey }).key);
-    setCode("");
-    onCancel();
-  };
+  const needsApproval = async () => (await client.readContract({ address: tokenAddr, abi: erc20Abi, functionName: "allowance", args: [sender, ESCROW] })) < amount;
 
-  // 1. Derive the quantum-safe key from the recovery code (memory only).
-  const unlock = () =>
+  const begin = () =>
     run(async () => {
-      const r = await unlockPqKey(client, sender, code);
-      setCode("");
-      if (!r.ok) {
-        setError(
-          r.reason === "format"
-            ? "That isn’t a valid recovery code. It starts with QRC1."
-            : r.reason === "mismatch"
-              ? "That code makes a different key from your registered Qrow key. Check you copied the whole code for this account."
-              : "Set up your Qrow key on the Start page first.",
-        );
-        return;
-      }
-      await checkWindow(r.key);
+      if (!token.address) throw new Error("QOR can’t be sent through QoreX’s cross-chain call yet. Choose fUSD, fETH, fBTC or a launched coin.");
+      if (await needsApproval()) setStep({ s: "approve" });
+      else await prepare();
     });
 
-  // 2. The chain admits EVM transactions only inside a live, scoped window.
-  const checkWindow = async (key: PqKey) => {
-    const status = await readWindow(sender);
-    const need = (await needsApproval()) ? 2 : 1;
-    const targetsOk = status.allowedTargets.length === 0 || (status.allowedTargets.includes(ESCROW.toLowerCase()) && (!token.address || need === 1 || status.allowedTargets.includes(token.address.toLowerCase())));
-    if (status.live && status.remainingTxs >= need && targetsOk) {
-      if (need === 2) setStep({ s: "approve", key });
-      else await prepare(key);
-    } else setStep({ s: "window", key, status });
-  };
-
-  // 3. Exact-amount approval for an ERC-20.
-  const approve = (key: PqKey) =>
+  // 1. Exact-amount approval, signed in QoreX.
+  const approve = () =>
     run(async () => {
-      if (!wallet) throw new Error("Connect a wallet that can sign.");
-      const hash = await wallet.writeContract({ address: token.address!, abi: erc20Abi, functionName: "approve", args: [ESCROW, amount], chain: CHAIN, account: sender });
-      await client.waitForTransactionReceipt({ hash });
-      await prepare(key);
+      await sendViaQorex(client, sender, tokenAddr, encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [ESCROW, amount] }));
+      await prepare();
     });
 
-  // 4. Sign the authorisation with ML-DSA-87 and simulate the exact transaction.
-  const prepare = async (key: PqKey) => {
+  // 2. This device signs the quantum-safe authorisation (passkey prompt), then we simulate.
+  const prepare = async () => {
     const mode = draft.freelancer ? 1 : 0;
-    // QoreSeal notice for the recipient (only if they registered an ML-KEM-1024 key).
     let sealedNote: Hex = "0x";
     const kem = await recipientKemKey(draft.recipient).catch(() => undefined);
     if (kem) {
@@ -138,101 +100,65 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
         ...(draft.note ? { note: draft.note } : {}),
       });
     }
-    const { validUntil, signature } = await signCreate(client, key, sender, { recipient: draft.recipient, token: tokenAddr, amount, mode, sealedNote });
-    forget(key);
-    const args: CreateArgs = [draft.recipient, tokenAddr, amount, mode, sealedNote, validUntil, signature];
-    const sim = await client.simulateContract({
-      account: sender,
-      address: ESCROW,
-      abi: qrowEscrowAbi,
-      functionName: "createPayment",
-      args,
-      value: token.address ? 0n : amount,
-    });
-    setStep({ s: "review", key, args, simulatedId: sim.result });
+    const { key, slot } = await unlockForSigning(client, sender);
+    let signed: { validUntil: bigint; signature: Hex };
+    try {
+      signed = await signCreate(client, key, sender, { recipient: draft.recipient, token: tokenAddr, amount, mode, sealedNote });
+    } finally {
+      forget(key);
+    }
+    const args: CreateArgs = [draft.recipient, tokenAddr, amount, mode, sealedNote, signed.validUntil, withSlot(slot, signed.signature)];
+    const sim = await client.simulateContract({ account: sender, address: ESCROW, abi: qrowEscrowAbi, functionName: "createPayment", args });
+    setStep({ s: "review", args, simulatedId: sim.result });
   };
 
-  // 5. You sign the transaction in your wallet.
+  // 3. Confirm in QoreX.
   const send = (args: CreateArgs) =>
     run(async () => {
-      if (!wallet) throw new Error("Connect a wallet that can sign.");
       setStep({ s: "sending" });
-      const hash = await wallet.writeContract({
-        address: ESCROW,
-        abi: qrowEscrowAbi,
-        functionName: "createPayment",
-        args,
-        value: token.address ? 0n : amount,
-        chain: CHAIN,
-        account: sender,
-      });
-      setStep({ s: "sending", hash });
-      const receipt = await client.waitForTransactionReceipt({ hash });
-      if (receipt.status !== "success") throw new Error("The transaction failed on chain. Nothing left your wallet except the fee.");
-      const [ev] = parseEventLogs({ abi: qrowEscrowAbi, logs: receipt.logs, eventName: "PaymentCreated" });
-      rememberRecipient(sender, draft.recipient);
-      clearDraft();
-      setStep({ s: "done", id: ev?.args.id ?? 0n, hash });
-    }).then((r) => {
-      if (r === undefined) setStep((s) => (s.s === "sending" ? { s: "failed", message: "" } : s));
+      try {
+        const before = await client.readContract({ address: ESCROW, abi: qrowEscrowAbi, functionName: "paymentCount" });
+        const r = await sendViaQorex(client, sender, ESCROW, encodeFunctionData({ abi: qrowEscrowAbi, functionName: "createPayment", args }));
+        rememberRecipient(sender, draft.recipient);
+        clearDraft();
+        setStep({ s: "done", id: before + 1n, hash: r.txHash });
+      } catch (e) {
+        setStep({ s: "review", args, simulatedId: 0n });
+        throw e;
+      }
     });
 
   return (
     <section className="panel signflow" aria-labelledby="sign-title" aria-live="polite">
       <h2 id="sign-title">Confirm and send</h2>
       <ol className="steps">
-        <li aria-current={step.s === "key" ? "step" : undefined}>Sign with your quantum-safe key</li>
-        <li aria-current={step.s === "window" ? "step" : undefined}>Check your EVM window</li>
-        {token.address && <li aria-current={step.s === "approve" ? "step" : undefined}>Allow the escrow to take exactly this amount</li>}
+        <li aria-current={step.s === "approve" ? "step" : undefined}>Allow the escrow to take exactly this amount</li>
+        <li aria-current={step.s === "start" ? "step" : undefined}>Sign with this device’s quantum-safe key</li>
         <li aria-current={step.s === "review" ? "step" : undefined}>Review the simulation</li>
-        <li aria-current={step.s === "sending" || step.s === "done" ? "step" : undefined}>Sign in your wallet</li>
+        <li aria-current={step.s === "sending" || step.s === "done" ? "step" : undefined}>Confirm in QoreX</li>
       </ol>
 
-      {step.s === "key" && (
-        <form
-          className="field"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void unlock();
-          }}
-        >
-          <label htmlFor="pq-code">Your Qrow key recovery code</label>
-          <input id="pq-code" className="input input--mono" type="password" autoComplete="off" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} placeholder="QRC1-…" />
-          <p className="hint">
-            It signs this payment with your quantum-safe key. It stays in this tab’s memory and is cleared as soon as you’ve signed. Qrow never stores or sends it. When QoreX can sign messages, this step moves into your wallet.
-          </p>
-          <div className="row">
-            <button className="btn" type="submit" aria-busy={busy} disabled={busy || code.trim() === ""}>
-              {busy ? "Checking the key…" : "Continue"}
-            </button>
-            <button className="btn btn--quiet" type="button" onClick={abandon}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {step.s === "window" && (
-        <WindowOpener
-          account={sender}
-          txs={token.address ? 2 : 1}
-          targets={token.address ? [ESCROW, token.address] : [ESCROW]}
-          live={!!step.status?.live}
-          onOpened={() => void run(() => checkWindow(step.key))}
-          onCancel={abandon}
-        />
+      {step.s === "start" && (
+        <div className="row">
+          <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void begin()}>
+            {busy ? "Signing…" : "Continue"}
+          </button>
+          <button className="btn btn--quiet" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+        </div>
       )}
 
       {step.s === "approve" && (
         <div className="field">
           <p>
-            The escrow needs your permission to take exactly <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span>, and not a token more.
+            First, allow the escrow to take exactly <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span> from your wallet, and not a token more. QoreX asks you to confirm.
           </p>
           <div className="row">
-            <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void approve(step.key)}>
-              {busy ? "Waiting for your wallet…" : "Approve in wallet"}
+            <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void approve()}>
+              {busy ? "Waiting for QoreX…" : "Approve in QoreX"}
             </button>
-            <button className="btn btn--quiet" type="button" onClick={abandon}>
+            <button className="btn btn--quiet" type="button" onClick={onCancel}>
               Cancel
             </button>
           </div>
@@ -241,19 +167,22 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
 
       {step.s === "review" && (
         <div className="field">
-          <div className="notice notice--ok">
-            <p className="notice__title">
-              <IconCheck /> Simulation passed
-            </p>
-            <p>
-              The transaction you’re about to sign creates payment <span className="fig">#{step.simulatedId.toString()}</span>: <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span> leaves your wallet into the escrow at <span className="mono">{ESCROW}</span>, for <span className="mono">{draft.recipient}</span>, refundable to you after {REFUND_TEXT}. It carries a {((step.args[6].length - 2) / 2).toLocaleString()}-byte ML-DSA-87 signature.
-            </p>
-          </div>
+          {step.simulatedId > 0n && (
+            <div className="notice notice--ok">
+              <p className="notice__title">
+                <IconCheck /> Simulation passed
+              </p>
+              <p>
+                This creates payment <span className="fig">#{step.simulatedId.toString()}</span>: <span className="fig">{displayAmount(amount, token.decimals)} {token.symbol}</span> goes into the escrow at{" "}
+                <span className="mono">{ESCROW}</span> for <span className="mono">{draft.recipient}</span>, refundable to you after {REFUND_TEXT}. It carries a quantum-safe ML-DSA-87 signature from this device.
+              </p>
+            </div>
+          )}
           <div className="row">
             <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void send(step.args)}>
-              Sign in wallet and send
+              Confirm in QoreX and send
             </button>
-            <button className="btn btn--quiet" type="button" onClick={abandon}>
+            <button className="btn btn--quiet" type="button" onClick={onCancel}>
               Cancel
             </button>
           </div>
@@ -262,13 +191,7 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
 
       {step.s === "sending" && (
         <p className="hint" aria-busy="true">
-          {step.hash ? (
-            <>
-              Sent. Waiting for the block… <span className="mono">{step.hash}</span>
-            </>
-          ) : (
-            "Confirm the transaction in your wallet…"
-          )}
+          Confirm in QoreX, then Qrow waits for the block…
         </p>
       )}
 
@@ -280,7 +203,6 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
           <p>
             The recipient can claim it now. If they don’t within {REFUND_TEXT}, anyone can return it to you. Transaction <span className="mono">{step.hash}</span>.
           </p>
-          <WindowCloser account={sender} />
         </div>
       )}
 
@@ -289,11 +211,6 @@ export function SignFlow({ sender, draft, token, onCancel }: { sender: Address; 
           <p className="notice__title">
             <IconAlert /> {error}
           </p>
-          {step.s === "failed" && (
-            <button className="btn btn--quiet" type="button" onClick={abandon}>
-              Back to the payment
-            </button>
-          )}
         </div>
       )}
     </section>

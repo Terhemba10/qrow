@@ -9,35 +9,32 @@ export function HowToTestPage() {
       <p className="muted">About 15 minutes. Testnet only: everything here is free and has no value.</p>
       <p>Try every feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day.</p>
 
-      <h2>1. Wallets</h2>
+      <h2>1. QoreX</h2>
       <ol>
         <li>
-          Install <a href={QOREX_URL} target="_blank" rel="noopener noreferrer">QoreX</a> (Chrome or Firefox extension; on a phone, the QoreX app). In QoreX: Settings, then “Use testnet (developers)”.
+          Install <a href={QOREX_URL} target="_blank" rel="noopener noreferrer">QoreX</a>: the extension for Chrome or Firefox, or on a phone the QoreX app (open Qrow in its dApp Browser: Home, then “Enter a dApp URL”).
         </li>
-        <li>
-          Install MetaMask and create a <strong>new, testnet-only</strong> wallet. QoreX doesn’t send EVM transactions yet, so payments are signed in MetaMask; this is QoreChain’s own setup.
-        </li>
-        <li>Restore that MetaMask recovery phrase into QoreX, so both wallets hold the same account. Never use a wallet that holds real funds.</li>
-        <li>Add QoreChain testnet to MetaMask (chain ID 9800) and connect it to Qrow.</li>
+        <li>In QoreX: Settings, then “Use testnet (developers)”. Use a wallet that holds no real funds.</li>
+        <li>On Qrow’s <Link to="/">Start</Link> page, press Connect QoreX.</li>
       </ol>
 
-      <h2>2. Test tokens and your keys</h2>
+      <h2>2. Free test tokens and this device</h2>
       <ol>
         <li>
-          Get free test QOR from the <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer">QoreChain faucet</a> (once every 24 hours).
+          Get free test QOR and fUSD from the <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer">QoreChain faucet</a> (once every 24 hours).
         </li>
         <li>In QoreX, send yourself 0.01 QOR. Your first transfer registers your quantum-safe key on chain.</li>
         <li>
-          On Qrow’s <Link to="/">Start</Link> page, create your <strong>Qrow key</strong> and save its recovery code. You type that code when you sign in Qrow. It is not your 24 words; Qrow never asks for those.
+          On the Start page, press <strong>Set up this device</strong>. Your device asks for your fingerprint, face or PIN, and QoreX asks you to confirm once. There’s nothing to write down or save.
         </li>
       </ol>
 
       <h2>3. Send and receive</h2>
       <ol>
         <li>
-          <Link to="/send">Send</Link> 1 QOR to a friend (or to a second account of yours). Qrow checks the address first and explains anything risky.
+          <Link to="/send">Send</Link> 1 fUSD to a friend (or to a second account of yours). Qrow checks the address first and explains anything risky.
         </li>
-        <li>Each signed step opens a short EVM window in QoreX (about 10 minutes, only for Qrow’s contract), then MetaMask confirms the transaction.</li>
+        <li>Each step is signed in QoreX. Your device signs the quantum-safe part with your fingerprint, face or PIN.</li>
         <li>
           Your friend opens <Link to="/receive">Receive</Link> and claims it. If nobody claims it within 7 days, anyone can return it to you.
         </li>
@@ -66,7 +63,7 @@ export function PrivacyPage() {
         <li>No accounts, no cookies, no tracking, no analytics scripts.</li>
         <li>Your browser remembers a few conveniences for you only (your last draft payment, past recipients for the lookalike check, launched-coin names). Clear site data to remove them.</li>
         <li>
-          Your Qrow key recovery code is never stored or sent anywhere. It stays in this tab’s memory while you sign, then it’s wiped.
+          This device’s Qrow key is stored encrypted in this browser and unlocks only with your passkey (fingerprint, face or PIN) where the device supports it. Qrow never shows, exports or sends it, and no code exists to lose.
         </li>
         <li>The Telegram alerts bot keeps your chat ID and the public wallet addresses you asked it to watch, until you send /unwatch or /stop.</li>
       </ul>

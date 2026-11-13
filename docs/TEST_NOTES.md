@@ -161,3 +161,37 @@ On-chain smoke tests (each in its own 1-tx window scoped to one contract, closed
 - Claimed by the Drill account with its **chain key** (no app key: fallback path): tx `0xf6df00552cda814765dd9fdacf94f49b3f71c2387f76cc4cc2c6f12ca75185fd`, block 9975099.
 - Watcher back-filled the three events from the v2 escrow and produced the created, notified and claimed alerts.
 - v1 addresses stay in `deployments/testnet.json` under `v1`; LANT and the v1 NFTs live on the v1 contracts.
+
+
+## v3 redeploy: device keys, QoreX-only signing (13 Nov)
+One creation window (6 txs, 200 blocks), closed afterwards; wiring read back from chain.
+
+| Contract | Address | Tx | Block | Gas |
+| --- | --- | --- | --- | --- |
+| QrowKeys v3 | `0xa5242cb348eddef0deb9599f81e55a64d186fd14` | `0x3a4ea1e8452cbd0c8c385da881b1b344fb269dda98ceda296a507fd2a72f8b4d` | 9978059 | 1,927,794 |
+| QrowEscrow | `0x332937d1918a0f85eacc5167ab87ba91c48a4655` | `0xd92b3cd9f704a67b4e7dfd1de814e7c18250f198157546a72c4f3c405c861101` | 9978060 | 2,441,945 |
+| QrowEscrowDemo | `0xe27ad71e9b476518240e71ff4a4d97e1f93264f4` | `0xf64640af68d0054d36e13ac10343d024636bda4c78b8b2b675d38a100210caf3` | 9978061 | 2,441,501 |
+| QrowGenesis | `0x5f03380be788bbd17eb3529b77ee27bed879602d` | `0x8fc8d2f4d94dbdccc3fc6a7059c40c1ebf2e3e4029f5ea6bea79f15ed650e20b` | 9978062 | 3,036,208 |
+| QrowMarket | `0x10e2e663ebb1fdd290b8cabbe6e2634852d65fa9` | `0x6698dee8c26947a20fe8ba96484b239f8d06b7c75ad4e941147d7e4d31c57471` | 9978063 | 2,091,366 |
+| QrowCoinFactory | `0x764a8586e7a7e9e2b511bf79d9f9c8b3ae7e7c5e` | `0xdeaf2a52e39e83a0b0e64aad247caa8d10a53e681c2b302b7d1f6843cf44c86e` | 9978065 | 4,249,004 |
+
+**QoreX-only smoke test (`npm run smoke:v3`), no EVM window at any point.** Every step is a native
+`MsgCrossVMCall` with the hybrid secp256k1 + ML-DSA-87 signature (what QoreX's `signAndBroadcast` sends):
+
+| Step | Native tx | EVM estimate | Gas used |
+| --- | --- | --- | --- |
+| Device key registered (`addFirstDevice`) | `239E8CF6911ADDEF30F1A17BBE6F84D08DD75A41FED58258DBF2DCF710A04942` | 2,157,815 | 3,005,226 |
+| Launch XLANE (device-key signature) | `B52AD899B0163B74E1E27888FF2B4751092162D6CFBD58AD28D5EC799B18E6D4` | 2,232,783 | 3,046,787 |
+| Claim XLANE share (device key) | `2EE074A89CF569A341156257CC4CBFF9D18D6E34923FC354393195B6AACA6C1C` | 468,741 | 939,181 |
+| Approve escrow for 10 XLANE | `0C2D6A96E10F0C8ABF03EE75DFB3E6C2C0A6CD5691AE69931744D4A7038379F8` | 46,434 | 299,998 |
+| Payment #1, 10 XLANE to the Drill account (device key) | `CCBF0062112DD462B6791717734D534B7353679120E3B9DED8F524CB207440EA` | 662,816 | 1,248,854 |
+| Drill account claims #1 (chain key, bare signature) | `2C69D648AA875B125ED12A7A8558DD05AA399BC0FDB66B6542D70FA27CF89E01` | 305,351 | 719,754 |
+
+Result: payment #1 Claimed; the Drill account holds 10 XLANE (`0x73BC3fd1B8b06E49Bd4a25e7f94990EAf43B4E34`).
+
+Findings:
+- The chain charges the whole gas limit (no refund) at the minimum price 0.1 uqor/gas. Qrow sizes it as
+  (EVM estimate + 250k + 90 per payload byte) × 1.1, which covered every step above with a modest margin.
+- `MsgCrossVMCall` needs `source_vm` set to a known VM name (`cosmwasm` used) although the docs say it's ignored.
+- Earlier tries: `addFirstDevice` ran out of gas at 800k and 3M limits (fees still charged), which is why gas is now sized from estimates.
+- Not tested: QoreX itself signing `MsgCrossVMCall` (the owner's `/dev/qorex-check`), and the passkey device key in a real browser with QoreX.

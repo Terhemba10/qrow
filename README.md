@@ -15,8 +15,10 @@ Built for the QoreChain *Build Before Q-Day* Developer Fest, Post-Quantum dApp c
 - **Post-quantum by design:** every sensitive contract action carries an ML-DSA-87 signature checked on chain with
   QoreChain's `pqcVerify` precompile, and every EVM transaction travels through a short, scoped EVM window opened
   with the account's hybrid (secp256k1 + ML-DSA-87) signature. A leaked classical key alone can't move anything.
-- **Qrow key:** QoreX keeps the account's chain key and doesn't sign messages for websites, so Qrow creates a
-  separate ML-DSA-87 key in the browser, registered once in `QrowKeys` and used by every Qrow contract.
+- **Signed in QoreX:** every transaction is a native-lane `MsgCrossVMCall` that QoreX signs with its hybrid
+  secp256k1 + ML-DSA-87 signature, calling Qrow's EVM contracts as the user. No MetaMask, no EVM window.
+- **Invisible device key:** QoreX doesn't sign messages for websites, so each browser keeps a Qrow device key
+  (ML-DSA-87) behind a passkey, registered in `QrowKeys`. Users never see, copy or save a key or code.
 - Also built, going live tab by tab: NFT Shop and Market, Portfolio, Staking, Market News, memecoin Launch,
   Telegram alerts, Admin & Analytics.
 
@@ -26,15 +28,15 @@ See **How to test Qrow** in the app (`/how-to-test`). In short: QoreX (testnet) 
 testnet-only account, free QOR from the [faucet](https://dashboard.qorechain.io/faucet), create your Qrow key on the
 Start page, then send 1 QOR to a friend.
 
-## Contracts (testnet, v2)
+## Contracts (testnet, v3)
 
 | Contract | Address |
 | --- | --- |
-| QrowKeys | `0x4ee5ca4c4d4ce7a7458a44c8eb155d7026f23db8` |
-| QrowEscrow | `0xe51f1a2d28661bead6b0a75d3e4e2b3edff766da` |
-| QrowGenesis | `0x73fe0fb443962c1e1503f57aba3cc6e895117287` |
-| QrowMarket | `0xc9c9dab84f368d879aa8f96b5dbf5c22062da373` |
-| QrowCoinFactory | `0x7ff6a8a047d9558c6b152a3cffe1adea19407836` |
+| QrowKeys (v3, device keys) | `0xa5242cb348eddef0deb9599f81e55a64d186fd14` |
+| QrowEscrow | `0x332937d1918a0f85eacc5167ab87ba91c48a4655` |
+| QrowGenesis | `0x5f03380be788bbd17eb3529b77ee27bed879602d` |
+| QrowMarket | `0x10e2e663ebb1fdd290b8cabbe6e2634852d65fa9` |
+| QrowCoinFactory | `0x764a8586e7a7e9e2b511bf79d9f9c8b3ae7e7c5e` |
 
 Deployment details and every on-chain test transaction: [`docs/TEST_NOTES.md`](docs/TEST_NOTES.md).
 

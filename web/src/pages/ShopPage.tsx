@@ -1,7 +1,7 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { encodeAbiParameters, keccak256, parseAbiItem, parseEventLogs, type Address } from "viem";
+import { encodeAbiParameters, keccak256, parseAbiItem, type Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { qrowGenesisAbi } from "../abi/QrowGenesis";
 import { PqActionPanel } from "../components/PqActionPanel";
@@ -48,7 +48,7 @@ export function ShopPage() {
   const { openConnectModal } = useConnectModal();
   const client = usePublicClient({ chainId: CHAIN.id });
   const col = useCollection();
-  const [currency, setCurrency] = useState<"QOR" | "fUSD">("QOR");
+  const [currency, setCurrency] = useState<"QOR" | "fUSD">("fUSD");
   const [minting, setMinting] = useState(false);
   const [mintedId, setMintedId] = useState<bigint>();
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
@@ -157,11 +157,9 @@ export function ShopPage() {
               approve={currency === "fUSD" && d ? { token: d.fusd, amount: price, label: `${displayAmount(price, decimals)} fUSD` } : undefined}
               build={(auth) => ({ abi: qrowGenesisAbi, functionName: "mint", args: [currencyAddr, auth!.validUntil, auth!.signature], value: currency === "QOR" ? price : 0n })}
               describeSimulation={(r) => `You receive Qrow Genesis #${String(r)} and pay ${displayAmount(price, decimals)} ${currency}.`}
-              confirmLabel="Sign in wallet and mint"
-              onDone={async (hash) => {
-                const rc = await client!.getTransactionReceipt({ hash });
-                const [ev] = parseEventLogs({ abi: qrowGenesisAbi, logs: rc.logs, eventName: "Minted" });
-                setMintedId(ev?.args.tokenId);
+              confirmLabel="Confirm in QoreX and mint"
+              onDone={async () => {
+                setMintedId(await client!.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "totalMinted" }));
                 void col.refetch();
                 void myMints.refetch();
               }}

@@ -3,7 +3,7 @@ import { parseAbiItem } from "viem";
 import { ESCROW } from "../config/network";
 
 /** Block the escrow was deployed in (contracts/deployments/testnet.json). Logs start here. */
-export const ESCROW_DEPLOY_BLOCK = 9_974_922n;
+export const ESCROW_DEPLOY_BLOCK = 9_978_060n;
 
 const paymentCreated = parseAbiItem(
   "event PaymentCreated(uint256 indexed id, address indexed sender, address indexed recipient, address token, uint256 amount, uint64 deadline, uint8 mode)",

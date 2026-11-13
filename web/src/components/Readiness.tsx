@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Address } from "viem";
 import { displayAmount } from "../lib/amount";
 import { MIN_QOR, useReadiness, type Item, type ItemId } from "../lib/readiness";
-import { AppKeySetup } from "./AppKeySetup";
+import { DeviceSetup } from "./DeviceSetup";
 import { IconAlert, IconCheck, IconInfo } from "./Icons";
 
 export const QOREX_URL = "https://qorechain.io/qorex";
@@ -25,17 +25,17 @@ export function AddressChip({ address }: { address: string }) {
 
 const TITLE: Record<ItemId, string> = {
   qorex: "QoreX is installed",
-  evmWallet: "An EVM wallet (MetaMask) is connected",
+  connected: "QoreX is connected to Qrow",
   network: "On QoreChain testnet",
-  sameAccount: "QoreX and MetaMask use the same account",
-  qor: "You have test QOR for fees",
+  sameAccount: "Qrow and QoreX show the same account",
+  qor: "You have free test QOR for fees",
   chainKey: "Your quantum-safe key is registered",
-  appKey: "Your Qrow key is set up",
+  device: "This device is set up",
 };
 
 /** The "Ready to test?" card: every item with its status and the fix. */
 export function Readiness({ compact = false }: { compact?: boolean }) {
-  const { items, ready, me, qorexQor, balance, refetch } = useReadiness();
+  const { items, ready, me, qorexQor, balance, refetch, device } = useReadiness();
   const { openConnectModal } = useConnectModal();
   const [open, setOpen] = useState<ItemId>();
   const done = items.filter((i) => i.state === "ok").length;
@@ -47,52 +47,52 @@ export function Readiness({ compact = false }: { compact?: boolean }) {
       case "qorex":
         return (
           <p>
-            QoreX opens the short EVM windows that keep you safe and signs your staking. On a computer, add the extension to Chrome or Firefox. On a phone, open Qrow inside the QoreX app’s dApp Browser.{" "}
+            Every Qrow transaction is signed in QoreX. On a computer, add the QoreX extension to Chrome or Firefox. On a phone, open Qrow inside the QoreX app’s dApp Browser (Home, then “Enter a dApp URL”).{" "}
             <a href={QOREX_URL} target="_blank" rel="noopener noreferrer">
               Get QoreX
             </a>
           </p>
         );
-      case "evmWallet":
+      case "connected":
         return (
           <>
-            <p>QoreX doesn’t send EVM transactions yet, so payments are signed in MetaMask (QoreChain’s own setup). Use a fresh testnet-only wallet that QoreX also holds.</p>
+            <p>Connect QoreX so Qrow can read your balances. Connecting never moves anything.</p>
             <button className="btn" type="button" onClick={openConnectModal}>
-              Connect wallet
+              Connect QoreX
             </button>
           </>
         );
       case "network":
-        return <p>Switch your EVM wallet to QoreChain testnet (chain 9800). Qrow never switches it for you. In QoreX: Settings, then “Use testnet (developers)”.</p>;
+        return <p>Switch QoreX to the testnet: Settings, then “Use testnet (developers)”. Qrow never switches it for you.</p>;
       case "sameAccount":
         return (
           <p>
             {qorexQor ? (
               <>
-                QoreX is on <AddressChip address={qorexQor} />, but MetaMask is on <AddressChip address={me ? evmToQor(me) : ""} />.{" "}
+                QoreX is on <AddressChip address={qorexQor} />, but Qrow is reading <AddressChip address={me ? evmToQor(me) : ""} />.{" "}
               </>
             ) : (
               "QoreX hasn’t shared an account with Qrow yet. "
             )}
-            Both wallets must hold the same account: create it in MetaMask, then restore that recovery phrase into QoreX (testnet-only wallet).
+            Choose the same account in QoreX, then reconnect.
           </p>
         );
       case "qor":
         return (
           <>
             <p>
-              You have {balance !== undefined ? displayAmount(balance, 18) : "…"} QOR; about {displayAmount(MIN_QOR, 18)} QOR covers several actions. The faucet is free, once per 24 hours. Qrow re-checks
-              when you come back to this tab.
+              You have {balance !== undefined ? displayAmount(balance, 18) : "…"} QOR. About {displayAmount(MIN_QOR, 18)} QOR covers several actions. The faucet is free, once every 24 hours, and also gives fUSD to pay with. Qrow
+              re-checks when you come back to this tab.
             </p>
             <a className="btn" href={FAUCET_URL} target="_blank" rel="noopener noreferrer">
-              Get test tokens
+              Get free test tokens
             </a>
           </>
         );
       case "chainKey":
         return <p>QoreX registers your quantum-safe key with your first transfer. In QoreX, send yourself a tiny amount (0.01 QOR), then come back here.</p>;
-      case "appKey":
-        return me ? <AppKeySetup account={me as Address} onDone={refetch} /> : null;
+      case "device":
+        return me ? <DeviceSetup account={me as Address} state={device} onDone={refetch} /> : null;
     }
   };
 

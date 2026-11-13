@@ -101,7 +101,7 @@ export function SendPage() {
         </div>
         <div className="panel empty">
           <h2>Connect your wallet to start</h2>
-          <p className="muted">Qrow reads your balance and checks every payment before you sign. Nothing is sent until you confirm it in your wallet.</p>
+          <p className="muted">Qrow reads your balance and checks every payment before you sign. Nothing is sent until you confirm it in QoreX.</p>
           <button className="btn" type="button" onClick={openConnectModal}>
             Connect wallet
           </button>
@@ -203,7 +203,7 @@ export function SendPage() {
         <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 var(--space-lg)" }}>
           <legend>Token</legend>
           <div className="seg" role="radiogroup">
-            {TOKENS.map((t) => (
+            {TOKENS.filter((t) => t.address).map((t) => (
               <span key={t.symbol}>
                 <input type="radio" name="token" id={`tok-${t.symbol}`} value={t.symbol} checked={symbol === t.symbol} onChange={() => setSymbol(t.symbol)} />
                 <label htmlFor={`tok-${t.symbol}`}>{t.symbol}</label>

@@ -49,7 +49,7 @@ async function main() {
       address: escrow,
       event: parseAbiItem("event PaymentNote(uint256 indexed id, address indexed recipient, bytes sealedNote)"),
       args: { id },
-      fromBlock: 9_974_922n,
+      fromBlock: 9_978_060n,
     });
     if (!logs.length) return console.log(`payment #${id} has no note`);
     const env = logs[0].args.sealedNote!;

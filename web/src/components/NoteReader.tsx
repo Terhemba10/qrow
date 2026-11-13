@@ -3,16 +3,15 @@ import type { Address, Hex } from "viem";
 import { usePublicClient } from "wagmi";
 import { CHAIN } from "../config/network";
 import { short } from "../lib/address";
-import { forget, unlockPqKey } from "../lib/pq";
+import { unlockForSigning } from "../lib/appKey";
+import { forget } from "../lib/pq";
 import { openNotice, sealKeysFromPqSecret, wipeSealKeys, type PaymentNotice } from "../lib/seal";
 
 const fmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-/** Decrypt a QoreSeal notice in this tab with the recipient's recovery code (memory only). */
+/** Decrypt a QoreSeal notice in this tab with this device's key (passkey prompt; memory only). */
 export function NoteReader({ me, envelope }: { me: Address; envelope: Hex }) {
   const client = usePublicClient({ chainId: CHAIN.id })!;
-  const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<PaymentNotice>();
@@ -21,18 +20,15 @@ export function NoteReader({ me, envelope }: { me: Address; envelope: Hex }) {
     setBusy(true);
     setError(undefined);
     try {
-      const r = await unlockPqKey(client, me, code);
-      setCode("");
-      if (!r.ok) {
-        setError(r.reason === "format" ? "That isn’t a valid recovery code." : r.reason === "mismatch" ? "That code isn’t this account’s." : "This account has no quantum-safe key.");
-        return;
-      }
-      const keys = sealKeysFromPqSecret(r.key.secretKey);
-      forget(r.key);
+      const { key } = await unlockForSigning(client, me);
+      const keys = sealKeysFromPqSecret(key.secretKey);
+      forget(key);
       const n = openNotice(envelope, keys);
       wipeSealKeys(keys);
-      if (!n) setError("This note couldn’t be decrypted with your keys, or it isn’t a Qrow notice.");
+      if (!n) setError("This note was sealed to a key this device doesn’t hold, or it isn’t a Qrow notice.");
       else setNotice(n);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn’t open the note.");
     } finally {
       setBusy(false);
     }
@@ -54,32 +50,12 @@ export function NoteReader({ me, envelope }: { me: Address; envelope: Hex }) {
       </div>
     );
   }
-  if (!open) {
-    return (
-      <div className="note-closed">
-        <button className="linkbtn" type="button" onClick={() => setOpen(true)}>
-          Read the encrypted notice
-        </button>
-      </div>
-    );
-  }
   return (
-    <form
-      className="note-closed field"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void read();
-      }}
-    >
-      <label htmlFor={`note-${envelope.slice(2, 10)}`}>Your PQC recovery code</label>
-      <input id={`note-${envelope.slice(2, 10)}`} className="input input--mono" type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} placeholder="QRC1-…" />
-      <p className="hint">Opens the note in this tab only. The code is cleared right after.</p>
-      <div className="row">
-        <button className="btn btn--quiet" type="submit" disabled={busy || !code.trim()} aria-busy={busy}>
-          {busy ? "Decrypting…" : "Decrypt"}
-        </button>
-      </div>
+    <div className="note-closed">
+      <button className="linkbtn" type="button" disabled={busy} aria-busy={busy} onClick={() => void read()}>
+        {busy ? "Decrypting…" : "Read the encrypted notice"}
+      </button>
       {error && <p className="field-error">{error}</p>}
-    </form>
+    </div>
   );
 }

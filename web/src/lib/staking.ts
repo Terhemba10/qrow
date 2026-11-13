@@ -140,14 +140,14 @@ export async function qorexAccount(): Promise<string | undefined> {
 }
 
 /** Sign and broadcast native messages in QoreX (hybrid secp256k1 + ML-DSA-87 signature). */
-export async function signInQorex(messages: Eo[], memo?: string): Promise<{ txHash: string; code: number }> {
+export async function signInQorex(messages: Eo[], memo?: string, gasLimit?: number): Promise<{ txHash: string; code: number }> {
   const n = getQorexNative();
   if (!n || !hasCapability(n, "signAndBroadcast")) throw new Error("QoreX isn’t available in this browser.");
   const r = await n.signAndBroadcast({
     chainId: NATIVE_CHAIN_ID,
     messages: messages.map((m) => ({ typeUrl: m.typeUrl, value: registry.encode(m as never) })),
     memo,
-    gasLimit: 400_000 * messages.length,
+    gasLimit: gasLimit ?? 400_000 * messages.length,
   });
   if (r.code !== 0) throw new Error(`The chain refused the transaction (code ${r.code}).`);
   return r;

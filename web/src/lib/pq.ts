@@ -1,20 +1,12 @@
 /**
- * Post-quantum signing for escrow actions.
- *
- * Today QoreX can't sign arbitrary messages, so the ML-DSA-87 key is derived in this tab from the
- * account's PQC recovery code (QRC1). The code and the key live only in memory while you sign and
- * are dropped right after. They are never stored, logged or sent anywhere.
- *
- * The signed bytes are QoreSign's message format, the same bytes QoreX's planned signArbitrary
- * will sign, so the QoreX path drops in here later without contract changes.
+ * Post-quantum signing for Qrow's contracts. The ML-DSA-87 key is this browser's Qrow device key
+ * (lib/device.ts, unlocked with a passkey for each signature, wiped right after); the signed bytes
+ * are QoreSign's message format, which the contracts verify with pqcVerify.
  */
-import { isValidRecoveryCode, pqcKeyFromRecoveryCode, pqcSign } from "@qorechain/sdk";
+import { pqcSign } from "@qorechain/sdk";
 import { encodeAbiParameters, keccak256, toBytes, toHex, type Address, type Hex, type PublicClient } from "viem";
-import { evmToQor } from "@qorechain/sdk";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
-import { qrowKeysAbi } from "../abi/QrowKeys";
-import { KEYS } from "../config/contracts";
-import { ESCROW, REST } from "../config/network";
+import { ESCROW } from "../config/network";
 
 const PQC_KEY_STATUS: Address = "0x0000000000000000000000000000000000000a02";
 const keyStatusAbi = [
@@ -37,32 +29,11 @@ export interface PqKey {
   publicKey: Uint8Array;
 }
 
-export type UnlockError = "format" | "mismatch" | "noKey";
 
 /** The account's ML-DSA-87 key registered on QoreChain (QoreX registers it with the first transfer). */
 export async function chainKeyRegistered(client: PublicClient, account: Address): Promise<boolean> {
   const [registered, alg, , proven] = await client.readContract({ address: PQC_KEY_STATUS, abi: keyStatusAbi, functionName: "pqcKeyStatus", args: [account] });
   return registered && alg === 1 && proven;
-}
-
-/**
- * Derive the key from a QRC1 recovery code and check it's the one Qrow's contracts verify for this
- * account: its Qrow app key (QrowKeys) if it has one, else its chain-registered key.
- */
-export async function unlockPqKey(
-  client: PublicClient,
-  account: Address,
-  code: string,
-): Promise<{ ok: true; key: PqKey } | { ok: false; reason: UnlockError }> {
-  if (!isValidRecoveryCode(code.trim())) return { ok: false, reason: "format" };
-  const expected = await client.readContract({ address: KEYS, abi: qrowKeysAbi, functionName: "keyOf", args: [account] });
-  if (!expected || expected === "0x") return { ok: false, reason: "noKey" };
-  const kp = pqcKeyFromRecoveryCode(code.trim(), evmToQor(account));
-  if (toHex(kp.publicKey).toLowerCase() !== expected.toLowerCase()) {
-    kp.secretKey.fill(0);
-    return { ok: false, reason: "mismatch" };
-  }
-  return { ok: true, key: kp };
 }
 
 /** Wipe a key from memory (best effort in JS). */
@@ -97,32 +68,4 @@ export async function signCreate(
   const message = await client.readContract({ address: ESCROW, abi: qrowEscrowAbi, functionName: "pqMessage", args: [digest] });
   const signature = toHex(pqcSign(key.secretKey, toBytes(message)));
   return { validUntil, signature };
-}
-
-export interface WindowStatus {
-  found: boolean;
-  live: boolean;
-  remainingTxs: number;
-  remainingBlocks: number;
-  allowedTargets: string[];
-}
-
-/** The sender's EVM authorisation window (native lane), read over REST. */
-export async function readWindow(account: Address): Promise<WindowStatus> {
-  const res = await fetch(`${REST}/qorechain/pqc/v1/evm_window/${evmToQor(account)}`);
-  if (!res.ok) throw new Error(`window: HTTP ${res.status}`);
-  const w = (await res.json()) as {
-    found: boolean;
-    live: boolean;
-    remaining_txs: string;
-    remaining_blocks: string;
-    allowed_targets: string[];
-  };
-  return {
-    found: w.found,
-    live: w.live,
-    remainingTxs: Number(w.remaining_txs || 0),
-    remainingBlocks: Number(w.remaining_blocks || 0),
-    allowedTargets: (w.allowed_targets ?? []).map((t) => t.toLowerCase()),
-  };
 }

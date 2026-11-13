@@ -13,7 +13,7 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "ACTION_CANCEL_RESET",
+    "name": "ACTION_ADD_DEVICE",
     "inputs": [],
     "outputs": [
       {
@@ -26,33 +26,7 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "ACTION_REGISTER",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "ACTION_REVOKE",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "ACTION_ROTATE",
+    "name": "ACTION_APPROVE_DEVICE",
     "inputs": [],
     "outputs": [
       {
@@ -91,6 +65,19 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
+    "name": "MAX_DEVICES",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MAX_SIG_VALIDITY",
     "inputs": [],
     "outputs": [
@@ -104,7 +91,7 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "RESET_DELAY",
+    "name": "PROPOSAL_DELAY",
     "inputs": [],
     "outputs": [
       {
@@ -156,12 +143,106 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "appKeyOf",
+    "name": "addApprovedDevice",
+    "inputs": [
+      {
+        "name": "pubkey",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "validUntil",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "pop",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "approverSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "slot",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "addFirstDevice",
+    "inputs": [
+      {
+        "name": "pubkey",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "validUntil",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "pop",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "slot",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "cancelProposal",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deviceCount",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "deviceKey",
     "inputs": [
       {
         "name": "account",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "slot",
+        "type": "uint8",
+        "internalType": "uint8"
       }
     ],
     "outputs": [
@@ -175,32 +256,44 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "cancelReset",
+    "name": "devices",
     "inputs": [
       {
-        "name": "validUntil",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "sig",
-        "type": "bytes",
-        "internalType": "bytes"
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "outputs": [
+      {
+        "name": "slots",
+        "type": "uint8[]",
+        "internalType": "uint8[]"
+      },
+      {
+        "name": "keyHashes",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "finishReset",
+    "name": "finishProposal",
     "inputs": [],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "slot",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
     "type": "function",
-    "name": "hasAppKey",
+    "name": "hasDevice",
     "inputs": [
       {
         "name": "account",
@@ -238,25 +331,6 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "keyOf",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "nativeChainId",
     "inputs": [],
     "outputs": [
@@ -264,25 +338,6 @@ export const qrowKeysAbi = [
         "name": "",
         "type": "string",
         "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "pqKeyOf",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes",
-        "internalType": "bytes"
       }
     ],
     "stateMutability": "view"
@@ -327,7 +382,31 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "register",
+    "name": "proposal",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "keyHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "dueAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "proposeDevice",
     "inputs": [
       {
         "name": "pubkey",
@@ -350,71 +429,12 @@ export const qrowKeysAbi = [
   },
   {
     "type": "function",
-    "name": "requestReset",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "resetAt",
+    "name": "removeDevice",
     "inputs": [
       {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint64",
-        "internalType": "uint64"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "revoke",
-    "inputs": [
-      {
-        "name": "validUntil",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "sig",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "rotate",
-    "inputs": [
-      {
-        "name": "newPubkey",
-        "type": "bytes",
-        "internalType": "bytes"
-      },
-      {
-        "name": "validUntil",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "sig",
-        "type": "bytes",
-        "internalType": "bytes"
-      },
-      {
-        "name": "pop",
-        "type": "bytes",
-        "internalType": "bytes"
+        "name": "slot",
+        "type": "uint8",
+        "internalType": "uint8"
       }
     ],
     "outputs": [],
@@ -422,7 +442,38 @@ export const qrowKeysAbi = [
   },
   {
     "type": "event",
-    "name": "AppKeyRegistered",
+    "name": "DeviceAdded",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "slot",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "uint8"
+      },
+      {
+        "name": "keyHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "approved",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DeviceProposed",
     "inputs": [
       {
         "name": "account",
@@ -435,98 +486,9 @@ export const qrowKeysAbi = [
         "type": "bytes32",
         "indexed": true,
         "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "AppKeyRevoked",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
       },
       {
-        "name": "keyHash",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "AppKeyRotated",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "oldKeyHash",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "newKeyHash",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ResetCancelled",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ResetFinished",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "keyHash",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ResetRequested",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "finishAfter",
+        "name": "dueAt",
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
@@ -535,9 +497,48 @@ export const qrowKeysAbi = [
     "anonymous": false
   },
   {
-    "type": "error",
-    "name": "AlreadyRegistered",
-    "inputs": []
+    "type": "event",
+    "name": "DeviceRemoved",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "slot",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "uint8"
+      },
+      {
+        "name": "keyHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProposalCancelled",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "keyHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "error",
@@ -551,12 +552,22 @@ export const qrowKeysAbi = [
   },
   {
     "type": "error",
+    "name": "BadSlot",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "HasDevices",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidChainId",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "NoAppKey",
+    "name": "KeyInUse",
     "inputs": []
   },
   {
@@ -566,22 +577,27 @@ export const qrowKeysAbi = [
   },
   {
     "type": "error",
+    "name": "NoDevices",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "NoPqKey",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "NoResetPending",
+    "name": "NoProposal",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "ResetNotDue",
+    "name": "ProposalNotDue",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "ResetPending",
+    "name": "ProposalPending",
     "inputs": []
   },
   {
@@ -592,6 +608,11 @@ export const qrowKeysAbi = [
   {
     "type": "error",
     "name": "SignatureTooLong",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TooManyDevices",
     "inputs": []
   }
 ] as const;

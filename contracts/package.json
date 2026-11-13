@@ -27,7 +27,8 @@
     "deploy:v2": "tsx --env-file=.env scripts/deploy-v2.ts",
     "appkey": "tsx --env-file=.env scripts/appkey.ts",
     "crossvm-probe": "tsx --env-file=.env scripts/crossvm-probe.ts",
-    "deploy:v3": "tsx --env-file=.env scripts/deploy-v3.ts"
+    "deploy:v3": "tsx --env-file=.env scripts/deploy-v3.ts",
+    "smoke:v3": "tsx --env-file=.env scripts/smoke-v3.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
