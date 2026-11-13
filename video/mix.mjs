@@ -18,6 +18,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { shotList } from "./cut.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MUSIC = join(HERE, "audio", "music", "good-days-aylex.mp3");
@@ -52,7 +53,7 @@ function layout(mode) {
   if (!existsSync(timingFile)) fail("Generate the narration first: node tts.mjs shots --voice <Name>");
   const timing = JSON.parse(readFileSync(timingFile, "utf8"));
   let t = 0;
-  const clips = script.shots.map((s) => {
+  const clips = shotList(script).map((s) => {
     const file = join(HERE, "audio", "shots", `${s.id}.mp3`);
     if (!existsSync(file) || !timing[s.id]) fail(`No clip for ${s.id} yet.`);
     const c = { file, start: t + LEAD };
@@ -73,7 +74,7 @@ function main() {
   const { clips, total } = layout(mode);
   const outDir = join(HERE, "out");
   mkdirSync(outDir, { recursive: true });
-  const out = join(outDir, mode === "preview" ? "preview-mix.mp3" : "soundtrack.wav");
+  const out = join(outDir, mode === "preview" ? "preview-mix.mp3" : process.argv.includes("--alt") ? "soundtrack-alt.wav" : "soundtrack.wav");
 
   const musicLen = dur(MUSIC);
   // Inputs: the music twice (for a crossfaded loop when the video is longer), then the voice clips.

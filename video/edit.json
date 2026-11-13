@@ -1,0 +1,24 @@
+{
+  "note": "Edit plan for assemble.py. Each shot is filled by its segments in order; `in` skips the page load at the start of a clip, `max` caps a segment. The scene's length comes from script.json and the voice clip (never changed). Owner-recorded clips are marked `owner: true`; until they exist the preview shows a slate. If footage is longer than its slot it is trimmed (or sped up by at most 1.35x when `fit: speed`); if shorter, its last frame is held.",
+  "shots": {
+    "s01-hook": [{ "file": "s01-hook.mp4", "in": 0.0 }],
+    "s02-what": [{ "file": "s02-what.mp4", "in": 2.0 }],
+    "s03-connect-faucet": [
+      { "file": "s03a-connect.mp4", "owner": true, "max": 6.0, "fit": "speed" },
+      { "file": "s03b-faucet.mp4", "in": 1.0, "max": 9.5 }
+    ],
+    "s04-swap": [{ "file": "s04-swap.mp4", "owner": true, "fit": "speed" }],
+    "s05-send": [
+      { "file": "s05a-form.mp4", "in": 0.6, "max": 9.0 },
+      { "file": "s05b-send.mp4", "owner": true, "fit": "speed" }
+    ],
+    "s06-claim": [{ "file": "s06-claim.mp4", "owner": true, "fit": "speed" }],
+    "s07-verify": [{ "file": "s07-verify.mp4", "in": 1.0 }],
+    "s08-more": [
+      { "file": "s08-more.mp4", "in": 1.2, "max": 13.0 },
+      { "file": "s08b-staking.mp4", "owner": true, "optional": true, "max": 3.0 }
+    ],
+    "s09-end": [{ "file": "s09-end.mp4", "in": 0.0 }],
+    "s05-alt": [{ "file": "s05-alt.mp4", "in": 0.8 }]
+  }
+}

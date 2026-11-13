@@ -16,6 +16,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { shotList } from "./cut.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const API = "https://api.elevenlabs.io/v1";
@@ -194,7 +195,7 @@ async function main() {
       const p = (v, w = 2) => String(v).padStart(w, "0");
       return `${p(Math.floor(ms / 3_600_000))}:${p(Math.floor(ms / 60_000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`;
     };
-    for (const s of script.shots) {
+    for (const s of shotList(script)) {
       const dur = timing[s.id]?.seconds;
       if (!dur) fail(`No clip for ${s.id} yet.`);
       // One caption per sentence. Each split is first estimated from the sentence's share of the
@@ -226,8 +227,8 @@ async function main() {
       t += Math.max(s.seconds, dur + 0.6);
     }
     mkdirSync(join(HERE, "out"), { recursive: true });
-    writeFileSync(join(HERE, "out", "captions.srt"), out.join("\n"));
-    console.log(`Wrote out/captions.srt (${n - 1} captions, from script.json, so they match the narration word for word).`);
+    writeFileSync(join(HERE, "out", process.argv.includes("--alt") ? "captions-alt.srt" : "captions.srt"), out.join("\n"));
+    console.log(`Wrote out/${process.argv.includes("--alt") ? "captions-alt.srt" : "captions.srt"} (${n - 1} captions, from script.json, so they match the narration word for word).`);
     return;
   }
 
