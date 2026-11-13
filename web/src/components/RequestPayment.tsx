@@ -62,7 +62,7 @@ export function RequestPayment({ me }: { me: Address }) {
           <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 var(--space-md)" }}>
             <legend>Token</legend>
             <div className="seg">
-              {TOKENS.map((t) => (
+              {TOKENS.filter((t) => t.address).map((t) => (
                 <span key={t.symbol}>
                   <input type="radio" name="req-token" id={`req-${t.symbol}`} checked={symbol === t.symbol} onChange={() => setSymbol(t.symbol as TokenSymbol)} />
                   <label htmlFor={`req-${t.symbol}`}>{t.symbol}</label>

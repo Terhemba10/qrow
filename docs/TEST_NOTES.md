@@ -195,3 +195,11 @@ Findings:
 - `MsgCrossVMCall` needs `source_vm` set to a known VM name (`cosmwasm` used) although the docs say it's ignored.
 - Earlier tries: `addFirstDevice` ran out of gas at 800k and 3M limits (fees still charged), which is why gas is now sized from estimates.
 - Not tested: QoreX itself signing `MsgCrossVMCall` (the owner's `/dev/qorex-check`), and the passkey device key in a real browser with QoreX.
+
+**Finding (13 Nov): EVM events from cross-VM calls are invisible to `eth_getLogs`.** Payment #1 (native tx
+`CCBF0062…40EA`, block 9978354, `crossvm_response: executed`) changed the escrow's state, but `eth_getLogs` for the
+escrow returns nothing for that block or the whole range. Also: the public RPC caps `eth_getLogs` at 10,000 blocks.
+What Qrow does: payment lists, past recipients and Telegram alerts read the escrow's **state** (`paymentCount`,
+`getPayment`) instead of events; every remaining log scan is chunked to 9,000 blocks. Verified in the app: Receive
+shows payment #1 for the Drill account; the watcher records it (`scannedId` 1) without stale alerts. Sealed notes
+are only in the `PaymentNote` event, so notes on payments made through QoreX can't be read yet.

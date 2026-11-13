@@ -1,3 +1,4 @@
+import { useCoins } from "../lib/coins";
 import { Readiness } from "../components/Readiness";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ export function ReceivePage() {
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const client = usePublicClient({ chainId: CHAIN.id });
+  useCoins(); // registers launched coins so their payments show by name
   const payments = usePayments(isConnected && chainId === CHAIN.id ? address : undefined);
   const pqKey = useQuery({
     queryKey: ["hasPqKey", address],

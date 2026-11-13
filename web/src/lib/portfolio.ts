@@ -105,13 +105,13 @@ export interface ActivityRow {
   amount: string;
   counterparty: string;
   status: string;
-  tx: Hex;
+  tx?: Hex;
 }
 
 export function toCsv(rows: ActivityRow[]): string {
   const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   const header = ["date_utc", "type", "reference", "amount", "counterparty", "status", "tx_hash"];
-  const lines = rows.map((r) => [new Date(r.time * 1000).toISOString(), r.kind, r.ref, r.amount, r.counterparty, r.status, r.tx].map(esc).join(","));
+  const lines = rows.map((r) => [new Date(r.time * 1000).toISOString(), r.kind, r.ref, r.amount, r.counterparty, r.status, r.tx ?? ""].map(esc).join(","));
   return [header.join(","), ...lines].join("\n") + "\n";
 }
 

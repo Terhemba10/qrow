@@ -36,6 +36,7 @@ const abi = parseAbi([
   "event PaymentReleased(uint256 indexed id, address indexed recipient, uint256 amount)",
   "event PaymentCancelled(uint256 indexed id, address indexed sender, uint256 amount)",
   "event PaymentRefunded(uint256 indexed id, address indexed sender, uint256 amount, address indexed caller)",
+  "function paymentCount() view returns (uint256)",
   "function getPayment(uint256 id) view returns ((address sender, address recipient, address token, uint256 amount, uint64 createdAt, uint64 deadline, uint8 mode, uint8 status))",
   "function createPayment(address recipient, address token, uint256 amount, uint8 mode, bytes sealedNote, uint64 validUntil, bytes pqSig)",
   "function cancel(uint256 id, uint64 validUntil, bytes pqSig)",
@@ -58,6 +59,7 @@ interface State {
   pending: Record<string, PaymentInfo & { createdAt: number; idStr?: string }>;
   tgOffset: number;
   escrow?: string; // which escrow lastBlock/sent/pending belong to
+  scannedId?: number; // highest payment number seen by the state poller
 }
 mkdirSync(DATA, { recursive: true });
 const statePath = new URL("state.json", DATA);
@@ -66,7 +68,7 @@ const state: State = existsSync(statePath)
   : { subs: {}, lastBlock: (DEPLOY_BLOCK - 1n).toString(), sent: [], pending: {}, tgOffset: 0 };
 // A new escrow (redeploy) starts its own history: keep subscriptions and the Telegram offset only.
 if (state.escrow !== ESCROW) {
-  Object.assign(state, { escrow: ESCROW, lastBlock: (DEPLOY_BLOCK - 1n).toString(), sent: [], pending: {} });
+  Object.assign(state, { escrow: ESCROW, lastBlock: (DEPLOY_BLOCK - 1n).toString(), sent: [], pending: {}, scannedId: 0 });
 }
 const save = () => writeFileSync(statePath, JSON.stringify(state, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
 
@@ -140,6 +142,44 @@ async function handleLog(log: Log & { eventName?: string; args?: { id?: bigint }
   await deliver(eventAlerts(kind, info, log.transactionHash, await cosmosHash(log.transactionHash)));
   if (log.blockNumber && log.blockNumber > BigInt(state.lastBlock)) state.lastBlock = log.blockNumber.toString();
   save();
+}
+
+/**
+ * Payments made through QoreX are cross-VM calls, and QoreChain doesn't expose EVM logs from those
+ * (found 13 Nov), so alerts come from the escrow's state: new payment numbers, and status changes
+ * of pending payments. Polled every 10 seconds; one alert per payment, kind and person.
+ */
+const FINAL_KIND: Record<number, Kind> = { 2: "claimed", 3: "released", 4: "cancelled", 5: "refunded" };
+let polling = false;
+async function pollState() {
+  if (polling) return;
+  polling = true;
+  try {
+    const count = Number(await httpClient.readContract({ address: ESCROW, abi, functionName: "paymentCount" }));
+    for (let n = (state.scannedId ?? 0) + 1; n <= count; n++) {
+      const id = BigInt(n);
+      const [info, p] = await Promise.all([paymentInfo(id), httpClient.readContract({ address: ESCROW, abi, functionName: "getPayment", args: [id] })]);
+      if (!info) break;
+      if (p.status === 1) {
+        state.pending[id.toString()] = info;
+        await deliver(eventAlerts("created", info, ""));
+      }
+      state.scannedId = n;
+      save();
+    }
+    for (const [key, info] of Object.entries(state.pending)) {
+      const p = await httpClient.readContract({ address: ESCROW, abi, functionName: "getPayment", args: [BigInt(key)] });
+      const kind = FINAL_KIND[p.status];
+      if (!kind) continue;
+      delete state.pending[key];
+      save();
+      await deliver(eventAlerts(kind, { ...info, id: BigInt(key) }, ""));
+    }
+  } catch (e) {
+    console.log(`[poll] ${(e as Error).message.split("\n")[0]}`);
+  } finally {
+    polling = false;
+  }
 }
 
 async function backfill() {
@@ -280,13 +320,10 @@ async function pollTelegram() {
 // ---------------------------------------------------------------- run
 async function main() {
   console.log(`qrow watcher: escrow ${ESCROW}, ws ${WS}, telegram ${TOKEN ? "on" : "off"}`);
-  await backfill();
-  wsClient.watchContractEvent({
-    address: ESCROW,
-    abi,
-    onLogs: (logs) => void Promise.all(logs.map((l) => handleLog(l as never))),
-    onError: (e) => console.log(`[ws] ${e.message.split("\n")[0]}`),
-  });
+  // Alerts come from escrow state (pollState), which sees payments made through QoreX too. The log
+  // path (backfill, handleLog) only sees EVM-wallet transactions, so it isn't used: no double alerts.
+  await pollState();
+  setInterval(() => void pollState(), 10_000);
   wsClient.watchBlockNumber({
     onBlockNumber: (n) => void checkBlockForFailures(n).catch((e: Error) => console.log(`[blocks] ${e.message.split("\n")[0]}`)),
     onError: (e) => console.log(`[ws] ${e.message.split("\n")[0]}`),
