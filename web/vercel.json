@@ -7,11 +7,11 @@
   "rewrites": [
     {
       "source": "/agent/:path*",
-      "destination": "/api/agent/:path*"
+      "destination": "/api/agent?p=:path*"
     },
     {
       "source": "/lcd-testnet/:path*",
-      "destination": "/api/lcd/:path*"
+      "destination": "/api/lcd?p=:path*"
     },
     {
       "source": "/((?!api/).*)",

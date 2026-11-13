@@ -29,3 +29,16 @@ export const limits = {
   agent: new RateLimiter(120, 60_000),
   rest: new RateLimiter(600, 60_000),
 };
+
+/**
+ * The original path and query of a rewritten request: vercel.json sends /agent/<path> and
+ * /lcd-testnet/<path> to /api/agent?p=<path> and /api/lcd?p=<path>, keeping the original query
+ * parameters. Returns "/<path>?<original query without p>".
+ */
+export function rewrittenPath(url: string | undefined): string {
+  const u = new URL(url ?? "/", "http://x");
+  const p = u.searchParams.get("p") ?? "";
+  u.searchParams.delete("p");
+  const q = u.searchParams.toString();
+  return `/${p.replace(/^\/+/, "")}${q ? `?${q}` : ""}`;
+}
