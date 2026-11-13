@@ -158,7 +158,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .actions .row { justify-content: flex-end; }
 
 .checks { display: grid; gap: var(--space-sm); }
-.checks__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap; }
 .checks__list { list-style: none; margin: 0; padding: 0; border-top: var(--rule-hair) solid var(--color-rule); }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair) solid var(--color-rule); align-items: start; }
 .check__icon { padding-top: var(--space-2xs); color: var(--color-muted); }
@@ -168,7 +167,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .check__title { font-size: var(--text-sm); font-weight: var(--weight-medium); }
 .check--danger .check__title, .check--block .check__title { color: var(--color-danger); }
 .check__detail { font-size: var(--text-sm); color: var(--color-muted); }
-.check__ms { font-size: var(--text-xs); color: var(--color-muted); padding-top: var(--space-2xs); }
 
 .confirm { display: grid; gap: var(--space-md); }
 .confirm__sheet { display: grid; gap: var(--space-xs); }
@@ -194,8 +192,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .ack input:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 
 .signflow { display: grid; gap: var(--space-md); }
-.steps { margin: 0; padding-inline-start: 1.25rem; display: grid; gap: var(--space-2xs); color: var(--color-muted); font-size: var(--text-sm); }
-.steps li[aria-current="step"] { color: var(--color-ink); font-weight: var(--weight-medium); }
 .cmd { margin: 0; padding: var(--space-sm); background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-rule-2); border-radius: var(--radius-input); font-size: var(--text-xs); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (max-width: 60rem) {
@@ -301,8 +297,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
   .nav a { padding: 0 var(--space-xs); min-height: 40px; font-size: var(--text-sm); }
 }
 
-/* Qrow key recovery code */
-.keycode { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); padding: var(--space-md); border: 1px dashed var(--color-rule-2); border-radius: var(--radius-card); font-size: var(--text-md, 1.05rem); user-select: all; }
 .addr mark { background: var(--color-paper-2); color: var(--color-ink); font-weight: 600; border-radius: 3px; padding: 0 1px; }
 .linkish { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: start; }
 
@@ -331,7 +325,6 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 
 /* Faucet */
 .faucet-addr { font-size: var(--text-lg); overflow-wrap: anywhere; }
-.steps-list { margin: 0; padding-inline-start: 1.25em; display: grid; gap: var(--space-xs); }
 .facts-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
 
 .panel, .nftcard { color: var(--color-ink); }
