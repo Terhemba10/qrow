@@ -221,3 +221,26 @@ The Drill account plays the QoreX user (its transactions are the ones QoreX sign
 Result: payment #2 exists with the user as sender (status Pending); the user's window has 0 transactions left.
 Not covered here: QoreX itself signing `MsgGrant` and `MsgOpenEVMWindow` (owner's check, tests 4 and 5), and the
 passkey in a real browser.
+
+## One approval per action (UX redesign, 13 Nov, `npm run smoke:oneclick`)
+A brand-new account plays the QoreX user (its transactions are the ones QoreX signs); a fresh device account
+does the rest. The flow mirrors `web/src/lib/action.ts`. All on testnet, all succeeded:
+
+| Step | Tx | Gas |
+| --- | --- | --- |
+| 0a. Test set-up: the Drill account funds the new user, 2 QOR | `1E60BD40D6ADE33CACECDA77235B4ADC8F82BCA82205C0E6C371CE3EB820704C` | 200,643 |
+| 0b. Test set-up: user registers its ML-DSA key (QoreX does this on a first transaction) | `BC78A02249F3CC1735CC5A0CEDD6058273A4D1F62D5D0329F996AC9C807371A1` | 296,987 |
+| 0c. Test set-up: user swaps 0.3 QOR for bank fUSD (like the faucet's fUSD) | `AD85BD02869DCF7AD9679F71E01A47DD961667EEC264021BAB9A95BBD7DDB994` | 265,309 |
+| **1. User approval, first action:** device fees + MsgCrossVMCall grant (30 d) + MsgConvertCoin grant (10 min) + window (QrowKeys, fUSD, escrow; 3 calls), one transaction | `02A17121EE3FE23C7D0325EAD7C3C938070CEA895BE0AD67D0929BB4ADDF5FA4` | 270,070 |
+| 2a. Device registers its own ML-DSA key | `AAEF28C48BEAA155AD76E5929E6C816C65F18D8543776DB8DD18670F3981E258` | 296,957 |
+| 2b. Device: `addFirstDevice` as the user | `C59B50E151CEB2303184DA172D295D6250B60A39073D50471805E82CFC4399EB` | 3,008,783 |
+| 2c. Device: convert 0.01 bank fUSD to ERC-20 as the user (MsgExec of MsgConvertCoin) | `F14483FA633FC44FB5BE5ED7BBCCF6F1E04B747DDF8A3B97DF687E9F7943F13A` | 452,438 |
+| 2d. Device: approve exactly 0.01 fUSD as the user | `619CA1AFB067C67B7701CCFD3CC9C816256BC637763D888EE9F48266E0AA9164` | 289,507 |
+| 2e. Device: `createPayment` as the user (device-key signature), payment #3 | `0F8F8829A6C2461722ED0417684A3A63E75276E8934F3DA91B16FA8DCFF54D73` | 1,216,482 |
+| **3. User approval, second action:** window for the escrow (1 call) | `4E61C9AC24F5F20BE4F5A4AFA4AEF1CCDD639F280E341B1C5C677BCB38C7380C` | 190,087 |
+| 4. Device: `cancel` as the user (device-key signature); payment #3 now Cancelled | `903A2FD82465FD0C7DE5330523A6433B53DCF1CD2010C836208B2AB13CD5A308` | 985,822 |
+
+Result: the chain accepts the whole first-time set-up plus the window as ONE user transaction, and a convert
+can run through authz inside the same flow. Still the owner's test: whether QoreX displays and signs the bundle
+(`MsgGrant` + `MsgOpenEVMWindow`, check page tests 4 and 5). If QoreX refuses a message type, the app sends
+what QoreX accepts and asks for the window by hand once (one blocker, one fix).

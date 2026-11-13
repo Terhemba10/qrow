@@ -1,15 +1,27 @@
 import { useId, useState } from "react";
 import { useAccount } from "wagmi";
 import { evmToQor } from "@qorechain/sdk";
-import { IconAlert, IconCheck } from "../components/Icons";
+import { IconAlert } from "../components/Icons";
+import { ReceiptCard } from "../components/ReceiptCard";
+import { addReceipt, type Receipt } from "../lib/receipts";
 import { Countdown, useNow } from "../components/Countdown";
 import { displayAmount, parseAmount } from "../lib/amount";
 import { build, earlyUnlockQuote, LOCK_TERMS, qorexAccount, qorexAvailable, REF_MEMO, signInQorex, storedReferral, UQOR, useStaking, type Lock } from "../lib/staking";
 
 const q = (uqor: bigint) => `${displayAmount(uqor, 6)} QOR`;
-const fmtDate = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
+const fmtDate = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
-type Pending = { title: string; lines: string[]; warn?: string[]; messages: { typeUrl: string; value: unknown }[]; memo?: string };
+type Pending = {
+  title: string;
+  lines: string[];
+  warn?: string[];
+  messages: { typeUrl: string; value: unknown }[];
+  memo?: string;
+};
 
 export function StakingPage() {
   const { address } = useAccount();
@@ -25,7 +37,11 @@ export function StakingPage() {
   const [months, setMonths] = useState<number>(3);
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; text: string }>();
+  const [result, setResult] = useState<{
+    ok: boolean;
+    text: string;
+    receipt?: Receipt;
+  }>();
   const hasQorex = qorexAvailable();
 
   const p = params.data;
@@ -41,12 +57,30 @@ export function StakingPage() {
     setBusy(true);
     setResult(undefined);
     try {
+      const signer = qorexAddr ?? (await qorexAccount());
+      if (!signer) throw new Error("QoreX didn’t share an account. Unlock QoreX and try again.");
+      setQorexAddr(signer);
+      if (delegator && signer !== delegator) throw new Error("QoreX is on a different account from the one Qrow shows. Choose the same account in QoreX.");
       const r = await signInQorex(pending.messages, pending.memo);
-      setResult({ ok: true, text: `Done in QoreX. Transaction ${r.txHash}.` });
+      const receipt: Receipt = {
+        hash: r.txHash,
+        kind: "Staking",
+        title: pending.title,
+        lines: pending.lines.map((l, i) => ({
+          name: i === 0 ? "What" : `Detail ${i}`,
+          value: l,
+        })),
+        at: new Date().toISOString(),
+      };
+      if (address) addReceipt(address, receipt);
+      setResult({ ok: true, text: "", receipt });
       setPending(undefined);
       void position.refetch();
     } catch (e) {
-      setResult({ ok: false, text: e instanceof Error ? e.message : "QoreX refused the request." });
+      setResult({
+        ok: false,
+        text: e instanceof Error ? e.message : "QoreX refused the request.",
+      });
     } finally {
       setBusy(false);
     }
@@ -63,7 +97,11 @@ export function StakingPage() {
     const memo = firstDelegation && ref ? REF_MEMO(ref) : undefined;
     setPending({
       title: "Stake QOR",
-      lines: [`Stake ${q(a.units)} with ${v?.moniker ?? validator} (${((v?.commission ?? 0) * 100).toFixed(0)}% commission).`, `Unstaking later takes ${unbondDays} days (the chain’s unbonding period).`, ...(memo ? [`Tagged with your referrer’s link (${ref?.slice(0, 10)}…). They get a count and a badge, no payout.`] : [])],
+      lines: [
+        `Stake ${q(a.units)} with ${v?.moniker ?? validator} (${((v?.commission ?? 0) * 100).toFixed(0)}% commission).`,
+        `Unstaking later takes ${unbondDays} days (the chain’s unbonding period).`,
+        ...(memo ? [`Tagged with your referrer’s link (${ref?.slice(0, 10)}…). They get a count and a badge, no payout.`] : []),
+      ],
       warn,
       messages: [build.delegate(delegator, validator, a.units)],
       memo,
@@ -113,7 +151,9 @@ export function StakingPage() {
     if (!withRewards.length) return;
     setPending({
       title: "Claim & restake",
-      lines: withRewards.map((d) => `Claim ${q(d.rewards)} from ${validators.data?.find((v) => v.operator === d.validator)?.moniker ?? d.validator} and stake it again with them.`).concat(["One QoreX signature. Nothing is restaked automatically without you."]),
+      lines: withRewards
+        .map((d) => `Claim ${q(d.rewards)} from ${validators.data?.find((v) => v.operator === d.validator)?.moniker ?? d.validator} and stake it again with them.`)
+        .concat(["One QoreX signature. Nothing is restaked automatically without you."]),
       messages: withRewards.flatMap((d) => [build.withdraw(delegator, d.validator), build.delegate(delegator, d.validator, d.rewards)]),
     });
   }
@@ -122,7 +162,10 @@ export function StakingPage() {
     <section className="page" aria-labelledby="stk-title">
       <div className="sheet__head">
         <h1 id="stk-title">Staking</h1>
-        <p className="muted">Stake testnet QOR with a validator on QoreChain’s native lane, and optionally lock it for a bonus. Every action is signed in QoreX with your hybrid (ECDSA + ML-DSA-87) signature. Testnet QOR has no value.</p>
+        <p className="muted">
+          Stake testnet QOR with a validator on QoreChain’s native lane, and optionally lock it for a bonus. Every action is signed in QoreX with your hybrid (ECDSA + ML-DSA-87) signature. Testnet QOR
+          has no value.
+        </p>
       </div>
 
       {!hasQorex && (
@@ -131,14 +174,13 @@ export function StakingPage() {
             <IconAlert /> Staking is signed in QoreX
           </p>
           <p>
-            QoreX isn’t available in this browser, so you can view staking but not sign. <a href="https://build.qorechain.io/start" target="_blank" rel="noopener noreferrer">Install QoreX</a> to stake.
+            QoreX isn’t available in this browser, so you can view staking but not sign.{" "}
+            <a href="https://build.qorechain.io/start" target="_blank" rel="noopener noreferrer">
+              Install QoreX
+            </a>{" "}
+            to stake.
           </p>
         </div>
-      )}
-      {hasQorex && !qorexAddr && (
-        <button className="btn" type="button" onClick={() => void qorexAccount().then(setQorexAddr)}>
-          Connect QoreX
-        </button>
       )}
 
       <div className="stats">
@@ -164,27 +206,27 @@ export function StakingPage() {
               {w}
             </p>
           ))}
-          <ul className="checks__list">
+          <ul className="facts-list">
             {pending.lines.map((l) => (
-              <li key={l} className="check">
-                <span className="check__icon">
-                  <IconCheck />
-                </span>
-                <p className="check__title">{l}</p>
-              </li>
+              <li key={l}>{l}</li>
             ))}
           </ul>
           <div className="row">
-            <button className="btn btn--quiet" type="button" onClick={() => setPending(undefined)}>
-              Cancel
+            <button className="btn" type="button" disabled={busy || !hasQorex} aria-busy={busy} onClick={() => void sign()}>
+              {busy ? "Approve in QoreX…" : "Approve in QoreX"}
             </button>
-            <button className="btn" type="button" disabled={busy || !hasQorex || !qorexAddr} aria-busy={busy} onClick={() => void sign()}>
-              {busy ? "Waiting for QoreX…" : "Confirm & sign in QoreX"}
+            <button className="btn btn--quiet" type="button" disabled={busy} onClick={() => setPending(undefined)}>
+              Back
             </button>
           </div>
         </section>
       )}
-      {result && <p className={`notice ${result.ok ? "notice--ok" : "notice--danger"}`} role="status">{result.text}</p>}
+      {result?.receipt && <ReceiptCard r={result.receipt} />}
+      {result && !result.ok && (
+        <p className="notice notice--danger" role="alert">
+          {result.text}
+        </p>
+      )}
 
       <div className="split">
         <section className="stack" aria-labelledby="pos-title">
@@ -193,24 +235,30 @@ export function StakingPage() {
           {!delegator && <p className="muted">Connect a wallet to see your stake.</p>}
           {pos && pos.delegations.length === 0 && <p className="muted">You’re not staking yet.</p>}
           {pos && pos.delegations.length > 0 && (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th scope="col">Validator</th>
-                  <th scope="col" className="num">Staked</th>
-                  <th scope="col" className="num">Rewards</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pos.delegations.map((d) => (
-                  <tr key={d.validator}>
-                    <th scope="row">{validators.data?.find((v) => v.operator === d.validator)?.moniker ?? d.validator.slice(0, 16)}</th>
-                    <td className="num fig">{q(d.amount)}</td>
-                    <td className="num fig">{q(d.rewards)}</td>
+            <div className="table-wrap" tabIndex={0}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Validator</th>
+                    <th scope="col" className="num">
+                      Staked
+                    </th>
+                    <th scope="col" className="num">
+                      Rewards
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pos.delegations.map((d) => (
+                    <tr key={d.validator}>
+                      <th scope="row">{validators.data?.find((v) => v.operator === d.validator)?.moniker ?? d.validator.slice(0, 16)}</th>
+                      <td className="num fig">{q(d.amount)}</td>
+                      <td className="num fig">{q(d.rewards)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           {totalRewards > 0n && (
             <button className="btn" type="button" onClick={prepareRestake}>
@@ -253,7 +301,8 @@ export function StakingPage() {
             <option value="">Choose a validator</option>
             {validators.data?.map((v) => (
               <option key={v.operator} value={v.operator} disabled={v.jailed}>
-                {v.moniker}, {(v.commission * 100).toFixed(0)}% commission{v.jailed ? " (jailed)" : ""}
+                {v.moniker}, {(v.commission * 100).toFixed(0)}% commission
+                {v.jailed ? " (jailed)" : ""}
               </option>
             ))}
           </select>

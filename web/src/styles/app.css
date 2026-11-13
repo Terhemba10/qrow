@@ -294,9 +294,10 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .badge--safe { border-color: var(--color-ok); color: var(--color-ok); }
 .coin .facts dd { overflow-wrap: anywhere; min-width: 0; }
 
-/* Phones: every tab visible without sideways scrolling. */
+/* Phones: one row of tabs that scrolls sideways (the Start page lists every tab), so content starts high. */
 @media (max-width: 640px) {
-  .nav { flex-wrap: wrap; overflow-x: visible; row-gap: 0; gap: 0; }
+  .nav { flex-wrap: nowrap; overflow-x: auto; gap: 0; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
   .nav a { padding: 0 var(--space-xs); min-height: 40px; font-size: var(--text-sm); }
 }
 
@@ -345,3 +346,29 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .verify__result { margin-top: var(--space-lg); }
 .verify__value { overflow-wrap: anywhere; min-width: 0; }
 .verify__step h3 { margin: 0; font-size: var(--text-md, 1rem); }
+
+/* Welcome tip (first visit only) and blockers */
+.welcome { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; justify-content: space-between; max-width: calc(var(--container) - 2 * var(--gutter)); margin: var(--space-md) auto 0; padding: var(--space-sm) var(--space-md); border: 1px solid var(--color-rule-2); border-radius: var(--radius-card); background: var(--color-paper-2); color: var(--color-ink); }
+.welcome p { margin: 0; }
+@media (max-width: 60rem) { .welcome { margin-inline: var(--gutter); } }
+.blocker .btn { justify-self: start; margin-top: var(--space-xs); }
+.receipt .facts { margin-top: var(--space-xs); }
+.receipts { display: grid; gap: var(--space-md); }
+.help-link { color: var(--color-ink-2); font-weight: var(--weight-medium); text-decoration: none; white-space: nowrap; }
+.help-link:hover, .help-link.active { color: var(--color-ink); text-decoration: underline; }
+
+/* Grid children never grow wider than the screen because of a long link, address or menu. */
+.page > *, .split > *, .stack > *, .panel > * { min-width: 0; }
+select.input { max-width: 100%; text-overflow: ellipsis; }
+.mono { overflow-wrap: anywhere; }
+/* Wide tables scroll inside their own box on phones, never the page. */
+.table-wrap { max-width: 100%; overflow-x: auto; }
+.table-wrap:focus-visible { outline: var(--focus-ring); }
+
+/* Critique fixes (13 Nov): themed placeholder, finger-sized links, a compact welcome tip on phones. */
+.input::placeholder { color: var(--color-muted); opacity: 1; }
+.help-link { display: inline-flex; align-items: center; min-height: var(--hit); padding: 0 var(--space-sm); }
+.footer a, .trylist > li > a, .welcome a { display: inline-flex; align-items: center; min-height: var(--hit); }
+@media (max-width: 40rem) {
+  .welcome { padding: var(--space-xs) var(--space-sm); font-size: var(--text-sm); margin-top: var(--space-sm); }
+}

@@ -653,3 +653,39 @@ owner's QoreX passes the grant and window checks (tests 4 and 5) for the device-
 
 Owner steps open: GitHub login connection in Vercel (auto-deploy on push), `CMC_API_KEY` in Vercel, Render account
 for the watcher, QoreX checks 4 and 5, testing the live link on desktop Chrome with QoreX and on a phone.
+
+## UX redesign: one Connect, one approval per action (13 Nov, owner's brief after live feedback)
+
+Live feedback: every tab showed about 7 steps; stressful. Now:
+- **One connect** in the header ("Connect QoreX"); wagmi reconnects silently on reload. No per-tab readiness checklists:
+  the 7-item card is gone from Start, Send and Receive. Help moved to an optional **Help / Get started** page (header
+  link); first visitors get one dismissible welcome tip, shown once.
+- **One confirm screen, one QoreX approval per action** (`web/src/lib/action.ts`, `components/ActionFlow.tsx`): checks
+  run silently (QoreX account, fees, token balance incl. bank-form tokens, allowance, device, grant, window); the
+  one QoreX transaction carries everything QoreX must authorise (first time: device fees + permission; convert
+  permission when fUSD must be converted; the scoped window). The device then registers its key, adds itself,
+  converts, approves, signs (ML-DSA-87), simulates and sends without asking QoreX again. Same security model:
+  per-action window (targets, call count, ~10 min, value cap), passkey-protected device key, contract PQ checks.
+- **One blocker at a time**, with one fix, only when the user tries the action (wrong network → Help; no QOR or
+  tokens → Faucet; other device → "Add this device (3-day wait)"; QoreX can't open the window → Help, try again).
+- **Receipts**: every action ends with a receipt (what, amounts, hash, "Verify on testnet", explorer, raw testnet
+  record) saved per account in this browser and listed in Portfolio. Set-up steps in the same flow are listed too.
+- Proven on testnet (`npm run smoke:oneclick`, docs/TEST_NOTES.md): a brand-new account's first payment (with
+  convert) took ONE user transaction; its second action (cancel) took ONE.
+
+### Before / after (clicks after filling the form; QoreX approvals; device prompts = fingerprint/face/PIN)
+
+| Action | Before (fbc0850) | After |
+| --- | --- | --- |
+| Getting ready | Connect + a 7-item checklist on Start, Send, Receive; a manual 0.01 QOR self-send in QoreX; "Set up this device" (1 click, **2 QoreX approvals**, 2–3 device prompts) | Connect once. Nothing else up front |
+| First payment (Send), new user | Set-up above, then 4 clicks (Check, Confirm & Send, Continue, Send payment), **1 more QoreX approval**, 1 device prompt; faucet fUSD (bank form) counted as 0, no in-app convert: **blocked** | **2 clicks** (Review payment, Send in QoreX), **1 QoreX approval** (set-up + convert + window bundled), 1 device prompt |
+| Later payment | 4 clicks, 1 approval, 1 device prompt | **2 clicks, 1 approval**, 1 device prompt |
+| Claim / Release / Cancel / Refund, Buy, List, Mint, Launch | 3 clicks (open, Continue, Confirm), 1 approval, 1 device prompt; first time also the set-up (+2 approvals) | **2 clicks** (open, "… in QoreX"), **1 approval** (first time included), 1 device prompt |
+| Swap | 1 click, 1 approval, no confirm screen, up to 3 messages at once | 2 clicks (Review swap, Swap in QoreX), 1 approval, confirm screen, one blocker, receipt |
+| Stake / lock / claim bonus | 2 clicks, 1 approval | 2 clicks, 1 approval, now with a receipt |
+
+Target met in code and on chain: connect once, then 1 QoreX approval per action, including the first contract action
+(better than the "at most 1 extra the first time" target). Still the owner's test: whether QoreX displays and signs
+the bundle (`MsgGrant` + `MsgOpenEVMWindow`, check page tests 4 and 5); if it refuses one type, the app sends what
+QoreX accepts and asks for the window by hand once (one blocker). The device prompt stays: it protects the device's
+quantum-safe key and removing it would weaken that protection (owner's rule), so it is counted, not removed.

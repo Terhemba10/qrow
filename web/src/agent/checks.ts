@@ -130,9 +130,9 @@ export async function runChecks(client: PublicClient, sender: Address, draft: Pa
       return has
         ? { level: "ok", title: "The recipient can claim it", detail: "They have a registered ML-DSA-87 (quantum-safe) key." }
         : {
-            level: "warn",
-            title: "The recipient can’t claim it yet",
-            detail: `They must set up a quantum-safe (ML-DSA-87) key in QoreX first. If they don’t claim it within ${REFUND_TEXT}, it comes back to you.`,
+            level: "info",
+            title: "The recipient sets up their quantum-safe key when they claim",
+            detail: `It happens inside their claim approval in QoreX. If they don’t claim it within ${REFUND_TEXT}, it comes back to you.`,
           };
     }),
 
@@ -171,15 +171,16 @@ export async function runChecks(client: PublicClient, sender: Address, draft: Pa
     }),
 
     timed("balance", "Couldn’t read your balance", async () => {
+      // Contract (ERC-20) form plus the bank form the faucet pays: Qrow converts the difference in the same approval.
       const bal = token.address
-        ? await client.readContract({ address: token.address, abi: erc20Abi, functionName: "balanceOf", args: [sender] })
+        ? (await client.readContract({ address: token.address, abi: erc20Abi, functionName: "balanceOf", args: [sender] })) + (await bankBalance(sender, token.bankDenom))
         : await client.getBalance({ address: sender });
       return bal >= amount
         ? { level: "ok", title: "You have enough", detail: `Balance ${displayAmount(bal, token.decimals)} ${token.symbol}.` }
         : {
             level: "block",
             title: `Not enough ${token.symbol}`,
-            detail: `You have ${displayAmount(bal, token.decimals)} ${token.symbol} available to the escrow and this payment needs ${displayAmount(amount, token.decimals)}.`,
+            detail: `You have ${displayAmount(bal, token.decimals)} ${token.symbol} and this payment needs ${displayAmount(amount, token.decimals)}.`,
           };
     }),
 
@@ -188,7 +189,7 @@ export async function runChecks(client: PublicClient, sender: Address, draft: Pa
       const needed = (token.address ? 0n : amount) + 10n ** 18n; // keep about 1 QOR for fees
       return qor >= needed
         ? { level: "ok", title: "You have QOR for the network fee" }
-        : { level: "warn", title: "You may not have enough QOR for the fee", detail: "Keep about 1 QOR for network fees; payments with ML-DSA signatures use more gas than a plain transfer." };
+        : { level: "info", title: "QOR for the fee is checked when you send", detail: "If it’s short, Qrow says so then, with a link to the faucet." };
     }),
 
     timed("limits", "Couldn’t read your sending limits", async () => {
@@ -239,3 +240,10 @@ function logRun(run: AgentRun) {
 
 export const worst = (rs: CheckResult[]): Level =>
   (["block", "danger", "warn", "info", "ok"] as Level[]).find((l) => rs.some((r) => r.level === l)) ?? "ok";
+
+async function bankBalance(sender: Address, denom: string): Promise<bigint> {
+  if (!denom) return 0n;
+  const r = await fetch(`${REST}/cosmos/bank/v1beta1/balances/${evmToQor(sender)}/by_denom?denom=${encodeURIComponent(denom)}`).catch(() => undefined);
+  if (!r?.ok) return 0n;
+  return BigInt(((await r.json()) as { balance?: { amount?: string } }).balance?.amount ?? "0");
+}

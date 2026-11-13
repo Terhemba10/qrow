@@ -27,27 +27,27 @@ export function WalletButton() {
 function WalletButtonInner() {
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+      {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
         const ready = mounted;
         if (!ready) {
           return (
             <button className="btn btn--quiet" type="button" disabled aria-busy="true">
-              Loading wallet
+              Connecting…
             </button>
           );
         }
         if (!account || !chain) {
           return (
             <button className="btn" type="button" onClick={openConnectModal}>
-              Connect wallet
+              Connect QoreX
             </button>
           );
         }
         if (chain.unsupported) {
           return (
-            <button className="btn btn--quiet" type="button" onClick={openChainModal}>
-              Wrong network
-            </button>
+            <a className="btn btn--quiet" href="/help#testnet" title="Qrow works on QoreChain testnet only">
+              Switch QoreX to Testnet
+            </a>
           );
         }
         return (

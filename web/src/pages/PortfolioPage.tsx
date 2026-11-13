@@ -3,7 +3,10 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { evmToQor } from "@qorechain/sdk";
 import { useAccount } from "wagmi";
+import { Link } from "react-router-dom";
 import { IconAlert } from "../components/Icons";
+import { ReceiptCard } from "../components/ReceiptCard";
+import { useReceipts } from "../lib/receipts";
 import { AGENT, CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { short } from "../lib/address";
@@ -12,12 +15,25 @@ import { usePayments } from "../lib/payments";
 import { useCoins } from "../lib/coins";
 import { downloadCsv, useBalances, useNfts, type ActivityRow } from "../lib/portfolio";
 
-const STATUS_WORD: Record<string, string> = { Pending: "Waiting", Claimed: "Claimed", Released: "Released", Cancelled: "Cancelled", Refunded: "Refunded" };
-const fmtDate = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const STATUS_WORD: Record<string, string> = {
+  Pending: "Waiting",
+  Claimed: "Claimed",
+  Released: "Released",
+  Cancelled: "Cancelled",
+  Refunded: "Refunded",
+};
+const fmtDate = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export function PortfolioPage() {
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const receipts = useReceipts(address);
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const balances = useBalances(me);
   const nfts = useNfts(me);
@@ -37,8 +53,24 @@ export function PortfolioPage() {
   const activity = useMemo<ActivityRow[]>(() => {
     if (!payments.data || !me) return [];
     const rows: ActivityRow[] = [
-      ...payments.data.outgoing.map((p) => ({ time: p.createdAt, kind: "Payment sent", ref: `#${p.id}`, amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`, counterparty: p.recipient, status: STATUS_WORD[p.status] ?? p.status, tx: p.createdTx })),
-      ...payments.data.incoming.map((p) => ({ time: p.createdAt, kind: "Payment received", ref: `#${p.id}`, amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`, counterparty: p.sender, status: STATUS_WORD[p.status] ?? p.status, tx: p.createdTx })),
+      ...payments.data.outgoing.map((p) => ({
+        time: p.createdAt,
+        kind: "Payment sent",
+        ref: `#${p.id}`,
+        amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`,
+        counterparty: p.recipient,
+        status: STATUS_WORD[p.status] ?? p.status,
+        tx: p.createdTx,
+      })),
+      ...payments.data.incoming.map((p) => ({
+        time: p.createdAt,
+        kind: "Payment received",
+        ref: `#${p.id}`,
+        amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`,
+        counterparty: p.sender,
+        status: STATUS_WORD[p.status] ?? p.status,
+        tx: p.createdTx,
+      })),
     ];
     return rows.sort((a, b) => b.time - a.time);
   }, [payments.data, me]);
@@ -48,12 +80,12 @@ export function PortfolioPage() {
       <section className="sheet" aria-labelledby="pf-title">
         <div className="sheet__head">
           <h1 id="pf-title">Portfolio</h1>
-          <p className="muted">Your balances, NFTs, listings and payments across QoreChain’s lanes.</p>
+          <p className="muted">Your balances, NFTs, listings, payments and receipts.</p>
         </div>
         <div className="panel empty">
           <h2>Connect your wallet to see your portfolio</h2>
           <button className="btn" type="button" onClick={openConnectModal}>
-            Connect wallet
+            Connect QoreX
           </button>
         </div>
       </section>
@@ -70,6 +102,22 @@ export function PortfolioPage() {
         <p className="muted">Testnet balances: these tokens have no value.</p>
       </div>
 
+      <section aria-labelledby="rcpt-title" className="stack">
+        <h2 id="rcpt-title">Your receipts</h2>
+        {receipts.length === 0 ? (
+          <p className="muted">
+            After each transaction its receipt and hash appear here (in this browser). You can check any hash on <Link to="/verify">Verify</Link>.
+          </p>
+        ) : (
+          <div className="receipts">
+            {receipts.slice(0, 10).map((r) => (
+              <ReceiptCard key={r.hash} r={r} compact />
+            ))}
+            {receipts.length > 10 && <p className="hint">Showing the 10 most recent of {receipts.length}.</p>}
+          </div>
+        )}
+      </section>
+
       <section aria-labelledby="bal-title" className="stack">
         <h2 id="bal-title">Balances</h2>
         {balances.isPending && <span className="skeleton" style={{ width: "60%", height: 120 }} />}
@@ -85,48 +133,47 @@ export function PortfolioPage() {
         )}
         {balances.data && (
           <>
-            <table className="table">
-              <caption className="visually-hidden">Token balances by lane</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Token</th>
-                  <th scope="col" className="num">EVM (usable by Qrow)</th>
-                  <th scope="col" className="num">Native lane, not converted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {balances.data.rows.map((r) => (
-                  <tr key={r.token.symbol}>
-                    <th scope="row">{r.token.symbol}</th>
-                    <td className="num fig">{displayAmount(r.evm, r.token.decimals)}</td>
-                    <td className="num fig">{r.token.address ? displayAmount(r.bank, r.token.decimals) : "same balance"}</td>
-                  </tr>
-                ))}
-                {balances.data.cw20.map((c) => (
-                  <tr key={c.symbol}>
-                    <th scope="row">
-                      {c.symbol} <span className="hint">CosmWasm CW20, read only</span>
+            <div className="table-wrap" tabIndex={0}>
+              <table className="table">
+                <caption className="visually-hidden">Token balances</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Token</th>
+                    <th scope="col" className="num">
+                      Balance
                     </th>
-                    <td className="num muted">n/a</td>
-                    <td className="num fig">{displayAmount(c.balance, c.decimals)}</td>
                   </tr>
-                ))}
-                {coins.data
-                  ?.filter((c) => c.mine && c.mine.balance > 0n)
-                  .map((c) => (
-                    <tr key={c.address}>
-                      <th scope="row">
-                        {c.symbol} <span className="hint">launched in Qrow, testnet memecoin</span>
-                      </th>
-                      <td className="num fig">{displayAmount(c.mine!.balance, 18)}</td>
-                      <td className="num muted">n/a</td>
+                </thead>
+                <tbody>
+                  {balances.data.rows.map((r) => (
+                    <tr key={r.token.symbol}>
+                      <th scope="row">{r.token.symbol}</th>
+                      <td className="num fig">{displayAmount(r.token.address ? r.evm + r.bank : r.evm, r.token.decimals)}</td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
-            {balances.data.rows.some((r) => r.token.address && r.evm === 0n && r.bank > 0n) && (
-              <p className="hint">Fest tokens on the native lane must be converted (MsgConvertCoin, in QoreX) before Qrow’s EVM contracts can use them.</p>
-            )}
+                  {balances.data.cw20.map((c) => (
+                    <tr key={c.symbol}>
+                      <th scope="row">
+                        {c.symbol} <span className="hint">CosmWasm CW20, read only</span>
+                      </th>
+                      <td className="num fig">{displayAmount(c.balance, c.decimals)}</td>
+                    </tr>
+                  ))}
+                  {coins.data
+                    ?.filter((c) => c.mine && c.mine.balance > 0n)
+                    .map((c) => (
+                      <tr key={c.address}>
+                        <th scope="row">
+                          {c.symbol} <span className="hint">launched in Qrow, testnet memecoin</span>
+                        </th>
+                        <td className="num fig">{displayAmount(c.mine!.balance, 18)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            <details>
+              <summary className="hint">Your addresses on each QoreChain lane</summary>
             <dl className="facts lanes">
               <div>
                 <dt>EVM</dt>
@@ -144,6 +191,7 @@ export function PortfolioPage() {
                 </dd>
               </div>
             </dl>
+            </details>
           </>
         )}
       </section>
@@ -160,7 +208,8 @@ export function PortfolioPage() {
                 <p className="nftcard__name">{n.name}</p>
                 {n.listed && (
                   <p className="hint fig">
-                    Listed at {displayAmount(n.listed.price, n.listed.currency === "0x0000000000000000000000000000000000000000" ? 18 : tokenBySymbol("fUSD")!.decimals)} {n.listed.currency === "0x0000000000000000000000000000000000000000" ? "QOR" : "fUSD"}
+                    Listed at {displayAmount(n.listed.price, n.listed.currency === "0x0000000000000000000000000000000000000000" ? 18 : tokenBySymbol("fUSD")!.decimals)}{" "}
+                    {n.listed.currency === "0x0000000000000000000000000000000000000000" ? "QOR" : "fUSD"}
                   </p>
                 )}
               </li>
@@ -173,7 +222,9 @@ export function PortfolioPage() {
         <h2 id="ref-title">Referrals</h2>
         {referrals.data !== undefined ? (
           <p>
-            <span className={`badge${referrals.data > 0 ? " badge--earned" : ""}`}>{referrals.data >= 10 ? "Connector" : referrals.data >= 3 ? "Guide" : referrals.data >= 1 ? "First referral" : "No referrals yet"}</span>{" "}
+            <span className={`badge${referrals.data > 0 ? " badge--earned" : ""}`}>
+              {referrals.data >= 10 ? "Connector" : referrals.data >= 3 ? "Guide" : referrals.data >= 1 ? "First referral" : "No referrals yet"}
+            </span>{" "}
             <span className="fig">{referrals.data}</span> {referrals.data === 1 ? "person has" : "people have"} staked through your link. Tracking only: Qrow pays no commission.
           </p>
         ) : referrals.isError ? (
@@ -203,33 +254,37 @@ export function PortfolioPage() {
         {payments.isPending && <span className="skeleton" style={{ width: "80%" }} />}
         {payments.data && activity.length === 0 && <p className="muted">No payments yet.</p>}
         {activity.length > 0 && (
-          <table className="table">
-            <caption className="visually-hidden">Payments sent and received</caption>
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Type</th>
-                <th scope="col">Payment</th>
-                <th scope="col" className="num">Amount</th>
-                <th scope="col">With</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activity.map((r) => (
-                <tr key={`${r.kind}${r.ref}`}>
-                  <td>{fmtDate.format(new Date(r.time * 1000))}</td>
-                  <td>{r.kind}</td>
-                  <td className="fig">{r.ref}</td>
-                  <td className="num fig">{r.amount}</td>
-                  <td className="mono" title={r.counterparty}>
-                    {short(r.counterparty)}
-                  </td>
-                  <td>{r.status}</td>
+          <div className="table-wrap" tabIndex={0}>
+            <table className="table">
+              <caption className="visually-hidden">Payments sent and received</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Payment</th>
+                  <th scope="col" className="num">
+                    Amount
+                  </th>
+                  <th scope="col">With</th>
+                  <th scope="col">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {activity.map((r) => (
+                  <tr key={`${r.kind}${r.ref}`}>
+                    <td>{fmtDate.format(new Date(r.time * 1000))}</td>
+                    <td>{r.kind}</td>
+                    <td className="fig">{r.ref}</td>
+                    <td className="num fig">{r.amount}</td>
+                    <td className="mono" title={r.counterparty}>
+                      {short(r.counterparty)}
+                    </td>
+                    <td>{r.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </section>

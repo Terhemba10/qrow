@@ -134,7 +134,7 @@ export function ShopPage() {
           </fieldset>
           {!me ? (
             <button className="btn" type="button" onClick={openConnectModal}>
-              Connect wallet to mint
+              Connect QoreX to mint
             </button>
           ) : soldOut ? (
             <p className="muted">Sold out: all 256 are minted. Look in the NFT Market.</p>
@@ -158,7 +158,7 @@ export function ShopPage() {
               approve={currency === "fUSD" && d ? { token: d.fusd, amount: price, label: `${displayAmount(price, decimals)} fUSD` } : undefined}
               build={(auth) => ({ abi: qrowGenesisAbi, functionName: "mint", args: [currencyAddr, auth!.validUntil, auth!.signature], value: currency === "QOR" ? price : 0n })}
               describeSimulation={(r) => `You receive Qrow Genesis #${String(r)} and pay ${displayAmount(price, decimals)} ${currency}.`}
-              confirmLabel="Confirm and mint"
+              confirmLabel="Mint in QoreX"
               onDone={async () => {
                 setMintedId(await client!.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "totalMinted" }));
                 void col.refetch();

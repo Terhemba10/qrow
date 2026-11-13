@@ -3,7 +3,7 @@ import { evmToQor } from "@qorechain/sdk";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "wagmi";
-import { AddressChip } from "../components/Readiness";
+import { AddressChip } from "../components/AddressChip";
 import { IconCheck } from "../components/Icons";
 import { CHAIN } from "../config/network";
 import { TABS, isLive } from "../config/tabs";
@@ -80,12 +80,7 @@ export function FaucetPage() {
             Open QoreChain Faucet
           </a>
 
-          <ol className="steps-list">
-            <li>On the QoreChain Dashboard, sign in (Connect with QoreX).</li>
-            <li>Make sure the network is Testnet.</li>
-            <li>Choose “Use my address” (or paste the address above).</li>
-            <li>Press Request Tokens.</li>
-          </ol>
+          <p className="hint">On the faucet: sign in with QoreX on Testnet, choose “Use my address”, then Request Tokens.</p>
         </section>
 
         <section className="stack" aria-labelledby="what-title">

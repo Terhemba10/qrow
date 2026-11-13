@@ -7,7 +7,6 @@ import { qrowGenesisAbi } from "../abi/QrowGenesis";
 import { qrowMarketAbi } from "../abi/QrowMarket";
 import { marketChecks } from "../agent/marketChecks";
 import { pastRecipients } from "../agent/recipients";
-import { CheckList } from "../components/CheckList";
 import { BigAddress } from "../components/ConfirmSheet";
 import { PqActionPanel } from "../components/PqActionPanel";
 import { GENESIS, MARKET } from "../config/contracts";
@@ -66,7 +65,7 @@ export function MarketPage() {
   const mine = useNfts(me);
   const [buying, setBuying] = useState<Row>();
   const [ack, setAck] = useState(false);
-  const [signing, setSigning] = useState(false);
+  const [, setSigning] = useState(false);
 
   const history = useQuery({ queryKey: ["market-history", me], enabled: !!me && !!client, queryFn: () => pastRecipients(client!, me!) });
   const balance = useQuery({
@@ -128,20 +127,25 @@ export function MarketPage() {
           <p className="label">Seller</p>
           <BigAddress address={buying.seller} label="Seller" />
           {!buyChecks && <span className="skeleton" style={{ width: "60%" }} />}
-          {buyChecks && <CheckList run={{ results: buyChecks, totalMs: 0, startedAt: Date.now() }} />}
+          {buyChecks
+            ?.filter((c) => c.level === "warn" || c.level === "danger" || c.level === "block")
+            .slice(0, 1)
+            .map((c) => (
+              <div key={c.id} className={`notice ${c.level === "warn" ? "notice--warn" : "notice--danger"}`} role="alert">
+                <p className="notice__title">{c.title}</p>
+                {c.detail && <p>{c.detail}</p>}
+              </div>
+            ))}
           {danger && (
             <label className="ack">
               <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
               <span>I’ve checked the seller’s full address, and I still want to buy.</span>
             </label>
           )}
-          {!signing ? (
+          {!buyChecks || blocked || (danger && !ack) ? (
             <div className="row">
               <button className="btn btn--quiet" type="button" onClick={() => setBuying(undefined)}>
                 Cancel
-              </button>
-              <button className="btn" type="button" disabled={!buyChecks || blocked || (danger && !ack)} onClick={() => setSigning(true)}>
-                Confirm &amp; Buy
               </button>
             </div>
           ) : (
@@ -154,14 +158,16 @@ export function MarketPage() {
               approve={buying.currency.toLowerCase() !== ZERO ? { token: buying.currency, amount: buying.price, label: `${displayAmount(buying.price, FUSD.decimals)} fUSD` } : undefined}
               build={(auth) => ({ abi: qrowMarketAbi, functionName: "buy", args: [buying.id, auth!.validUntil, auth!.signature], value: buying.currency.toLowerCase() === ZERO ? buying.price : 0n })}
               describeSimulation={() => `${displayAmount(buying.price, cur(buying.currency).decimals)} ${cur(buying.currency).symbol} goes to ${short(buying.seller)} and ${buying.name} comes to you, in one transaction.`}
-              confirmLabel="Confirm and buy"
+              confirmLabel="Buy in QoreX"
+              details={[{ name: "Price", value: `${displayAmount(buying.price, cur(buying.currency).decimals)} ${cur(buying.currency).symbol}` }]}
+              receipt={() => ({ kind: "NFT purchase", title: `Bought ${buying.name}`, lines: [{ name: "Price", value: `${displayAmount(buying.price, cur(buying.currency).decimals)} ${cur(buying.currency).symbol}` }, { name: "Seller", value: buying.seller }] })}
               onDone={() => {
                 setSigning(false);
                 setBuying(undefined);
                 void market.refetch();
                 void mine.refetch();
               }}
-              onCancel={() => setSigning(false)}
+              onCancel={() => setBuying(undefined)}
             />
           )}
         </section>
@@ -280,7 +286,7 @@ function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: s
           pq={{ actionName: "ACTION_LIST", paramsHash: enc(["uint256", "address", "uint256"], [props.tokenId, curAddr, parsed.ok ? parsed.units : 0n]) }}
           build={(auth) => ({ abi: qrowMarketAbi, functionName: "list", args: [props.tokenId, curAddr, parsed.ok ? parsed.units : 0n, auth!.validUntil, auth!.signature] })}
           describeSimulation={(r) => `Listing #${String(r)}: ${props.name} for ${price} ${currency}. The NFT moves into the market contract.`}
-          confirmLabel="Confirm and list"
+          confirmLabel="List in QoreX"
           onDone={props.onDone}
           onCancel={() => setSigning(false)}
         />
@@ -311,7 +317,7 @@ function UnlistCard({ me, row, onDone }: { me: Address; row: Row; onDone: () => 
           pq={{ actionName: "ACTION_CANCEL", paramsHash: enc(["uint256"], [row.id]) }}
           build={(auth) => ({ abi: qrowMarketAbi, functionName: "cancel", args: [row.id, auth!.validUntil, auth!.signature] })}
           describeSimulation={() => `${row.name} goes from the market back to you.`}
-          confirmLabel="Confirm and cancel"
+          confirmLabel="Remove listing in QoreX"
           onDone={onDone}
           onCancel={() => setSigning(false)}
         />

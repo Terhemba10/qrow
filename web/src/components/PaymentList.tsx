@@ -6,8 +6,8 @@ import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { actionsFor, type Payment } from "../lib/payments";
 import { Countdown, useNow } from "./Countdown";
-import { IconAlert } from "./Icons";
 import { PqActionPanel } from "./PqActionPanel";
+import { paymentRef } from "../lib/verify";
 import { NoteReader } from "./NoteReader";
 
 type Act = "claim" | "release" | "cancel" | "refund";
@@ -27,13 +27,13 @@ export function PaymentList({
   me,
   payments,
   direction,
-  hasPqKey,
   onChanged,
 }: {
   me: Address;
   payments: Payment[];
   direction: "in" | "out";
-  hasPqKey: boolean | undefined;
+  /** No longer used: claiming sets up the quantum-safe key in the same approval. */
+  hasPqKey?: boolean;
   onChanged: () => void;
 }) {
   const now = useNow();
@@ -91,11 +91,6 @@ export function PaymentList({
               )}
             </div>
             {direction === "in" && p.sealedNote && <NoteReader me={me} envelope={p.sealedNote} />}
-            {a.claim && hasPqKey === false && (
-              <p className="field-error paylist__note">
-                <IconAlert /> You need a registered quantum-safe (ML-DSA-87) key to claim. Set it up in QoreX. If you don’t claim within {REFUND_TEXT}, it goes back to the sender.
-              </p>
-            )}
             {open?.id === p.id && (
               <PqActionPanel
                 sender={me}
@@ -137,7 +132,17 @@ export function PaymentList({
                       ? `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol} goes from the escrow to ${short(p.recipient)}.`
                       : `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol} goes from the escrow back to ${short(p.sender)}.`
                 }
-                confirmLabel={open.act === "claim" ? "Confirm and claim" : open.act === "release" ? "Confirm and release" : open.act === "cancel" ? "Confirm and cancel" : "Confirm and refund"}
+                confirmLabel={open.act === "claim" ? "Claim in QoreX" : open.act === "release" ? "Release in QoreX" : open.act === "cancel" ? "Take it back in QoreX" : "Refund in QoreX"}
+                details={[
+                  { name: "Amount", value: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}` },
+                  { name: open.act === "claim" ? "From" : open.act === "release" ? "To" : "Back to", value: open.act === "claim" ? p.sender : open.act === "release" ? p.recipient : p.sender },
+                ]}
+                receipt={() => ({
+                  kind: open.act === "claim" ? "Claim" : open.act === "release" ? "Release" : open.act === "cancel" ? "Cancel" : "Refund",
+                  title: `${open.act === "claim" ? "Claimed" : open.act === "release" ? "Released" : open.act === "cancel" ? "Cancelled" : "Refunded"}: ${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`,
+                  ref: paymentRef(p.id),
+                  lines: [{ name: open.act === "claim" ? "From" : open.act === "release" ? "To" : "Back to", value: open.act === "claim" ? p.sender : open.act === "release" ? p.recipient : p.sender }],
+                })}
                 onDone={() => onChanged()}
                 onCancel={() => setOpen(undefined)}
               />

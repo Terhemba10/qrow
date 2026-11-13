@@ -1,14 +1,11 @@
-import type { UnifiedAccount } from "@qorechain/sdk";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { BaseError, ContractFunctionRevertedError, encodeFunctionData, erc20Abi, type Abi, type Address, type Hex } from "viem";
+import type { ReactNode } from "react";
+import { BaseError, ContractFunctionRevertedError, encodeFunctionData, type Abi, type Address, type Hex } from "viem";
 import { usePublicClient } from "wagmi";
 import { CHAIN, REFUND_TEXT } from "../config/network";
-import { unlockForSigning, withSlot } from "../lib/appKey";
-import { wipe } from "../lib/device";
+import { tokenByAddress } from "../config/tokens";
 import { signPqAction } from "../lib/pqAction";
-import { ensureWindow, runAsUser, WindowManualError, XvmError } from "../lib/xvm";
-import { IconAlert, IconCheck } from "./Icons";
-import { WindowHelp } from "./WindowHelp";
+import { XvmError } from "../lib/xvm";
+import { ActionFlow, type ReceiptDraft } from "./ActionFlow";
 
 export interface PqCall {
   abi: Abi;
@@ -17,17 +14,10 @@ export interface PqCall {
   value?: bigint;
 }
 
-type Step =
-  | { s: "start" }
-  | { s: "window"; targets: Address[]; txs: number }
-  | { s: "review"; call: PqCall; simulated: string }
-  | { s: "sending" }
-  | { s: "done"; hash: string };
-
 const FRIENDLY: Record<string, string> = {
-  BadPqSignature: "The quantum-safe signature didn’t verify. Start again.",
-  SignatureExpired: "The quantum-safe signature expired. Sign again.",
-  NoPqKey: "Set up this device on the Start page first.",
+  BadPqSignature: "The quantum-safe signature didn’t verify. Try again.",
+  SignatureExpired: "The quantum-safe signature expired. Try again.",
+  NoPqKey: "This device isn’t set up for this account yet. Try again: it sets up in the same approval.",
   NotRecipient: "Only the recipient can claim this payment.",
   NotSender: "Only the sender can do this.",
   NotPending: "This payment is no longer pending.",
@@ -35,6 +25,11 @@ const FRIENDLY: Record<string, string> = {
   NotExpired: `The ${REFUND_TEXT} aren’t over yet.`,
   WrongMode: "This payment uses the other release mode.",
   TransferFailed: "The transfer failed.",
+  BadPqSignatureForDevice: "This device’s key didn’t verify. Try again.",
+  OverPaymentLimit: "This is above your limit per payment.",
+  OverDailyLimit: "This is above your daily limit.",
+  InvalidRecipient: "The recipient address isn’t allowed.",
+  NonStandardToken: "This token doesn’t transfer exact amounts, so the escrow refuses it.",
 };
 
 export function explainError(e: unknown): string {
@@ -49,9 +44,9 @@ export function explainError(e: unknown): string {
 }
 
 /**
- * One post-quantum-protected contract call (approved design, 13 Nov): QoreX opens a short window for
- * exactly these calls; this device (passkey) signs the action and runs it as you inside the window.
- * With `pq` unset (e.g. refundExpired, which anyone may call) there's no device signature.
+ * One quantum-safe contract action, with one confirm screen and one QoreX approval (see
+ * lib/action.ts). With `pq` unset (e.g. refundExpired, which anyone may call) there's no device
+ * signature and no device key is needed.
  */
 export function PqActionPanel(props: {
   sender: Address;
@@ -59,145 +54,46 @@ export function PqActionPanel(props: {
   summary: ReactNode;
   contract: Address;
   pq?: { actionName: string; paramsHash: Hex };
-  /** An ERC-20 the contract will pull: approved for exactly this amount first, inside the same window. */
+  /** An ERC-20 the contract will pull: approved for exactly this amount first, in the same flow. */
   approve?: { token: Address; amount: bigint; label: string };
   build: (auth?: { validUntil: bigint; signature: Hex }) => PqCall;
-  describeSimulation: (result: unknown) => string;
+  /** Kept for callers; the simulation now runs silently just before sending. */
+  describeSimulation?: (result: unknown) => string;
   confirmLabel: string;
+  details?: { name: string; value: string }[];
+  receipt?: (txHash: string) => ReceiptDraft;
   onDone: (txHash: string) => void;
   onCancel: () => void;
 }) {
   const client = usePublicClient({ chainId: CHAIN.id })!;
-  const [step, setStep] = useState<Step>({ s: "start" });
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
-  const device = useRef<UnifiedAccount>();
-
-  const forgetDevice = () => {
-    if (device.current) wipe(device.current);
-    device.current = undefined;
-  };
-  useEffect(() => forgetDevice, []);
-
-  async function run(fn: () => Promise<void>) {
-    setBusy(true);
-    setError(undefined);
-    try {
-      await fn();
-    } catch (e) {
-      if (e instanceof WindowManualError) setStep({ s: "window", targets: e.targets, txs: e.txs });
-      else setError(explainError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const cancel = () => {
-    forgetDevice();
-    props.onCancel();
-  };
-
-  const prepare = () =>
-    run(async () => {
-      if (props.build({ validUntil: 0n, signature: "0x" }).value) throw new Error("QOR can’t be attached yet; use fUSD for this. QOR payments come with the next contract update.");
-      const needsApproval =
-        !!props.approve && (await client.readContract({ address: props.approve.token, abi: erc20Abi, functionName: "allowance", args: [props.sender, props.contract] })) < props.approve.amount;
-      const targets = needsApproval ? [props.approve!.token, props.contract] : [props.contract];
-      await ensureWindow(props.sender, targets, targets.length);
-      const u = await unlockForSigning(client, props.sender);
-      device.current = u.device;
-      if (needsApproval) {
-        await runAsUser(client, props.sender, u.device, [{ to: props.approve!.token, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [props.contract, props.approve!.amount] }) }]);
-      }
-      let auth: { validUntil: bigint; signature: Hex } | undefined;
-      if (props.pq) {
-        const s = await signPqAction(client, u.key, props.contract, props.pq.actionName, props.sender, props.pq.paramsHash);
-        auth = { validUntil: s.validUntil, signature: withSlot(u.slot, s.signature) };
-      }
-      const call = props.build(auth);
-      const sim = await client.simulateContract({ account: props.sender, address: props.contract, abi: call.abi, functionName: call.functionName, args: call.args });
-      setStep({ s: "review", call, simulated: props.describeSimulation(sim.result) });
-    });
-
-  const send = (call: PqCall) =>
-    run(async () => {
-      const d = device.current;
-      if (!d) throw new Error("Start again: the device was locked.");
-      setStep({ s: "sending" });
-      try {
-        const r = await runAsUser(client, props.sender, d, [{ to: props.contract, data: encodeFunctionData({ abi: call.abi, functionName: call.functionName, args: call.args }) }]);
-        forgetDevice();
-        setStep({ s: "done", hash: r.txHash });
-        props.onDone(r.txHash);
-      } catch (e) {
-        setStep({ s: "review", call, simulated: "" });
-        throw e;
-      }
-    });
-
+  const tok = props.approve ? tokenByAddress(props.approve.token) : undefined;
   return (
-    <section className="panel signflow" aria-live="polite" aria-label={props.title}>
-      <h3>{props.title}</h3>
+    <div className="stack">
       <div>{props.summary}</div>
-
-      {step.s === "start" && (
-        <div className="row">
-          <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void prepare()}>
-            {busy ? "Working…" : "Continue"}
-          </button>
-          <button className="btn btn--quiet" type="button" onClick={cancel}>
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {step.s === "window" && <WindowHelp targets={step.targets} txs={step.txs} busy={busy} onCheck={() => void prepare()} onCancel={cancel} />}
-
-      {step.s === "review" && (
-        <>
-          {step.simulated && (
-            <div className="notice notice--ok">
-              <p className="notice__title">
-                <IconCheck /> Simulation passed
-              </p>
-              <p>{step.simulated}</p>
-            </div>
-          )}
-          <div className="row">
-            <button className="btn" type="button" disabled={busy} aria-busy={busy} onClick={() => void send(step.call)}>
-              {props.confirmLabel}
-            </button>
-            <button className="btn btn--quiet" type="button" onClick={cancel}>
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
-
-      {step.s === "sending" && (
-        <p className="hint" aria-busy="true">
-          Sending inside your window, then Qrow waits for the block…
-        </p>
-      )}
-
-      {step.s === "done" && (
-        <div className="notice notice--ok" role="status">
-          <p className="notice__title">
-            <IconCheck /> Done
-          </p>
-          <p>
-            Transaction <span className="mono">{step.hash}</span>
-          </p>
-        </div>
-      )}
-
-      {error && (
-        <div className="notice notice--danger" role="alert">
-          <p className="notice__title">
-            <IconAlert /> {error}
-          </p>
-        </div>
-      )}
-    </section>
+      <ActionFlow
+        title={props.title}
+        details={props.details ?? []}
+        confirmLabel={props.confirmLabel}
+        onCancel={props.onCancel}
+        onDone={props.onDone}
+        receipt={props.receipt ?? (() => ({ kind: props.title, title: `${props.title}: done`, lines: [] }))}
+        plan={{
+          user: props.sender,
+          contract: props.contract,
+          needsKey: !!props.pq,
+          approve: props.approve ? { token: props.approve.token, amount: props.approve.amount, symbol: tok?.symbol ?? props.approve.label, decimals: tok?.decimals ?? 18 } : undefined,
+          build: async ({ key, sign }) => {
+            let auth: { validUntil: bigint; signature: Hex } | undefined;
+            if (props.pq) {
+              const s = await signPqAction(client, key, props.contract, props.pq.actionName, props.sender, props.pq.paramsHash);
+              auth = { validUntil: s.validUntil, signature: sign(s.signature) };
+            }
+            const call = props.build(auth);
+            if (call.value) throw new XvmError("QOR can’t be attached yet; use fUSD for this. QOR payments come with the next contract update.");
+            return { to: props.contract, data: encodeFunctionData({ abi: call.abi, functionName: call.functionName, args: call.args }) };
+          },
+        }}
+      />
+    </div>
   );
 }

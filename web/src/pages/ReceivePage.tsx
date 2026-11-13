@@ -1,26 +1,17 @@
 import { useCoins } from "../lib/coins";
-import { Readiness } from "../components/Readiness";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useQuery } from "@tanstack/react-query";
-import { useAccount, usePublicClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { IconAlert } from "../components/Icons";
 import { PaymentList } from "../components/PaymentList";
 import { RequestPayment } from "../components/RequestPayment";
-import { CHAIN, ESCROW, REFUND_TEXT } from "../config/network";
-import { pqAuthAbi } from "../lib/pqAction";
+import { CHAIN } from "../config/network";
 import { usePayments } from "../lib/payments";
 
 export function ReceivePage() {
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const client = usePublicClient({ chainId: CHAIN.id });
   useCoins(); // registers launched coins so their payments show by name
   const payments = usePayments(isConnected && chainId === CHAIN.id ? address : undefined);
-  const pqKey = useQuery({
-    queryKey: ["hasPqKey", address],
-    enabled: !!address && !!client,
-    queryFn: () => client!.readContract({ address: ESCROW, abi: pqAuthAbi, functionName: "hasPqKey", args: [address!] }),
-  });
 
   if (!isConnected || !address) {
     return (
@@ -30,9 +21,9 @@ export function ReceivePage() {
           <p className="muted">Payments sent to you wait in escrow until you claim them with your quantum-safe key.</p>
         </div>
         <div className="panel empty">
-          <h2>Connect your wallet to see payments for you</h2>
+          <h2>Connect QoreX to see payments for you</h2>
           <button className="btn" type="button" onClick={openConnectModal}>
-            Connect wallet
+            Connect QoreX
           </button>
         </div>
       </section>
@@ -43,20 +34,10 @@ export function ReceivePage() {
   const waiting = incoming.filter((p) => p.status === "Pending");
   return (
     <section className="page" aria-labelledby="recv-title">
-      <Readiness compact />
       <div className="sheet__head">
         <h1 id="recv-title">Receive</h1>
         <p className="muted">Payments sent to you wait in escrow. Claim them before the countdown ends, or they go back to the sender.</p>
       </div>
-
-      {pqKey.data === false && (
-        <div className="notice notice--warn" role="alert">
-          <p className="notice__title">
-            <IconAlert /> You can’t claim payments yet
-          </p>
-          <p>Claiming needs a registered quantum-safe (ML-DSA-87) key. Register one in QoreX. Until then, anything sent to you goes back to the sender after {REFUND_TEXT}.</p>
-        </div>
-      )}
 
       <div className="split">
         <section aria-labelledby="in-title" className="stack">
@@ -92,7 +73,7 @@ export function ReceivePage() {
             </div>
           )}
           {payments.data && incoming.length > 0 && (
-            <PaymentList me={address} payments={incoming} direction="in" hasPqKey={pqKey.data} onChanged={() => void payments.refetch()} />
+            <PaymentList me={address} payments={incoming} direction="in" onChanged={() => void payments.refetch()} />
           )}
         </section>
         <RequestPayment me={address} />

@@ -3,10 +3,11 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
+import { WelcomeTip } from "./components/WelcomeTip";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
 import { captureReferral } from "./lib/staking";
-import { HowToTestPage, PrivacyPage } from "./pages/InfoPages";
+import { HelpPage, PrivacyPage } from "./pages/InfoPages";
 import { LaunchPage } from "./pages/LaunchPage";
 import { MarketPage } from "./pages/MarketPage";
 import { NewsPage } from "./pages/NewsPage";
@@ -48,6 +49,9 @@ export function App() {
             <NavLink to="/verify">Verify</NavLink>
           </nav>
           <span className="net">{NETWORK_NAME}</span>
+          <NavLink to="/help" className="help-link">
+            Help
+          </NavLink>
           <WalletButton />
         </div>
       </header>
@@ -59,6 +63,7 @@ export function App() {
           Demo escrow (<span className="mono">{ESCROW.slice(0, 10)}…</span>): refunds after 10 minutes so they can be shown live. The real Qrow escrow keeps the 7-day rule.
         </p>
       )}
+      <WelcomeTip />
       <main id="main">
         <Routes>
           <Route path="/" element={<StartPage />} />
@@ -74,7 +79,8 @@ export function App() {
           <Route path="/news" element={live("news", <NewsPage />)} />
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
           <Route path="/verify" element={<VerifyPage />} />
-          <Route path="/how-to-test" element={<HowToTestPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/how-to-test" element={<Navigate to="/help" replace />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           {QorexCheckPage && (
             <Route
@@ -94,7 +100,7 @@ export function App() {
           Feedback
         </a>
         <p className="hint">
-          Built in Doha, Qatar, Middle East. Qrow is open source (MIT), a community project, not made by QoreChain. Testnet only: never send real funds. <NavLink to="/how-to-test">How to test</NavLink>, <NavLink to="/verify">Verify a transaction</NavLink>, <NavLink to="/privacy">Privacy and testnet</NavLink>.
+          Built in Doha, Qatar, Middle East. Qrow is open source (MIT), a community project, not made by QoreChain. Testnet only: never send real funds. <NavLink to="/help">Get started</NavLink>, <NavLink to="/verify">Verify a transaction</NavLink>, <NavLink to="/privacy">Privacy and testnet</NavLink>.
         </p>
       </footer>
     </>

@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
-import { Readiness } from "../components/Readiness";
 import { TABS, isLive } from "../config/tabs";
 
+/** Start: what Qrow is and what you can try. No checklist: tabs work as soon as QoreX is connected. */
 export function StartPage() {
   return (
     <section className="page" aria-labelledby="start-title">
       <div className="sheet__head">
         <h1 id="start-title">Payments that stay safe after Q-Day</h1>
-        <p className="muted">Escrow payments on QoreChain, every step signed with a quantum-safe key.</p>
-        <p>Try every feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day.</p>
+        <p className="muted">Escrow payments on QoreChain testnet, every step signed with a quantum-safe key.</p>
       </div>
-      <Readiness />
       <section className="stack" aria-labelledby="try-title">
         <h2 id="try-title">What you can try</h2>
         <ul className="trylist">
@@ -21,10 +19,11 @@ export function StartPage() {
               <p className="hint">{t.blurb}</p>
             </li>
           ))}
+          <li>
+            <Link to="/verify">Verify</Link>
+            <p className="hint">Check any transaction hash or Qrow reference against QoreChain testnet. No wallet needed.</p>
+          </li>
         </ul>
-        <p className="hint">
-          New here? Read <Link to="/how-to-test">How to test Qrow</Link>. Qrow stores nothing about you: see <Link to="/privacy">Privacy and testnet</Link>.
-        </p>
       </section>
     </section>
   );

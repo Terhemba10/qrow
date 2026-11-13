@@ -152,7 +152,7 @@ export function LaunchPage() {
                       pq={{ actionName: "ACTION_CLAIM", paramsHash: keccak256(encodeAbiParameters([{ type: "address" }], [c.address])) }}
                       build={(auth) => ({ abi: qrowCoinAbi, functionName: "claim", args: [auth!.validUntil, auth!.signature] })}
                       describeSimulation={(r) => `You receive ${whole(r as bigint)} ${c.symbol}.`}
-                      confirmLabel="Confirm and claim"
+                      confirmLabel="Claim in QoreX"
                       onDone={() => void coins.refetch()}
                       onCancel={() => setClaiming(undefined)}
                     />
@@ -218,7 +218,7 @@ export function LaunchPage() {
 
           {!me ? (
             <button className="btn" type="button" onClick={openConnectModal}>
-              Connect wallet to launch
+              Connect QoreX to launch
             </button>
           ) : !signing ? (
             <button className="btn btn--block" type="button" disabled={!ready} onClick={() => setSigning(true)}>
@@ -237,7 +237,7 @@ export function LaunchPage() {
               pq={{ actionName: "ACTION_LAUNCH", paramsHash }}
               build={(auth) => ({ abi: qrowCoinFactoryAbi, functionName: "launch", args: [form.name, form.symbol, supply, bps, form.description, auth!.validUntil, auth!.signature] })}
               describeSimulation={(r) => `The factory creates ${form.symbol} at ${String(r)}.`}
-              confirmLabel="Confirm and launch"
+              confirmLabel="Launch in QoreX"
               onDone={async () => {
                 const n = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coinCount" });
                 const [coin] = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coins", args: [n - 1n, 1n] });

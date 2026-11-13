@@ -1,10 +1,9 @@
-import { Readiness } from "../components/Readiness";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useId, useMemo, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAccount, useSwitchChain } from "wagmi";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useAccount } from "wagmi";
 import { IconAlert, IconInfo } from "../components/Icons";
-import { CHAIN, NETWORK_NAME, REFUND_TEXT, networkLabel } from "../config/network";
+import { CHAIN, REFUND_TEXT } from "../config/network";
 import { TOKENS, launchedCoins, tokenBySymbol, tokenKey, type TokenSymbol } from "../config/tokens";
 import { useCoins } from "../lib/coins";
 import { parseRecipient } from "../lib/address";
@@ -57,7 +56,6 @@ function NoteField({ recipient, note, setNote }: { recipient?: `0x${string}`; no
 export function SendPage() {
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { switchChain, isPending: switching } = useSwitchChain();
   const navigate = useNavigate();
   const ids = { to: useId(), amount: useId(), toErr: useId(), amtErr: useId() };
 
@@ -91,6 +89,9 @@ export function SendPage() {
       : AMOUNT_ERRORS[parsed.reason]
     : undefined;
   const selfSend = recipient.ok && address && recipient.evm.toLowerCase() === address.toLowerCase();
+  // Both forms count: Qrow converts bank-form tokens (what the faucet pays) inside the same approval.
+  const total = balance.status === "ok" ? balance.evmUnits + (balance.bankUnits ?? 0n) : undefined;
+  const short = parsed.ok && total !== undefined && parsed.units > total;
 
   if (!isConnected) {
     return (
@@ -100,10 +101,10 @@ export function SendPage() {
           <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>
         </div>
         <div className="panel empty">
-          <h2>Connect your wallet to start</h2>
+          <h2>Connect QoreX to start</h2>
           <p className="muted">Qrow reads your balance and checks every payment before you sign. Nothing is sent until you confirm it in QoreX.</p>
           <button className="btn" type="button" onClick={openConnectModal}>
-            Connect wallet
+            Connect QoreX
           </button>
         </div>
       </section>
@@ -113,7 +114,7 @@ export function SendPage() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitted(true);
-    if (!recipient.ok || !parsed.ok || selfSend || wrongNetwork) return;
+    if (!recipient.ok || !parsed.ok || selfSend || wrongNetwork || short) return;
     saveDraft({
       recipient: recipient.evm,
       recipientQor: recipient.qor,
@@ -128,21 +129,19 @@ export function SendPage() {
 
   return (
     <section className="sheet" aria-labelledby="send-title">
-      <Readiness compact />
       <div className="sheet__head">
         <h1 id="send-title">Send a payment</h1>
         <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>
       </div>
 
       {wrongNetwork && (
-        <div className="notice notice--warn" role="alert" style={{ marginBottom: "var(--space-lg)" }}>
+        <div className="notice notice--warn blocker" role="alert" style={{ marginBottom: "var(--space-lg)" }}>
           <p className="notice__title">
-            <IconAlert /> Your wallet is on {networkLabel(chainId)}
+            <IconAlert /> Switch QoreX to Testnet to continue.
           </p>
-          <p>Qrow only works on {NETWORK_NAME}. Switch your wallet to continue. Qrow never switches networks by itself.</p>
-          <button className="btn" type="button" onClick={() => switchChain({ chainId: CHAIN.id })} aria-busy={switching}>
-            {switching ? "Waiting for your wallet…" : `Switch to ${NETWORK_NAME}`}
-          </button>
+          <Link className="btn" to="/help#testnet">
+            How to switch
+          </Link>
         </div>
       )}
 
@@ -254,19 +253,19 @@ export function SendPage() {
                 <span>{balance.message}</span>
               ) : (
                 <span className="fig">
-                  {displayAmount(balance.evmUnits, token.decimals)} {token.symbol}
+                  {displayAmount(total ?? 0n, token.decimals)} {token.symbol}
                 </span>
               )}
             </span>
-            {balance.status === "ok" && balance.evmUnits > 0n && (
-              <button type="button" className="linkbtn" onClick={() => setAmount(displayAmount(balance.evmUnits, token.decimals).replaceAll(",", ""))}>
+            {total !== undefined && total > 0n && (
+              <button type="button" className="linkbtn" onClick={() => setAmount(formatUnitsExact(total, token.decimals))}>
                 Use all
               </button>
             )}
           </div>
-          {balance.status === "ok" && balance.evmUnits === 0n && (balance.bankUnits ?? 0n) > 0n && (
-            <p className="hint">
-              <IconInfo /> You hold {displayAmount(balance.bankUnits!, token.decimals)} {token.symbol} on the native side of QoreChain. Convert it in QoreX so the escrow can use it.
+          {short && (
+            <p className="field-error">
+              <IconAlert /> That’s more than you have. <Link to="/faucet">Get free {token.symbol}</Link>
             </p>
           )}
           {amountError && (
@@ -294,7 +293,7 @@ export function SendPage() {
 
         <div className="actions">
           <button className="btn btn--block" type="submit" disabled={wrongNetwork}>
-            Check this payment
+            Review payment
           </button>
           <p className="hint">Next, Qrow checks the address and the amount. You’ll see every detail before you sign.</p>
         </div>

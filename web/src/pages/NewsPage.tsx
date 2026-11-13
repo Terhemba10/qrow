@@ -16,14 +16,33 @@ interface Headline {
   published: string;
 }
 
-const usd = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: n >= 100 ? 0 : n >= 1 ? 2 : 4 }).format(n);
-const cap = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(n);
+const usd = (n: number) =>
+  new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: n >= 100 ? 0 : n >= 1 ? 2 : 4,
+  }).format(n);
+const cap = (n: number) =>
+  new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(n);
 const pct = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(2)}%`;
-const when = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const when = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url);
-  const j = (await r.json().catch(() => ({ ok: false }))) as T & { ok: boolean; reason?: string };
+  const j = (await r.json().catch(() => ({ ok: false }))) as T & {
+    ok: boolean;
+    reason?: string;
+  };
   if (!r.ok || !j.ok) throw new Error(j.reason ?? "unavailable");
   return j;
 }
@@ -69,37 +88,45 @@ export function NewsPage() {
         )}
         {prices.data && (
           <>
-            <table className="table">
-              <caption className="visually-hidden">Prices in US dollars with 24-hour change</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Coin</th>
-                  <th scope="col" className="num">Price</th>
-                  <th scope="col" className="num">24 h</th>
-                  <th scope="col" className="num">Market cap</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prices.data.data.map((p) => (
-                  <tr key={p.symbol}>
-                    <th scope="row">
-                      {p.symbol} <span className="hint">{p.name}</span>
-                    </th>
-                    <td className="num fig">{usd(p.price)}</td>
-                    <td className={`num fig ${p.change24h < 0 ? "down" : "up"}`}>{pct(p.change24h)}</td>
-                    <td className="num fig">{cap(p.marketCap)}</td>
-                  </tr>
-                ))}
-                {!prices.data.qorListed && (
+            <div className="table-wrap" tabIndex={0}>
+              <table className="table">
+                <caption className="visually-hidden">Prices in US dollars with 24-hour change</caption>
+                <thead>
                   <tr>
-                    <th scope="row">QOR</th>
-                    <td className="num muted" colSpan={3}>
-                      Not listed on CoinMarketCap. Testnet QOR has no market price.
-                    </td>
+                    <th scope="col">Coin</th>
+                    <th scope="col" className="num">
+                      Price
+                    </th>
+                    <th scope="col" className="num">
+                      24 h
+                    </th>
+                    <th scope="col" className="num">
+                      Market cap
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {prices.data.data.map((p) => (
+                    <tr key={p.symbol}>
+                      <th scope="row">
+                        {p.symbol} <span className="hint">{p.name}</span>
+                      </th>
+                      <td className="num fig">{usd(p.price)}</td>
+                      <td className={`num fig ${p.change24h < 0 ? "down" : "up"}`}>{pct(p.change24h)}</td>
+                      <td className="num fig">{cap(p.marketCap)}</td>
+                    </tr>
+                  ))}
+                  {!prices.data.qorListed && (
+                    <tr>
+                      <th scope="row">QOR</th>
+                      <td className="num muted" colSpan={3}>
+                        Not listed on CoinMarketCap. Testnet QOR has no market price.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
             <p className="hint">
               Data from{" "}
               <a href="https://coinmarketcap.com" target="_blank" rel="noopener noreferrer">

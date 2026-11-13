@@ -1,50 +1,57 @@
 import { Link } from "react-router-dom";
-import { QOREX_URL } from "../components/Readiness";
+import { QOREX_URL } from "../components/AddressChip";
 import { FEEDBACK_URL } from "../config/tabs";
 
-export function HowToTestPage() {
+/** Help / Get started: optional. Tabs never require reading it. */
+export function HelpPage() {
   return (
-    <article className="sheet prose" aria-labelledby="htt-title">
-      <h1 id="htt-title">How to test Qrow</h1>
-      <p className="muted">About 15 minutes. Testnet only: everything here is free and has no value.</p>
-      <p>Try every feature with free test QOR. Every transaction you make helps test and improve QoreChain before Q-Day.</p>
+    <article className="sheet prose" aria-labelledby="help-title">
+      <h1 id="help-title">Get started</h1>
+      <p className="muted">Testnet only: everything here is free and has no value. Every transaction you make helps test QoreChain before Q-Day.</p>
 
-      <h2>1. QoreX</h2>
+      <h2>Three things, once</h2>
       <ol>
         <li>
-          Install <a href={QOREX_URL} target="_blank" rel="noopener noreferrer">QoreX</a>: the extension for Chrome or Firefox, or on a phone the QoreX app (open Qrow in its dApp Browser: Home, then “Enter a dApp URL”).
+          Get <a href={QOREX_URL} target="_blank" rel="noopener noreferrer">QoreX</a> (Chrome or Firefox extension, or the QoreX app: open Qrow in its dApp Browser) and press <strong>Connect QoreX</strong> at the top of Qrow.
         </li>
-        <li>In QoreX: Settings, then “Use testnet (developers)”. Use a wallet that holds no real funds.</li>
-        <li>On Qrow’s <Link to="/">Start</Link> page, press Connect QoreX.</li>
+        <li>
+          Get free test tokens on the <Link to="/faucet">Faucet</Link> tab.
+        </li>
+        <li>Try any tab. Each action is one confirm in Qrow and one approval in QoreX.</li>
       </ol>
 
-      <h2>2. Free test tokens and this device</h2>
-      <ol>
-        <li>
-          Get free test QOR and fUSD on Qrow’s <Link to="/faucet">Faucet</Link> tab, which takes you to the official QoreChain faucet (once every 24 hours).
-        </li>
-        <li>
-          Try a <Link to="/swap">Swap</Link>: 1 QOR for fUSD. QoreX shows the swap and signs it, and Qrow shows the transaction hash to check on the explorer.
-        </li>
-        <li>In QoreX, send yourself 0.01 QOR. Your first transfer registers your quantum-safe key on chain.</li>
-        <li>
-          On the Start page, press <strong>Set up this device</strong>. Your device asks for your fingerprint, face or PIN, and QoreX asks you to confirm once. There’s nothing to write down or save.
-        </li>
-      </ol>
+      <h2 id="first-time">The first contract action</h2>
+      <p>
+        Sending a payment, claiming, buying or listing an NFT, or launching a coin also turns on secure contract actions for this device. It happens inside the same QoreX approval, plus a
+        fingerprint, face or PIN prompt from your device. There’s nothing to write down or save.
+      </p>
 
-      <h2>3. Send and receive</h2>
-      <ol>
-        <li>
-          <Link to="/send">Send</Link> 1 fUSD to a friend (or to a second account of yours). Qrow checks the address first and explains anything risky.
-        </li>
-        <li>Each step is signed in QoreX. Your device signs the quantum-safe part with your fingerprint, face or PIN.</li>
-        <li>
-          Your friend opens <Link to="/receive">Receive</Link> and claims it. If nobody claims it within 7 days, anyone can return it to you.
-        </li>
-        <li>Optional: get Telegram alerts by sending <span className="mono">/watch your-address</span> to @qrow_alerts_bot.</li>
-      </ol>
+      <h2 id="receipts">Receipts and verifying</h2>
+      <p>
+        After every transaction Qrow shows a receipt with its hash. Your receipts stay in <Link to="/portfolio">Portfolio</Link> in this browser. Press <strong>Verify on testnet</strong>, or paste any hash on the{" "}
+        <Link to="/verify">Verify</Link> page, to check it against QoreChain testnet yourself.
+      </p>
 
-      <h2>4. Tell us what broke</h2>
+      <h2>If something stops you</h2>
+      <h3 id="testnet">“Switch QoreX to Testnet”</h3>
+      <p>In QoreX: Settings, then “Use testnet (developers)”. Qrow never switches it for you, and it works on testnet only.</p>
+      <h3 id="qor">“You need free test QOR”</h3>
+      <p>
+        Network fees are paid in test QOR. Get it on the <Link to="/faucet">Faucet</Link> tab (once every 24 hours).
+      </p>
+      <h3 id="chain-key">“QoreX hasn’t registered your quantum-safe key yet”</h3>
+      <p>In QoreX, send yourself 0.01 QOR once. Your first transfer registers your quantum-safe (ML-DSA-87) key on chain.</p>
+      <h3 id="window">“Open the access window in QoreX”</h3>
+      <p>
+        If QoreX can’t open Qrow’s short access window from the page, open it in QoreX: Settings, Security, EVM access window, for about 10 minutes, then press the button in Qrow again. The window only lets
+        this one action run, and closes by itself.
+      </p>
+      <h3 id="devices">“Your Qrow key lives on another device”</h3>
+      <p>
+        Use the device you first used Qrow on, or add this one: for safety, a new device on an account that already has one waits 3 days before it can act, and your other device can cancel it.
+      </p>
+
+      <h2>Tell us what broke</h2>
       <p>
         Use <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">Report a problem</a>. Say what you tried and what happened; no personal details needed.
       </p>
@@ -64,7 +71,10 @@ export function PrivacyPage() {
       <h2>What Qrow stores</h2>
       <ul>
         <li>No accounts, no cookies, no tracking, no analytics scripts.</li>
-        <li>Your browser remembers a few conveniences for you only (your last draft payment, past recipients for the lookalike check, launched-coin names). Clear site data to remove them.</li>
+        <li>
+          Your browser remembers a few conveniences for you only: your receipts (transaction hashes and what they did), your last draft payment, past recipients for the lookalike check, launched-coin
+          names and whether you closed the welcome tip. Clear site data to remove them.
+        </li>
         <li>
           This device’s Qrow key is stored encrypted in this browser and unlocks only with your passkey (fingerprint, face or PIN) where the device supports it. Qrow never shows, exports or sends it, and no code exists to lose.
         </li>
@@ -72,7 +82,7 @@ export function PrivacyPage() {
       </ul>
       <h2>What the server sees</h2>
       <ul>
-        <li>Requests for prices, headlines and chain data, and, when you review a payment, the check results (with addresses removed) for the plain-language summary.</li>
+        <li>Requests for prices, headlines and chain data, and, when a payment needs a warning, the check results (with addresses removed) for the plain-language summary.</li>
         <li>Your IP address briefly, only to limit abuse. It isn’t logged with what you did.</li>
       </ul>
       <h2>On chain</h2>

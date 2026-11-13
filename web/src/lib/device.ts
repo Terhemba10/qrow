@@ -98,6 +98,16 @@ export async function deviceInfo(account: Address): Promise<{ keyHash: Hex; mode
  * browser key. Returns the public key to register. Nothing secret leaves this function.
  */
 export async function createDevice(account: Address): Promise<{ publicKey: Hex; mode: Mode; address: string }> {
+  const made = await createDeviceUnlocked(account);
+  wipe(made.acc);
+  return { publicKey: made.publicKey, mode: made.mode, address: made.address };
+}
+
+/**
+ * Same, but hands back the unlocked account for the action that is creating it, so a first-time user
+ * isn’t asked for the passkey again moments later. The caller must wipe() it.
+ */
+export async function createDeviceUnlocked(account: Address): Promise<{ publicKey: Hex; mode: Mode; address: string; acc: UnifiedAccount }> {
   const seed = rand(64); // [0,32) secp256k1 key, [32,64) ML-DSA secret
   try {
     let mode: Mode = "browser";
@@ -140,9 +150,13 @@ export async function createDevice(account: Address): Promise<{ publicKey: Hex; 
     const acc = fromSecret(seed);
     const publicKey = toHex(acc.pqc.publicKey);
     const address = acc.cosmos;
-    wipe(acc);
-    await putRec({ account: account.toLowerCase(), mode, credId, salt: mode === "passkey" ? salt : undefined, wrapKey, iv: buf(iv), enc, keyHash: keccak256(publicKey), address });
-    return { publicKey, mode, address };
+    try {
+      await putRec({ account: account.toLowerCase(), mode, credId, salt: mode === "passkey" ? salt : undefined, wrapKey, iv: buf(iv), enc, keyHash: keccak256(publicKey), address });
+    } catch (e) {
+      wipe(acc);
+      throw e;
+    }
+    return { publicKey, mode, address, acc };
   } finally {
     seed.fill(0);
   }

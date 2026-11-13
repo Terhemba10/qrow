@@ -42,8 +42,8 @@ export async function deviceState(client: PublicClient, account: Address): Promi
   return slots.length ? { s: "otherDevices", count: slots.length } : { s: "none" };
 }
 
-async function hasGrant(granter: string, grantee: string): Promise<boolean> {
-  const r = await fetch(`${REST}/cosmos/authz/v1beta1/grants?granter=${granter}&grantee=${grantee}&msg_type_url=${encodeURIComponent(XVM_TYPE)}`);
+export async function hasGrant(granter: string, grantee: string, typeUrl: string = XVM_TYPE): Promise<boolean> {
+  const r = await fetch(`${REST}/cosmos/authz/v1beta1/grants?granter=${granter}&grantee=${grantee}&msg_type_url=${encodeURIComponent(typeUrl)}`);
   if (!r.ok) return false;
   const j = (await r.json()) as { grants?: { expiration?: string }[] };
   return (j.grants ?? []).some((g) => !g.expiration || Date.parse(g.expiration) > Date.now() + 86_400_000);
@@ -67,7 +67,7 @@ export function grantMsg(granter: string, grantee: string, typeUrl: string, seco
 }
 
 /** Sign one QrowKeys action as the user with a key (proof of possession for the new device key). */
-async function signOnKeys(client: PublicClient, key: PqKey, user: Address, params: Hex) {
+export async function signOnKeys(client: PublicClient, key: PqKey, user: Address, params: Hex) {
   const [action, nonce, block] = await Promise.all([
     client.readContract({ address: KEYS, abi: qrowKeysAbi, functionName: "ACTION_ADD_DEVICE" }),
     client.readContract({ address: KEYS, abi: qrowKeysAbi, functionName: "pqNonce", args: [user] }),
