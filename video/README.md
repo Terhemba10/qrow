@@ -35,6 +35,8 @@ only shows what works.
   subscribed; the help page leaves any credit requirement to your agreement with ElevenLabs.
 - A hackathon entry with prizes is arguably promotional, so the safe choices are: Starter for the month you
   generate the audio (needs the owner's OK: it's paid), or the free plan with "elevenlabs.io" in the video title.
+- **Decision (owner, 13 Nov):** Starter, subscribed by the owner for the month the audio is generated, so the
+  narration has a commercial licence. The "Voiceover: AI-generated (ElevenLabs)" disclosure stays anyway.
 - Sources: [Can I publish the content I generate?](https://elevenlabs.io/docs/help-center/legal/can-i-publish-the-content-i-generate-on-the-platform),
   [Pricing](https://elevenlabs.io/pricing).
 
