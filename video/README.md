@@ -53,3 +53,19 @@ only shows what works.
 > Try it: https://qrow-app.vercel.app · Code (MIT): https://github.com/Terhemba10/qrow
 > Built in Doha, Qatar, for QoreChain's Build Before Q-Day Developer Fest. Public beta on testnet: tokens have no value.
 > Voiceover: AI-generated (ElevenLabs). Captions match the narration.
+>
+> Music from Free To Use
+> Source: https://freetouse.com/music
+> Good Days by Aylex
+
+## Music
+
+"Good Days" by Aylex, from Free To Use (`audio/music/good-days-aylex.mp3`, git-ignored; 1:59, so `mix.mjs` loops it
+once with a 3 s crossfade). **Free licence (checked 13 Nov 2026):** personal (individual) account only, non-commercial
+(not content that promotes or supports a business), and **attribution in the video description before the video is
+made public or unlisted** (the three "Music from Free To Use" lines above). Not allowed under any licence: sharing
+the file itself, claiming it as ours, or using it to train AI. Sources: [licence](https://freetouse.com/license),
+[FAQ](https://freetouse.com/faq).
+
+`node mix.mjs preview` plays the voice samples over the music; `node mix.mjs` builds `out/soundtrack.wav` from the
+narration clips (music about −30 LUFS and ducked under the voice, master −14 LUFS, true peak ≤ −1 dBTP).
