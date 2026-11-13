@@ -3,6 +3,8 @@
 **Escrow payments on QoreChain, every step signed with a quantum-safe key.**
 Public beta on QoreChain testnet (`qorechain-diana`, EVM chain 9800). Testnet tokens have no value.
 
+**Live: https://qrow-app.vercel.app** (desktop and phone; open it inside the QoreX app's dApp Browser on a phone).
+
 Built for the QoreChain *Build Before Q-Day* Developer Fest, Post-Quantum dApp category.
 
 ## What it does
@@ -23,6 +25,9 @@ Built for the QoreChain *Build Before Q-Day* Developer Fest, Post-Quantum dApp c
   Telegram alerts, Admin & Analytics.
 
 ## Try it
+
+Open **https://qrow-app.vercel.app**. In the public beta, only what works end to end for a normal QoreX user is
+switched on; the other tabs say "Coming soon" until they do (see `docs/PLAN.md`).
 
 See **How to test Qrow** in the app (`/how-to-test`). In short: QoreX (testnet) + MetaMask holding the same
 testnet-only account, free QOR from the [faucet](https://dashboard.qorechain.io/faucet), create your Qrow key on the

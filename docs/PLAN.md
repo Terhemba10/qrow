@@ -638,3 +638,18 @@ Security → EVM access window) before each protected action; the app shows the 
 
 **Rejected alternative:** MetaMask holding the same account (QoreChain's documented flow) means importing a recovery
 phrase into a second wallet, which the live-user rules forbid.
+
+
+## Public beta live (13 Nov)
+
+**https://qrow-app.vercel.app** (Vercel project `qrow`; `qrow.vercel.app` was taken). App, agent API and REST relay
+on Vercel; details, env vars and rollback in `docs/DEPLOY.md`. Verified from the in-app browser (not the dev server)
+at desktop and phone width: pages, news headlines, chain reads through the relay, a signed-transaction broadcast
+reaching the chain, security headers, no dev page in the bundle.
+
+Honest beta: live by default only Portfolio (read-only) and Market News. Coming soon, in this order as each works
+end to end: Faucet, Swap, Verify a transaction (being built), then Send, Receive and other contract actions once the
+owner's QoreX passes the grant and window checks (tests 4 and 5) for the device-account fallback.
+
+Owner steps open: GitHub login connection in Vercel (auto-deploy on push), `CMC_API_KEY` in Vercel, Render account
+for the watcher, QoreX checks 4 and 5, testing the live link on desktop Chrome with QoreX and on a phone.
