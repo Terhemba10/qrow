@@ -1,17 +1,19 @@
 /**
- * The Qrow device key: an ML-DSA-87 key this browser holds for one account, registered in QrowKeys.
- * Users never see it, copy it or save it.
+ * The Qrow device account: a small QoreChain account this browser holds for one user (secp256k1 +
+ * ML-DSA-87). It pays its own fees, carries out the user's actions through x/authz inside EVM
+ * windows the user opens in QoreX, and its ML-DSA-87 key is also the user's Qrow device key in
+ * QrowKeys. Users never see it, copy it or save it.
  *
- * Storage: a random 32-byte seed, encrypted with AES-GCM and kept in this browser's IndexedDB.
+ * Storage: two random 32-byte secrets (the secp256k1 key and the ML-DSA seed, kept apart as the SDK
+ * requires), encrypted with AES-GCM in this browser's IndexedDB.
  * - Preferred: the AES key comes from a passkey (WebAuthn PRF), so every signature asks for the
  *   device's fingerprint, face or PIN, and nothing in the browser alone can decrypt the seed.
  * - Fallback (no PRF support): a non-extractable AES key kept in IndexedDB. Scripts in this page can
  *   use it but never export it; weaker against a compromised page, and the UI says so.
  * The seed and the ML-DSA secret key exist in memory only while signing and are wiped right after.
  */
-import { generatePqcKeypair } from "@qorechain/sdk";
+import { unifiedAccountFromSeed, type UnifiedAccount } from "@qorechain/sdk";
 import { keccak256, toHex, type Address, type Hex } from "viem";
-import type { PqKey } from "./pq";
 
 type Mode = "passkey" | "browser";
 interface Rec {
@@ -23,6 +25,8 @@ interface Rec {
   iv: ArrayBuffer;
   enc: ArrayBuffer;
   keyHash: Hex;
+  /** The device account's qor1 address (public). */
+  address: string;
 }
 
 const DB = "qrow";
@@ -79,11 +83,11 @@ async function prfSecret(credId: ArrayBuffer, salt: ArrayBuffer): Promise<ArrayB
   return first;
 }
 
-/** Whether this browser has a device key for `account`, and how it's protected. */
-export async function deviceInfo(account: Address): Promise<{ keyHash: Hex; mode: Mode } | undefined> {
+/** Whether this browser has a device account for `account`, and how it's protected. */
+export async function deviceInfo(account: Address): Promise<{ keyHash: Hex; mode: Mode; address: string } | undefined> {
   try {
     const r = await getRec(account);
-    return r ? { keyHash: r.keyHash, mode: r.mode } : undefined;
+    return r ? { keyHash: r.keyHash, mode: r.mode, address: r.address } : undefined;
   } catch {
     return undefined;
   }
@@ -93,8 +97,8 @@ export async function deviceInfo(account: Address): Promise<{ keyHash: Hex; mode
  * Create this browser's device key for `account`: a passkey if the device supports PRF, otherwise a
  * browser key. Returns the public key to register. Nothing secret leaves this function.
  */
-export async function createDevice(account: Address): Promise<{ publicKey: Hex; mode: Mode }> {
-  const seed = rand(32);
+export async function createDevice(account: Address): Promise<{ publicKey: Hex; mode: Mode; address: string }> {
+  const seed = rand(64); // [0,32) secp256k1 key, [32,64) ML-DSA secret
   try {
     let mode: Mode = "browser";
     let aes: CryptoKey | undefined;
@@ -133,26 +137,35 @@ export async function createDevice(account: Address): Promise<{ publicKey: Hex; 
     }
     const iv = rand(12);
     const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aes, seed);
-    const kp = generatePqcKeypair(seed);
-    const publicKey = toHex(kp.publicKey);
-    kp.secretKey.fill(0);
-    await putRec({ account: account.toLowerCase(), mode, credId, salt: mode === "passkey" ? salt : undefined, wrapKey, iv: buf(iv), enc, keyHash: keccak256(publicKey) });
-    return { publicKey, mode };
+    const acc = fromSecret(seed);
+    const publicKey = toHex(acc.pqc.publicKey);
+    const address = acc.cosmos;
+    wipe(acc);
+    await putRec({ account: account.toLowerCase(), mode, credId, salt: mode === "passkey" ? salt : undefined, wrapKey, iv: buf(iv), enc, keyHash: keccak256(publicKey), address });
+    return { publicKey, mode, address };
   } finally {
     seed.fill(0);
   }
 }
 
-/** Decrypt the device key for one signature (asks for the passkey in passkey mode). Wipe it after use. */
-export async function unlockDevice(account: Address): Promise<PqKey & { keyHash: Hex }> {
+const fromSecret = (secret: Uint8Array): UnifiedAccount => unifiedAccountFromSeed(secret.slice(0, 32), { pqcSecret: secret.slice(32, 64) });
+
+/** Best-effort wipe of an unlocked account's secrets. */
+export function wipe(acc: UnifiedAccount) {
+  acc.pqc.secretKey.fill(0);
+  const pk = acc.privateKey as unknown;
+  if (pk instanceof Uint8Array) pk.fill(0);
+}
+
+/** Decrypt the device account for one action (asks for the passkey in passkey mode). Wipe it after use. */
+export async function unlockDevice(account: Address): Promise<UnifiedAccount> {
   const r = await getRec(account);
-  if (!r) throw new Error("This browser has no Qrow device key for this account. Set it up on the Start page.");
+  if (!r) throw new Error("This browser isn’t set up for this account yet. Set it up on the Start page.");
   const aes = r.mode === "passkey" ? await aesFromPrf(await prfSecret(r.credId!, r.salt!)) : r.wrapKey!;
-  const seed = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(r.iv) }, aes, r.enc));
+  const secret = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(r.iv) }, aes, r.enc));
   try {
-    const kp = generatePqcKeypair(seed);
-    return { secretKey: kp.secretKey, publicKey: kp.publicKey, keyHash: r.keyHash };
+    return fromSecret(secret);
   } finally {
-    seed.fill(0);
+    secret.fill(0);
   }
 }

@@ -154,7 +154,7 @@ export function MarketPage() {
               approve={buying.currency.toLowerCase() !== ZERO ? { token: buying.currency, amount: buying.price, label: `${displayAmount(buying.price, FUSD.decimals)} fUSD` } : undefined}
               build={(auth) => ({ abi: qrowMarketAbi, functionName: "buy", args: [buying.id, auth!.validUntil, auth!.signature], value: buying.currency.toLowerCase() === ZERO ? buying.price : 0n })}
               describeSimulation={() => `${displayAmount(buying.price, cur(buying.currency).decimals)} ${cur(buying.currency).symbol} goes to ${short(buying.seller)} and ${buying.name} comes to you, in one transaction.`}
-              confirmLabel="Confirm in QoreX and buy"
+              confirmLabel="Confirm and buy"
               onDone={() => {
                 setSigning(false);
                 setBuying(undefined);
@@ -280,7 +280,7 @@ function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: s
           pq={{ actionName: "ACTION_LIST", paramsHash: enc(["uint256", "address", "uint256"], [props.tokenId, curAddr, parsed.ok ? parsed.units : 0n]) }}
           build={(auth) => ({ abi: qrowMarketAbi, functionName: "list", args: [props.tokenId, curAddr, parsed.ok ? parsed.units : 0n, auth!.validUntil, auth!.signature] })}
           describeSimulation={(r) => `Listing #${String(r)}: ${props.name} for ${price} ${currency}. The NFT moves into the market contract.`}
-          confirmLabel="Confirm in QoreX and list"
+          confirmLabel="Confirm and list"
           onDone={props.onDone}
           onCancel={() => setSigning(false)}
         />
@@ -311,7 +311,7 @@ function UnlistCard({ me, row, onDone }: { me: Address; row: Row; onDone: () => 
           pq={{ actionName: "ACTION_CANCEL", paramsHash: enc(["uint256"], [row.id]) }}
           build={(auth) => ({ abi: qrowMarketAbi, functionName: "cancel", args: [row.id, auth!.validUntil, auth!.signature] })}
           describeSimulation={() => `${row.name} goes from the market back to you.`}
-          confirmLabel="Confirm in QoreX and cancel"
+          confirmLabel="Confirm and cancel"
           onDone={onDone}
           onCancel={() => setSigning(false)}
         />

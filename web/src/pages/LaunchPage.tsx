@@ -152,7 +152,7 @@ export function LaunchPage() {
                       pq={{ actionName: "ACTION_CLAIM", paramsHash: keccak256(encodeAbiParameters([{ type: "address" }], [c.address])) }}
                       build={(auth) => ({ abi: qrowCoinAbi, functionName: "claim", args: [auth!.validUntil, auth!.signature] })}
                       describeSimulation={(r) => `You receive ${whole(r as bigint)} ${c.symbol}.`}
-                      confirmLabel="Confirm in QoreX and claim"
+                      confirmLabel="Confirm and claim"
                       onDone={() => void coins.refetch()}
                       onCancel={() => setClaiming(undefined)}
                     />
@@ -237,7 +237,7 @@ export function LaunchPage() {
               pq={{ actionName: "ACTION_LAUNCH", paramsHash }}
               build={(auth) => ({ abi: qrowCoinFactoryAbi, functionName: "launch", args: [form.name, form.symbol, supply, bps, form.description, auth!.validUntil, auth!.signature] })}
               describeSimulation={(r) => `The factory creates ${form.symbol} at ${String(r)}.`}
-              confirmLabel="Confirm in QoreX and launch"
+              confirmLabel="Confirm and launch"
               onDone={async () => {
                 const n = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coinCount" });
                 const [coin] = await client!.readContract({ address: COIN_FACTORY, abi: qrowCoinFactoryAbi, functionName: "coins", args: [n - 1n, 1n] });

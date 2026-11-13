@@ -203,3 +203,21 @@ What Qrow does: payment lists, past recipients and Telegram alerts read the escr
 `getPayment`) instead of events; every remaining log scan is chunked to 9,000 blocks. Verified in the app: Receive
 shows payment #1 for the Drill account; the watcher records it (`scannedId` 1) without stale alerts. Sealed notes
 are only in the `PaymentNote` event, so notes on payments made through QoreX can't be read yet.
+
+## Approved fallback, end to end (13 Nov, `npm run smoke:device`)
+The Drill account plays the QoreX user (its transactions are the ones QoreX signs); a fresh device account
+`qor150h2vl803h202cv3v4d5vfl66k28hehpr6d43l` does the rest. All on testnet, all succeeded:
+
+| Step | Signed by | Tx | Gas |
+| --- | --- | --- | --- |
+| 1 QOR to the device + authz grant (MsgCrossVMCall, 30 days) | user (QoreX) | `9173D8B8545294D5AEA436EB0EA879133C3C17145C8F5A354CBEF670B9431AC3` | 221,118 |
+| Device registers its own ML-DSA-87 key (classical, once) | device | `BE0C8E1077993F4B8C826879AF5B9DA964C1987B353287061D35578D5A0F5613` | 296,957 |
+| Window: QrowKeys only, 1 tx, 420 blocks | user (QoreX) | `B8702E46F5B198CEC8146D6AB3C88CEB7BC75A3764C886A7513A27AC69793472` | 189,009 |
+| `QrowKeys.addFirstDevice` as the user (MsgExec) | device, hybrid | `92F62E5BC8FF3F6A0C9306EAC5A95C055FC8ED1403908952626FE8C780D4F687` | 3,008,708 |
+| Window: XLANE + escrow, 2 txs | user (QoreX) | `4A3CE469FFCDDDE7DB944F1180E0473D7F7DD73E7A848DE692394C992E333F16` | 190,849 |
+| `approve` as the user (MsgExec) | device, hybrid | `F52715A6C960C7DEE65C4B932BBCC27BB1C2EDBD74FCD5EE4EAB5038B07FCFBE` | 303,366 |
+| `createPayment` as the user, device-key `pqcVerify` signature (MsgExec) | device, hybrid | `3AD8065840C539433043852D517C89663292EC7C8931F4D75756017253D339E2` | 1,218,367 |
+
+Result: payment #2 exists with the user as sender (status Pending); the user's window has 0 transactions left.
+Not covered here: QoreX itself signing `MsgGrant` and `MsgOpenEVMWindow` (owner's check, tests 4 and 5), and the
+passkey in a real browser.

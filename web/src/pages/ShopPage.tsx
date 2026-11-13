@@ -158,7 +158,7 @@ export function ShopPage() {
               approve={currency === "fUSD" && d ? { token: d.fusd, amount: price, label: `${displayAmount(price, decimals)} fUSD` } : undefined}
               build={(auth) => ({ abi: qrowGenesisAbi, functionName: "mint", args: [currencyAddr, auth!.validUntil, auth!.signature], value: currency === "QOR" ? price : 0n })}
               describeSimulation={(r) => `You receive Qrow Genesis #${String(r)} and pay ${displayAmount(price, decimals)} ${currency}.`}
-              confirmLabel="Confirm in QoreX and mint"
+              confirmLabel="Confirm and mint"
               onDone={async () => {
                 setMintedId(await client!.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "totalMinted" }));
                 void col.refetch();

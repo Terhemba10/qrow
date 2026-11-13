@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { restPathAllowed } from "./relay.js";
+import { postPathAllowed, restPathAllowed } from "./relay.js";
 
 describe("restPathAllowed", () => {
   it("allows only the read paths the app uses, never traversal", () => {
@@ -10,5 +10,15 @@ describe("restPathAllowed", () => {
     expect(restPathAllowed("/cosmos/bank/%2e%2e/x")).toBe(false);
     expect(restPathAllowed("/cosmos/gov/v1/proposals")).toBe(false);
     expect(restPathAllowed("/")).toBe(false);
+  });
+});
+
+describe("postPathAllowed", () => {
+  it("allows only broadcasting and simulating signed transactions", () => {
+    expect(postPathAllowed("/cosmos/tx/v1beta1/txs")).toBe(true);
+    expect(postPathAllowed("/cosmos/tx/v1beta1/simulate")).toBe(true);
+    expect(postPathAllowed("/cosmos/tx/v1beta1/txs?x=1")).toBe(false);
+    expect(postPathAllowed("/cosmos/gov/v1/proposals")).toBe(false);
+    expect(postPathAllowed("/cosmos/tx/v1beta1/txs/../x")).toBe(false);
   });
 });

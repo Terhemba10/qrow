@@ -137,7 +137,7 @@ export function PaymentList({
                       ? `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol} goes from the escrow to ${short(p.recipient)}.`
                       : `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol} goes from the escrow back to ${short(p.sender)}.`
                 }
-                confirmLabel={open.act === "claim" ? "Confirm in QoreX and claim" : open.act === "release" ? "Confirm in QoreX and release" : open.act === "cancel" ? "Confirm in QoreX and cancel" : "Confirm in QoreX and refund"}
+                confirmLabel={open.act === "claim" ? "Confirm and claim" : open.act === "release" ? "Confirm and release" : open.act === "cancel" ? "Confirm and cancel" : "Confirm and refund"}
                 onDone={() => onChanged()}
                 onCancel={() => setOpen(undefined)}
               />

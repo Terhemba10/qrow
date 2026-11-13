@@ -1,12 +1,14 @@
-import { useState, type ReactNode } from "react";
+import type { UnifiedAccount } from "@qorechain/sdk";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BaseError, ContractFunctionRevertedError, encodeFunctionData, erc20Abi, type Abi, type Address, type Hex } from "viem";
 import { usePublicClient } from "wagmi";
 import { CHAIN, REFUND_TEXT } from "../config/network";
 import { unlockForSigning, withSlot } from "../lib/appKey";
-import { forget } from "../lib/pq";
+import { wipe } from "../lib/device";
 import { signPqAction } from "../lib/pqAction";
-import { sendViaQorex, XvmError } from "../lib/xvm";
+import { ensureWindow, runAsUser, WindowManualError, XvmError } from "../lib/xvm";
 import { IconAlert, IconCheck } from "./Icons";
+import { WindowHelp } from "./WindowHelp";
 
 export interface PqCall {
   abi: Abi;
@@ -15,7 +17,12 @@ export interface PqCall {
   value?: bigint;
 }
 
-type Step = { s: "start" } | { s: "approve" } | { s: "review"; call: PqCall; simulated: string } | { s: "sending" } | { s: "done"; hash: string };
+type Step =
+  | { s: "start" }
+  | { s: "window"; targets: Address[]; txs: number }
+  | { s: "review"; call: PqCall; simulated: string }
+  | { s: "sending" }
+  | { s: "done"; hash: string };
 
 const FRIENDLY: Record<string, string> = {
   BadPqSignature: "The quantum-safe signature didn’t verify. Start again.",
@@ -42,9 +49,9 @@ export function explainError(e: unknown): string {
 }
 
 /**
- * One post-quantum-protected contract call: this device's key signs the action (passkey prompt),
- * the call is simulated, then QoreX signs and sends it as a MsgCrossVMCall. With `pq` unset (e.g.
- * refundExpired, which anyone may call) there's no device signature.
+ * One post-quantum-protected contract call (approved design, 13 Nov): QoreX opens a short window for
+ * exactly these calls; this device (passkey) signs the action and runs it as you inside the window.
+ * With `pq` unset (e.g. refundExpired, which anyone may call) there's no device signature.
  */
 export function PqActionPanel(props: {
   sender: Address;
@@ -52,7 +59,7 @@ export function PqActionPanel(props: {
   summary: ReactNode;
   contract: Address;
   pq?: { actionName: string; paramsHash: Hex };
-  /** An ERC-20 the contract will pull: Qrow asks QoreX for an approval of exactly this amount first. */
+  /** An ERC-20 the contract will pull: approved for exactly this amount first, inside the same window. */
   approve?: { token: Address; amount: bigint; label: string };
   build: (auth?: { validUntil: bigint; signature: Hex }) => PqCall;
   describeSimulation: (result: unknown) => string;
@@ -64,6 +71,13 @@ export function PqActionPanel(props: {
   const [step, setStep] = useState<Step>({ s: "start" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const device = useRef<UnifiedAccount>();
+
+  const forgetDevice = () => {
+    if (device.current) wipe(device.current);
+    device.current = undefined;
+  };
+  useEffect(() => forgetDevice, []);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -71,45 +85,48 @@ export function PqActionPanel(props: {
     try {
       await fn();
     } catch (e) {
-      setError(explainError(e));
+      if (e instanceof WindowManualError) setStep({ s: "window", targets: e.targets, txs: e.txs });
+      else setError(explainError(e));
     } finally {
       setBusy(false);
     }
   }
 
-  const needsApproval = async () =>
-    !!props.approve && (await client.readContract({ address: props.approve.token, abi: erc20Abi, functionName: "allowance", args: [props.sender, props.contract] })) < props.approve.amount;
-
-  const begin = () => run(async () => ((await needsApproval()) ? setStep({ s: "approve" }) : prepare()));
-
-  const approveExact = () =>
-    run(async () => {
-      await sendViaQorex(client, props.sender, props.approve!.token, encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [props.contract, props.approve!.amount] }));
-      await prepare();
-    });
-
-  const prepare = async () => {
-    if (props.build({ validUntil: 0n, signature: "0x" }).value) throw new Error("QOR can’t be attached through QoreX’s cross-chain call. Use fUSD for this.");
-    let auth: { validUntil: bigint; signature: Hex } | undefined;
-    if (props.pq) {
-      const { key, slot } = await unlockForSigning(client, props.sender);
-      try {
-        const s = await signPqAction(client, key, props.contract, props.pq.actionName, props.sender, props.pq.paramsHash);
-        auth = { validUntil: s.validUntil, signature: withSlot(slot, s.signature) };
-      } finally {
-        forget(key);
-      }
-    }
-    const call = props.build(auth);
-    const sim = await client.simulateContract({ account: props.sender, address: props.contract, abi: call.abi, functionName: call.functionName, args: call.args });
-    setStep({ s: "review", call, simulated: props.describeSimulation(sim.result) });
+  const cancel = () => {
+    forgetDevice();
+    props.onCancel();
   };
+
+  const prepare = () =>
+    run(async () => {
+      if (props.build({ validUntil: 0n, signature: "0x" }).value) throw new Error("QOR can’t be attached yet; use fUSD for this. QOR payments come with the next contract update.");
+      const needsApproval =
+        !!props.approve && (await client.readContract({ address: props.approve.token, abi: erc20Abi, functionName: "allowance", args: [props.sender, props.contract] })) < props.approve.amount;
+      const targets = needsApproval ? [props.approve!.token, props.contract] : [props.contract];
+      await ensureWindow(props.sender, targets, targets.length);
+      const u = await unlockForSigning(client, props.sender);
+      device.current = u.device;
+      if (needsApproval) {
+        await runAsUser(client, props.sender, u.device, [{ to: props.approve!.token, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [props.contract, props.approve!.amount] }) }]);
+      }
+      let auth: { validUntil: bigint; signature: Hex } | undefined;
+      if (props.pq) {
+        const s = await signPqAction(client, u.key, props.contract, props.pq.actionName, props.sender, props.pq.paramsHash);
+        auth = { validUntil: s.validUntil, signature: withSlot(u.slot, s.signature) };
+      }
+      const call = props.build(auth);
+      const sim = await client.simulateContract({ account: props.sender, address: props.contract, abi: call.abi, functionName: call.functionName, args: call.args });
+      setStep({ s: "review", call, simulated: props.describeSimulation(sim.result) });
+    });
 
   const send = (call: PqCall) =>
     run(async () => {
+      const d = device.current;
+      if (!d) throw new Error("Start again: the device was locked.");
       setStep({ s: "sending" });
       try {
-        const r = await sendViaQorex(client, props.sender, props.contract, encodeFunctionData({ abi: call.abi, functionName: call.functionName, args: call.args }));
+        const r = await runAsUser(client, props.sender, d, [{ to: props.contract, data: encodeFunctionData({ abi: call.abi, functionName: call.functionName, args: call.args }) }]);
+        forgetDevice();
         setStep({ s: "done", hash: r.txHash });
         props.onDone(r.txHash);
       } catch (e) {
@@ -125,30 +142,16 @@ export function PqActionPanel(props: {
 
       {step.s === "start" && (
         <div className="row">
-          <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void begin()}>
-            {busy ? "Signing…" : "Continue"}
+          <button className="btn" type="button" aria-busy={busy} disabled={busy} onClick={() => void prepare()}>
+            {busy ? "Working…" : "Continue"}
           </button>
-          <button className="btn btn--quiet" type="button" onClick={props.onCancel}>
+          <button className="btn btn--quiet" type="button" onClick={cancel}>
             Cancel
           </button>
         </div>
       )}
 
-      {step.s === "approve" && props.approve && (
-        <div className="field">
-          <p>
-            First, allow this contract to take exactly <span className="fig">{props.approve.label}</span> from your wallet, and not a token more.
-          </p>
-          <div className="row">
-            <button className="btn" type="button" disabled={busy} aria-busy={busy} onClick={() => void approveExact()}>
-              {busy ? "Waiting for QoreX…" : "Approve in QoreX"}
-            </button>
-            <button className="btn btn--quiet" type="button" onClick={props.onCancel}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {step.s === "window" && <WindowHelp targets={step.targets} txs={step.txs} busy={busy} onCheck={() => void prepare()} onCancel={cancel} />}
 
       {step.s === "review" && (
         <>
@@ -164,7 +167,7 @@ export function PqActionPanel(props: {
             <button className="btn" type="button" disabled={busy} aria-busy={busy} onClick={() => void send(step.call)}>
               {props.confirmLabel}
             </button>
-            <button className="btn btn--quiet" type="button" onClick={props.onCancel}>
+            <button className="btn btn--quiet" type="button" onClick={cancel}>
               Cancel
             </button>
           </div>
@@ -173,7 +176,7 @@ export function PqActionPanel(props: {
 
       {step.s === "sending" && (
         <p className="hint" aria-busy="true">
-          Confirm in QoreX, then Qrow waits for the block…
+          Sending inside your window, then Qrow waits for the block…
         </p>
       )}
 
