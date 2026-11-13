@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { evmToQor } from "@qorechain/sdk";
 import { useState } from "react";
@@ -85,9 +86,9 @@ export function Readiness({ compact = false }: { compact?: boolean }) {
               You have {balance !== undefined ? displayAmount(balance, 18) : "…"} QOR. About {displayAmount(MIN_QOR, 18)} QOR covers several actions. The faucet is free, once every 24 hours, and also gives fUSD to pay with. Qrow
               re-checks when you come back to this tab.
             </p>
-            <a className="btn" href={FAUCET_URL} target="_blank" rel="noopener noreferrer">
-              Get free test tokens
-            </a>
+            <Link className="btn" to="/faucet">
+              Get test tokens
+            </Link>
           </>
         );
       case "chainKey":

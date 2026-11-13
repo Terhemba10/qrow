@@ -17,6 +17,7 @@ import { SendPage } from "./pages/SendPage";
 import { ShopPage } from "./pages/ShopPage";
 import { StakingPage } from "./pages/StakingPage";
 import { StartPage } from "./pages/StartPage";
+import { FaucetPage } from "./pages/FaucetPage";
 
 captureReferral(window.location.search);
 
@@ -58,6 +59,7 @@ export function App() {
       <main id="main">
         <Routes>
           <Route path="/" element={<StartPage />} />
+          <Route path="/faucet" element={live("faucet", <FaucetPage />)} />
           <Route path="/send" element={live("send", <SendPage />)} />
           <Route path="/review" element={live("send", <ReviewPage />)} />
           <Route path="/receive" element={live("receive", <ReceivePage />)} />

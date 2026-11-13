@@ -3,9 +3,10 @@
  * normal QoreX user's Qrow key; until then it shows "Coming soon" (never hidden, never broken).
  * Override at build time with VITE_LIVE_TABS=send,receive,... The dev server shows every tab.
  */
-export type TabId = "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch";
+export type TabId = "faucet" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch";
 
 export const TABS: { id: TabId; path: string; label: string; blurb: string }[] = [
+  { id: "faucet", path: "/faucet", label: "Faucet", blurb: "Get free test QOR, fUSD, fETH and fBTC from QoreChain’s official faucet." },
   { id: "send", path: "/send", label: "Send", blurb: "Send test tokens to anyone. They wait in escrow until claimed, or come back to you after 7 days." },
   { id: "receive", path: "/receive", label: "Receive", blurb: "Claim payments sent to you, and make a payment request link or QR code." },
   { id: "shop", path: "/shop", label: "NFT Shop", blurb: "Mint a Qrow Genesis NFT, drawn on chain, with test tokens." },
@@ -21,7 +22,7 @@ export const TABS: { id: TabId; path: string; label: string; blurb: string }[] =
  * Receive (and every contract action) go live once QoreX passes the grant and window checks for the
  * device-account fallback; set VITE_LIVE_TABS then.
  */
-const DEFAULT_LIVE: TabId[] = ["portfolio", "news"];
+const DEFAULT_LIVE: TabId[] = ["faucet", "portfolio", "news"];
 const fromEnv = (import.meta.env.VITE_LIVE_TABS as string | undefined)
   ?.split(",")
   .map((s) => s.trim())

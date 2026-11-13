@@ -327,3 +327,10 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .panel { border-color: var(--color-rule); }
 .nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--color-settled); color: var(--color-ink); }
 .topbar { background: var(--color-desk); }
+
+/* Faucet */
+.faucet-addr { font-size: var(--text-lg); overflow-wrap: anywhere; }
+.steps-list { margin: 0; padding-inline-start: 1.25em; display: grid; gap: var(--space-xs); }
+.facts-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
+
+.panel, .nftcard { color: var(--color-ink); }

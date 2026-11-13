@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FAUCET_URL, QOREX_URL } from "../components/Readiness";
+import { QOREX_URL } from "../components/Readiness";
 import { FEEDBACK_URL } from "../config/tabs";
 
 export function HowToTestPage() {
@@ -21,7 +21,7 @@ export function HowToTestPage() {
       <h2>2. Free test tokens and this device</h2>
       <ol>
         <li>
-          Get free test QOR and fUSD from the <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer">QoreChain faucet</a> (once every 24 hours).
+          Get free test QOR and fUSD on Qrow’s <Link to="/faucet">Faucet</Link> tab, which takes you to the official QoreChain faucet (once every 24 hours).
         </li>
         <li>In QoreX, send yourself 0.01 QOR. Your first transfer registers your quantum-safe key on chain.</li>
         <li>
