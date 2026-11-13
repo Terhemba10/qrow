@@ -37,3 +37,4 @@ brand/node_modules/
 
 # Watcher runtime state (Telegram chat ids and subscriptions)
 watcher/data/
+.vercel

@@ -1,0 +1,10 @@
+# Vercel uploads ONLY the web app. Never upload keys, env files or other folders.
+/*
+!/web
+!/.vercelignore
+**/.env
+**/.env.*
+**/*.env
+web/node_modules
+web/dist
+web/.vercel

@@ -15,6 +15,11 @@ export const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?
 export const AGENT = `${API_BASE}/agent`;
 /** REST (LCD) through Qrow's relay (the public API sends no CORS headers). */
 export const REST = `${API_BASE}/lcd-testnet`;
+/**
+ * Where signed transactions are POSTed. On Vercel, rewritten POSTs lose their original path, so
+ * production posts straight to the relay function; the dev server proxies /lcd-testnet as usual.
+ */
+export const BROADCAST_URL = import.meta.env.DEV ? `${REST}/cosmos/tx/v1beta1/txs` : `${API_BASE}/api/lcd?p=cosmos/tx/v1beta1/txs`;
 
 /** The deployed escrow (see contracts/deployments/testnet.json). Override with VITE_QROW_ESCROW. */
 export const ESCROW: Address =

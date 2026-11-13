@@ -5,7 +5,7 @@
  */
 import { EthNativeSigner, type UnifiedAccount } from "@qorechain/sdk";
 import type { Registry } from "@cosmjs/proto-signing";
-import { NATIVE_CHAIN_ID, REST } from "../config/network";
+import { BROADCAST_URL, NATIVE_CHAIN_ID, REST } from "../config/network";
 import { registry as qrowRegistry } from "./staking";
 import { waitForNativeTx, XvmError } from "./xvm";
 
@@ -25,7 +25,7 @@ const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
 /** Broadcaster for EthNativeSigner: POST through the relay, then wait for the block. */
 const transport = {
   async broadcastTx(tx: Uint8Array) {
-    const r = await fetch(`${REST}/cosmos/tx/v1beta1/txs`, {
+    const r = await fetch(BROADCAST_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ tx_bytes: b64(tx), mode: "BROADCAST_MODE_SYNC" }),
