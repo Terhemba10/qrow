@@ -478,3 +478,117 @@ burst, on reads and API routes; writes only as a small manual sample. Report: p9
 | **Total** | | **about $7.25 base, about $10 with AI** |
 
 Draft message for QoreChain's Discord about endpoint limits: `docs/LAUNCH_KIT.md`.
+
+
+## Research: AMM, test tokens, convert, QOR (13 Nov, all on testnet with hybrid-signed native transactions)
+
+**Native AMM (`qorechain.amm.v1`)**: enabled; constant-product pools; swap fee 0.30% (of which 0.10% protocol fee);
+pool creation fee 100 QOR; max swap impact 5% (`max_swap_impact_bps` 500, enforced by the chain); min liquidity
+1,000. Messages (SDK `msg.amm.*`): `swapExactIn`, `swapExactOut`, `addLiquidity`, `removeLiquidity`, `createPool`.
+Pools read with `GET /qorechain/amm/v1/pools`. LP shares are bank coins `amm-lp/<id>` (6 decimals).
+
+| Pool | Pair | Reserves (13 Nov) |
+| --- | --- | --- |
+| 1 | fETH / QOR | 0.000000000000979 fETH / 1.02 QOR (dust) |
+| 2 | fUSD / QOR | 601 fUSD / 5,989 QOR (the useful one: about 0.1 fUSD per QOR) |
+| 3 | fETH / fUSD | 0.15 fETH / 338 fUSD |
+| 4 | fBTC / QOR | 0.015 fBTC / 11,636 QOR |
+| 5 | fBTC / fUSD | empty |
+
+**Test tokens**: fUSD `erc20:0x97143B771D34ddb9130b807b135Ae675A5a963CA` (6 decimals), fETH
+`erc20:0x02292293c13880a26242690eb70a0e42B8E91c28` (18), fBTC `erc20:0x4604e7E45b2ecdbfbDc157103f5B2b62cb16451A`
+(8), all registered token pairs (`/cosmos/evm/erc20/v1/token_pairs`). No "fUSDT" exists. **No ERC-20 form of QOR**
+is registered.
+
+**Faucet** (docs.qorechain.io/dashboard/faucet): 100 QOR plus 1,000 fUSD, 0.5 fETH, 0.02 fBTC per claim (as of
+27 Oct); once per 24 hours per account and per address; Dashboard sign-in; `qor1…` addresses only; fest tokens arrive
+as **bank coins**.
+
+**Proven on chain (deployer, hybrid signature, `scripts/amm-probe.ts`)**:
+- Swap 0.1 QOR → 0.010006 fUSD on pool 2 (exactly the constant-product quote): tx `39FAA0F1…D3D99F`.
+- Convert bank fUSD → ERC-20 with a hand-encoded `/cosmos.evm.erc20.v1.MsgConvertCoin` (coin, receiver 0x, sender
+  qor1): tx `19B5FBFA…0154F8`, 442,763 gas.
+- Convert ERC-20 → bank with `/cosmos.evm.erc20.v1.MsgConvertERC20` (contract, amount, receiver qor1, **sender qor1**,
+  not 0x): tx `50A2771B…DF65FA`, 432,038 gas. Neither message is built by the SDK; Qrow encodes them itself.
+- A plain bank send of QOR to a contract's address credits its EVM balance (1 uqor = 10^12 wei): tx `FB15427D…336049`.
+
+**What that means**
+- Swap and Liquidity are native messages QoreX signs directly (if QoreX displays them; part of the owner's QoreX check).
+- Paying in fUSD/fETH/fBTC works today: faucet bank coins → Convert → escrow/NFT contracts (cross-VM).
+- **Paying in QOR** can't go through a cross-VM call (no value attached) and QOR has no ERC-20 form. It *can* work
+  as one native transaction with two messages: a bank send of the QOR to the contract, then the cross-VM call that
+  books it (`createPaymentQor`, `mintQor`, `buyQor`), atomic in one transaction. That's a contract change (v4):
+  proposed for **after the Q-Day Drill** (18 Nov), so the Drill tests the v3 addresses already registered.
+
+## Swap tab (after the payments core)
+
+Swap QOR, fUSD, fETH, fBTC (and launched coins that have a pool) on the native AMM, signed in QoreX.
+- Direct pools only: if no pool exists for the pair, say so; never route through unknown tokens.
+- Live quote from reserves (constant product, 0.30% fee), price impact, minimum received with slippage (default 0.5%,
+  warn above 3%, block above 15%; the chain itself refuses impact above 5%), "rate updated" refresh.
+- Checking agent: balance plus fee, pool exists and has liquidity, impact warning, simulate (`/cosmos/tx/v1beta1/simulate`).
+- Converts where needed: AMM pools hold bank coins; contracts need ERC-20. Convert is offered in one click.
+
+## Earn: Staking + Liquidity
+
+- **Liquidity tab:** add/remove liquidity on native pools (pool share, reserves, fee explanation, impermanent loss in
+  plain words), optional pool creation for a launched coin vs QOR or fUSD (100 QOR creation fee, shown up front).
+  Positions (`amm-lp/<id>` balances) appear in Portfolio.
+- **Staking:** QOR only (native staking); fUSD holders are pointed to Liquidity.
+
+## Pay with QOR or fUSD across the app
+
+- fUSD/fETH/fBTC: now (Convert + cross-VM).
+- QOR: v4 contracts after the Drill (bank send + cross-VM in one transaction, see above).
+- NFT Shop/Market: listing currency chosen by the seller; floor per currency plus an approximate value in the other
+  (pool rate, labelled approximate); "Swap first" opens Swap prefilled.
+- Launch: coin pools against QOR or fUSD. Request-payment QR keeps the token (config tokens only).
+- Token addresses and denoms only from config, never from user input or QR codes.
+
+## Faucet tab (with the payments core)
+
+Link to https://dashboard.qorechain.io/faucet (new tab, `rel="noopener"`); never embedded, proxied or automated.
+Shows the `qor1…` address with first/last 4 highlighted and **Copy address**; steps (sign in on the Dashboard,
+Testnet, "Use my address", Request Tokens); the documented amounts and the 24-hour rule; a gentle balance watcher
+that shows "Tokens received ✓" with the amounts, then next steps (Convert fUSD, Swap, Send, NFT). "Next claim in…"
+only if a faucet payment can be read from chain, otherwise the 24-hour rule. Label: "Test tokens have no real value."
+Linked from the readiness card and How to test. Analytics: tab visits (aggregate count, no personal data) and
+"tokens received after visiting" from public chain data.
+
+## Rule for every tab: every transaction carries a verifiable hash
+
+- Store and show the **native transaction hash** (what explore.qore.network searches by), block height, time, status
+  (pending / confirmed / failed with the plain reason) and the contract or module. With QoreX every Qrow transaction is
+  a native transaction (cross-VM calls included), so the native hash is the one to verify; a separate EVM hash
+  exists only for the rare EVM-wallet transaction and is shown too when there is one.
+- "Pending" with the hash right after signing; "done" only once confirmed on chain.
+- Shown everywhere (success screens, payment timeline, history, Portfolio, NFT and coin pages, staking positions,
+  Admin) as first/last 6 with Copy and View on explorer, plus the note "Explorer: switch to Testnet if it opens on
+  mainnet". Telegram alerts, sealed notices, receipts (and receipt QR) and CSV exports include it.
+- Qrow reference IDs (`QRW-PAY-000123`, `QRW-NFT-000045`, `QRW-SWP-…`) map to the chain of hashes (create, then
+  claim/cancel/refund) shown on the detail page.
+- **Verify page** (no wallet): paste a hash or reference → fetched from the chain, not our database: status, block,
+  time, from/to, amount/token, which Qrow contract/action, receipt signature check; flags non-Qrow, mainnet and
+  malformed hashes.
+- Tests for each action type, pending → confirmed and failed, and the Verify page (valid, unknown, mainnet, malformed).
+- Built into each tab as it's made, not as a later stage.
+
+## Updated estimate (13 Nov)
+
+| Days | Work |
+| --- | --- |
+| 0.5 | Faucet tab, Convert helper (both directions), hash display + Verify page groundwork |
+| — | **Public beta v0.1** as soon as the owner runs the QoreX check and imports to Vercel |
+| 1 | Swap tab |
+| 1 | Liquidity tab (Earn) + LP positions in Portfolio |
+| 1 | Hash rule across tabs, reference IDs, Verify page, receipts |
+| 1.5 | v4 contracts for QOR payments (after the Drill, 19 Nov) + web |
+| 1 | NFT Shop/Market in both currencies + Swap first |
+| 1 | Staking, Launch, NFT tabs live (tested with a QoreX account) |
+| 1.5 | Admin & Analytics + indexer on Render (state-based) |
+| 1 | Scale: code-splitting, load test, monitoring, status line |
+| 1 | Submission: README, THREAT_MODEL, AI_USAGE, video script, final tests on the live link |
+| **≈ 10.5** | **finishing about 25 to 26 Nov**, before the 28 Nov freeze, if the owner's QoreX check passes |
+
+Risk: if QoreX refuses to display `MsgCrossVMCall`, AMM or convert messages, the QoreX-only design needs a fallback;
+that's the first thing the owner's check answers.

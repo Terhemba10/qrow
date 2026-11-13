@@ -40,6 +40,20 @@ Start page, then send 1 QOR to a friend.
 
 Deployment details and every on-chain test transaction: [`docs/TEST_NOTES.md`](docs/TEST_NOTES.md).
 
+## How to verify any Qrow transaction
+
+Every Qrow action is a QoreChain transaction you can check yourself, without trusting Qrow:
+
+1. Copy the transaction hash Qrow shows (success screens, history, Telegram alerts, CSV exports).
+2. Open [explore.qore.network](https://explore.qore.network) and search for it. If the explorer opens on mainnet,
+   switch it to **Testnet** (it remembers the network in your browser, not in the link).
+3. Or ask the chain directly: `https://api-testnet.qore.host/cosmos/tx/v1beta1/txs/<hash>`. A Qrow action made
+   through QoreX shows a `crossvm_request` event whose `target_contract` is one of the contracts above, plus
+   `pqc_hybrid_verify: verified` (the ML-DSA-87 signature the chain checked).
+4. The contract's state confirms the result, e.g. `QrowEscrow.getPayment(id)` for a payment.
+
+A Verify page in the app (paste a hash or a Qrow reference such as `QRW-PAY-000123`) is being added tab by tab.
+
 ## Repository
 
 | Folder | What |

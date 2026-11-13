@@ -90,10 +90,11 @@ export async function broadcastNative(
   messages: Parameters<EthNativeSigner["sign"]>[0]["messages"],
   memo?: string,
   gas?: number,
+  registry?: ConstructorParameters<typeof EthNativeSigner>[1] extends infer O ? (O extends { registry?: infer R } ? R : never) : never,
 ): Promise<string> {
   const net = network();
   const { accountNumber, sequence } = await accountSequence(net.rest, acc.cosmos);
-  const signer = new EthNativeSigner(acc, { signMode: mode, rest: net.rest });
+  const signer = new EthNativeSigner(acc, { signMode: mode, rest: net.rest, ...(registry ? { registry } : {}) });
   const transport = await StargateClient.connect(net.rpc);
   try {
     const res = await signer.signAndBroadcast(transport, {
