@@ -8,5 +8,9 @@ describe("rewrittenPath", () => {
     expect(rewrittenPath("/api/agent?p=referrals/qor1abc")).toBe("/referrals/qor1abc");
     expect(rewrittenPath("/api/lcd?p=cosmos/tx/v1beta1/txs&query=a%3D%27b%27&pagination.limit=1")).toBe("/cosmos/tx/v1beta1/txs?query=a%3D%27b%27&pagination.limit=1");
     expect(rewrittenPath("/api/lcd?p=cosmos%2Ftx%2Fv1beta1%2Ftxs")).toBe("/cosmos/tx/v1beta1/txs");
+    // POSTs can arrive with the original URL
+    expect(rewrittenPath("/lcd-testnet/cosmos/tx/v1beta1/txs")).toBe("/cosmos/tx/v1beta1/txs");
+    expect(rewrittenPath("/agent/explain")).toBe("/explain");
+    expect(rewrittenPath("/lcd-testnet-evil/x")).toBe("/lcd-testnet-evil/x");
   });
 });

@@ -35,10 +35,17 @@ export const limits = {
  * /lcd-testnet/<path> to /api/agent?p=<path> and /api/lcd?p=<path>, keeping the original query
  * parameters. Returns "/<path>?<original query without p>".
  */
-export function rewrittenPath(url: string | undefined): string {
+export function rewrittenPath(url: string | undefined, prefixes: string[] = ["/api/agent", "/api/lcd", "/agent", "/lcd-testnet"]): string {
   const u = new URL(url ?? "/", "http://x");
-  const p = u.searchParams.get("p") ?? "";
+  const p = u.searchParams.get("p");
   u.searchParams.delete("p");
   const q = u.searchParams.toString();
-  return `/${p.replace(/^\/+/, "")}${q ? `?${q}` : ""}`;
+  let path: string;
+  if (p !== null) path = `/${p.replace(/^\/+/, "")}`;
+  else {
+    // Some requests (POSTs) arrive with the original URL instead of the rewritten one.
+    const pre = prefixes.find((x) => u.pathname === x || u.pathname.startsWith(`${x}/`));
+    path = pre ? u.pathname.slice(pre.length) || "/" : u.pathname;
+  }
+  return `${path}${q ? `?${q}` : ""}`;
 }
