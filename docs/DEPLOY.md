@@ -13,14 +13,14 @@ Telegram watcher. Testnet only (`qorechain-diana`, EVM 9800), never mainnet. No 
 | Telegram watcher + indexer | Render background worker (`render.yaml`) | not deployed yet: needs the owner's Render account; runs on the owner's PC until then |
 | Contracts | QoreChain testnet | see README |
 
-**Deploying:** `npx vercel deploy --prod` from the repo root (the project link lives in `.vercel/`, git-ignored).
+**Deploying:** push to `main` (Vercel builds from GitHub). Manual: `npx vercel deploy --prod` from the repo root
+(the project link lives in `.vercel/`, git-ignored).
 `.vercelignore` uploads only `web/` and never any `.env` file; checked on the first deploy (116 files, `src` and
 the build only). Auto-deploy on push needs the GitHub connection below.
 
 **Owner steps still open:**
-1. Vercel → Account Settings → Authentication: add the **GitHub** login connection, then Project `qrow` → Settings →
-   Git → Connect `Terhemba10/qrow` (production branch `main`). From then on every push to `main` deploys and every
-   pull request gets a preview URL. (The CLI can't do this without that OAuth connection.)
+1. ~~GitHub connection~~ **done 13 Nov** by the owner: project `qrow` is linked to `Terhemba10/qrow` (`main`), root
+   `web`, Vite, domain `qrow-app.vercel.app`. Every push to `main` deploys; every pull request gets a preview URL.
 2. Project `qrow` → Settings → Environment Variables: add `CMC_API_KEY` (Production and Preview), then Redeploy.
    Until then Market News shows headlines and "Prices aren't available right now".
 3. Recommended: turn on two-factor authentication for the Vercel account.
