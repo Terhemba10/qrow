@@ -451,7 +451,7 @@ TEMPLATE = """<!doctype html>
   #root {{ position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--canvas-deep); font-family: var(--font-body); color: var(--text); }}
   .bg {{ position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 50%, #191b36 0%, var(--canvas-deep) 75%); }}
   .bg::after {{ content: ""; position: absolute; inset: 0; background: var(--vignette); }}
-  #win {{ position: absolute; {win} border-radius: 22px; overflow: hidden; background: var(--canvas);
+  #win {{ position: absolute; {win} z-index: 25; border-radius: 22px; overflow: hidden; background: var(--canvas);
          box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 0 0 1.5px rgba(238,240,255,.12), 0 0 60px rgba(62,240,210,.10); }}
   #camk {{ position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale({k}); }}
   #cam {{ position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }}
@@ -478,10 +478,11 @@ TEMPLATE = """<!doctype html>
   .key {{ position: absolute; z-index: 52; min-width: 64px; padding: 14px 22px; text-align: center; border-radius: 14px; box-sizing: border-box;
          font: 500 30px/1 var(--font-mono); color: var(--text); background: linear-gradient(175deg, rgba(30,34,64,.95), rgba(13,15,34,.97));
          border: 1.5px solid rgba(62,240,210,.5); border-bottom: 4px solid rgba(62,240,210,.7); box-shadow: 0 6px 0 rgba(0,0,0,.6), 0 0 26px rgba(62,240,210,.35); }}
-  .steps3 {{ position: absolute; left: 50%; top: 78px; transform: translateX(-50%); z-index: 45; display: flex; gap: 14px;
-            padding: 10px 14px; border-radius: 999px; background: var(--glass-bg-dark); border: 1.5px solid var(--glass-border); box-shadow: var(--glass-shadow); }}
-  .steps3 .s {{ display: flex; align-items: center; gap: 10px; padding: 6px 14px; font: 600 24px/1 var(--font-body); opacity: .45; }}
-  .steps3 .num {{ width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font: 500 20px/1 var(--font-mono); background: rgba(238,240,255,.14); }}
+  /* In the top bar, between the counter chip and the rail: never over the app itself */
+  .steps3 {{ position: absolute; left: 420px; top: 8px; z-index: 45; display: flex; gap: 6px;
+            padding: 5px 8px; border-radius: 999px; background: var(--glass-bg-dark); border: 1.5px solid var(--glass-border); }}
+  .steps3 .s {{ display: flex; align-items: center; gap: 8px; padding: 3px 10px; font: 600 21px/1 var(--font-body); opacity: .45; }}
+  .steps3 .num {{ width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 500 18px/1 var(--font-mono); background: rgba(238,240,255,.14); }}
   /* Captions (minimal, burned in) */
   .cap {{ position: absolute; left: 160px; right: 160px; bottom: 16px; text-align: center; z-index: 60;
          font: 500 31px/1.25 var(--font-body); color: var(--text); text-shadow: 0 2px 10px rgba(0,0,0,.8); }}
