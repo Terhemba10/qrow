@@ -334,3 +334,9 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .facts-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
 
 .panel, .nftcard { color: var(--color-ink); }
+
+/* Swap */
+.swap-out { display: flex; align-items: center; overflow-wrap: anywhere; color: var(--color-ink); }
+.status--failed { border-color: var(--color-danger); color: var(--color-danger); }
+.txhash { margin-top: var(--space-sm); }
+.txhash__line { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }

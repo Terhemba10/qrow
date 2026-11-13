@@ -23,6 +23,9 @@ export function HowToTestPage() {
         <li>
           Get free test QOR and fUSD on Qrow’s <Link to="/faucet">Faucet</Link> tab, which takes you to the official QoreChain faucet (once every 24 hours).
         </li>
+        <li>
+          Try a <Link to="/swap">Swap</Link>: 1 QOR for fUSD. QoreX shows the swap and signs it, and Qrow shows the transaction hash to check on the explorer.
+        </li>
         <li>In QoreX, send yourself 0.01 QOR. Your first transfer registers your quantum-safe key on chain.</li>
         <li>
           On the Start page, press <strong>Set up this device</strong>. Your device asks for your fingerprint, face or PIN, and QoreX asks you to confirm once. There’s nothing to write down or save.
