@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { postPathAllowed, restPathAllowed } from "./relay.js";
+import { mainnetCheckHash, postPathAllowed, restPathAllowed } from "./relay.js";
 
 describe("restPathAllowed", () => {
   it("allows only the read paths the app uses, never traversal", () => {
@@ -20,5 +20,15 @@ describe("postPathAllowed", () => {
     expect(postPathAllowed("/cosmos/tx/v1beta1/txs?x=1")).toBe(false);
     expect(postPathAllowed("/cosmos/gov/v1/proposals")).toBe(false);
     expect(postPathAllowed("/cosmos/tx/v1beta1/txs/../x")).toBe(false);
+  });
+});
+
+describe("mainnetCheckHash", () => {
+  it("accepts only an upper-case 64-hex hash, nothing else", () => {
+    const h = "4A676D5F2346E9958211407068819C534FBB87164A11273B52F09E2DF7C8E3CD";
+    expect(mainnetCheckHash(`/mainnet-check/${h}`)).toBe(h);
+    expect(mainnetCheckHash(`/mainnet-check/${h}/x`)).toBeUndefined();
+    expect(mainnetCheckHash(`/mainnet-check/${h.toLowerCase()}`)).toBeUndefined();
+    expect(mainnetCheckHash("/mainnet-check/../cosmos/bank")).toBeUndefined();
   });
 });

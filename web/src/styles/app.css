@@ -340,3 +340,8 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .status--failed { border-color: var(--color-danger); color: var(--color-danger); }
 .txhash { margin-top: var(--space-sm); }
 .txhash__line { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
+
+/* Verify */
+.verify__result { margin-top: var(--space-lg); }
+.verify__value { overflow-wrap: anywhere; min-width: 0; }
+.verify__step h3 { margin: 0; font-size: var(--text-md, 1rem); }

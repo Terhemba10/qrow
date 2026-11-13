@@ -3,8 +3,9 @@ import { defineConfig } from "vite";
 
 // From the create-qorechain-dapp viem-wagmi template (Apache-2.0): the public REST API sends no
 // CORS headers, so the browser reaches it through the dev/preview server at /lcd-testnet.
-// Qrow is testnet-only, so there is no mainnet proxy.
+// Qrow is testnet-only; the Verify page's mainnet existence check goes through Qrow's relay.
 const proxy = {
+  "/lcd-testnet/mainnet-check": { target: "http://127.0.0.1:8787" },
   "/lcd-testnet": {
     target: "https://api-testnet.qore.host",
     changeOrigin: true,

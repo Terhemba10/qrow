@@ -4,6 +4,8 @@
  * - POST: only broadcasting an already-signed transaction (`/cosmos/tx/v1beta1/txs`) and simulating one
  *   (`/cosmos/tx/v1beta1/simulate`), body at most 128 KB. The relay never signs anything and holds no
  *   keys: it forwards bytes the user's own device signed, exactly as a wallet would.
+ * - GET /mainnet-check/<hash>: does this transaction hash exist on QoreChain mainnet? Answers only
+ *   {found, height} (for the Verify page, which flags mainnet hashes; Qrow itself is testnet only).
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
 
@@ -11,6 +13,9 @@ const REST = process.env.QROW_REST ?? "https://api-testnet.qore.host";
 /** Only the read endpoints the app uses. */
 const REST_ALLOW = [/^\/cosmos\/(bank|staking|distribution|auth|tx|base|authz)\//, /^\/qorechain\//, /^\/cosmwasm\/wasm\/v1\/contract\//];
 const POST_ALLOW = new Set(["/cosmos/tx/v1beta1/txs", "/cosmos/tx/v1beta1/simulate"]);
+const MAINNET_REST = "https://api.qore.host";
+const MAINNET_CHECK = /^\/mainnet-check\/([0-9A-F]{64})$/;
+export const mainnetCheckHash = (path: string) => MAINNET_CHECK.exec(path)?.[1];
 const REST_MAX_BYTES = 4 * 1024 * 1024;
 const POST_MAX_BYTES = 128 * 1024;
 
@@ -37,6 +42,8 @@ async function readBody(req: IncomingMessage): Promise<Buffer | undefined> {
 }
 
 export async function relay(req: IncomingMessage, res: ServerResponse, path: string): Promise<void> {
+  const mainnetHash = req.method === "GET" ? mainnetCheckHash(path) : undefined;
+  if (mainnetHash) return mainnetCheck(res, mainnetHash);
   let init: RequestInit;
   if (req.method === "GET") {
     if (!restPathAllowed(path)) return json(res, 403, { ok: false, reason: "path_not_allowed" });
@@ -61,6 +68,18 @@ export async function relay(req: IncomingMessage, res: ServerResponse, path: str
     if (buf.length > REST_MAX_BYTES) return json(res, 502, { ok: false, reason: "too_large" });
     res.writeHead(up.status, { "content-type": up.headers.get("content-type") ?? "application/json", "cache-control": "no-store" });
     res.end(buf);
+  } catch {
+    json(res, 504, { ok: false, reason: "chain_unavailable" });
+  }
+}
+
+/** Existence only: never relays mainnet content. */
+async function mainnetCheck(res: ServerResponse, hash: string): Promise<void> {
+  try {
+    const up = await fetch(`${MAINNET_REST}/cosmos/tx/v1beta1/txs/${hash}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
+    if (!up.ok) return json(res, 200, { found: false });
+    const j = (await up.json().catch(() => ({}))) as { tx_response?: { height?: string } };
+    return json(res, 200, j.tx_response ? { found: true, height: Number(j.tx_response.height) } : { found: false });
   } catch {
     json(res, 504, { ok: false, reason: "chain_unavailable" });
   }

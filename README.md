@@ -57,7 +57,12 @@ Every Qrow action is a QoreChain transaction you can check yourself, without tru
    `pqc_hybrid_verify: verified` (the ML-DSA-87 signature the chain checked).
 4. The contract's state confirms the result, e.g. `QrowEscrow.getPayment(id)` for a payment.
 
-A Verify page in the app (paste a hash or a Qrow reference such as `QRW-PAY-000123`) is being added tab by tab.
+Or use the app's **Verify** page (https://qrow-app.vercel.app/verify), no wallet needed: paste a hash, an explorer
+link or a Qrow reference (`QRW-PAY-000123` for a payment, `QRW-NFT-000045` for an NFT). It reads QoreChain testnet
+through Qrow's read-only relay (never a Qrow database) and shows the status, block, time, signer, the ML-DSA-87
+signature check, the network fee and each step (Qrow contract and action, token and amount). It also recognises
+earlier Qrow contract versions, and it flags mainnet hashes, unknown hashes and malformed input. Every transaction
+hash Qrow shows links to it ("Verify on testnet").
 
 ## Repository
 
