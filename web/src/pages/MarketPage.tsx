@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { encodeAbiParameters, erc20Abi, keccak256, type Address } from "viem";
@@ -58,7 +58,7 @@ function useMarket() {
 
 export function MarketPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const client = usePublicClient({ chainId: CHAIN.id });
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const market = useMarket();
@@ -142,7 +142,9 @@ export function MarketPage() {
               <span>I’ve checked the seller’s full address, and I still want to buy.</span>
             </label>
           )}
-          {!buyChecks || blocked || (danger && !ack) ? (
+          {buying.currency.toLowerCase() === ZERO ? (
+            <p className="notice">This listing is priced in QOR. Buying with QOR comes with the next contract update.</p>
+          ) : !buyChecks || blocked || (danger && !ack) ? (
             <div className="row">
               <button className="btn btn--quiet" type="button" onClick={() => setBuying(undefined)}>
                 Cancel
@@ -229,7 +231,7 @@ export function MarketPage() {
 
 function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: string; floorFor: (c: Address) => bigint | undefined; history?: Map<string, number>; onDone: () => void }) {
   const id = useId();
-  const [currency, setCurrency] = useState<"QOR" | "fUSD">("QOR");
+  const [currency, setCurrency] = useState<"QOR" | "fUSD">("fUSD");
   const [price, setPrice] = useState("");
   const [signing, setSigning] = useState(false);
   const [ack, setAck] = useState(false);
@@ -253,11 +255,12 @@ function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: s
           <div className="seg">
             {(["QOR", "fUSD"] as const).map((c) => (
               <span key={c}>
-                <input type="radio" name={`${id}-cur`} id={`${id}-${c}`} checked={currency === c} onChange={() => setCurrency(c)} />
+                <input type="radio" name={`${id}-cur`} id={`${id}-${c}`} checked={currency === c} disabled={c === "QOR"} onChange={() => setCurrency(c)} />
                 <label htmlFor={`${id}-${c}`}>{c}</label>
               </span>
             ))}
           </div>
+          <p className="hint">Prices in QOR come with the next contract update.</p>
           <label className="label" htmlFor={`${id}-price`}>
             Price
           </label>

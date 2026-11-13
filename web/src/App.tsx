@@ -4,6 +4,7 @@ import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { WelcomeTip } from "./components/WelcomeTip";
+import { QorexConnect } from "./components/QorexConnect";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
 import { captureReferral } from "./lib/staking";
@@ -63,6 +64,7 @@ export function App() {
           Demo escrow (<span className="mono">{ESCROW.slice(0, 10)}…</span>): refunds after 10 minutes so they can be shown live. The real Qrow escrow keeps the 7-day rule.
         </p>
       )}
+      <QorexConnect />
       <WelcomeTip />
       <main id="main">
         <Routes>

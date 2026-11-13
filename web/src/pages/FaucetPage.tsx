@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { evmToQor } from "@qorechain/sdk";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -23,7 +23,7 @@ function hoursMinutes(ms: number) {
  */
 export function FaucetPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const qor = me ? evmToQor(me) : undefined;
   const [copied, setCopied] = useState(false);

@@ -19,6 +19,7 @@ import { DEVICE_MIN_UQOR, DEVICE_TOPUP_UQOR, deviceState, grantMsg, hasGrant, si
 import { CONVERT_COIN, toErc20Msg } from "./convert";
 import { createDeviceUnlocked, deviceInfo, unlockDevice, wipe } from "./device";
 import { deviceBroadcast, deviceQor } from "./native";
+import { qorexDownload } from "./qorex";
 import type { PqKey } from "./pq";
 import { qorexAccount, qorexAvailable, registry, signInQorex } from "./staking";
 import { PER_CALL_UQOR, readWindow, runAsUser, waitForNativeTx, WINDOW_BLOCKS, windowCovers, XvmError, type Call } from "./xvm";
@@ -58,6 +59,12 @@ export interface Preflight {
   blocker?: Blocker;
 }
 
+/** "QoreX isn’t here": one line and the right download for this browser (or the QoreX app on a phone). */
+export function qorexBlocker(lead: string): Blocker {
+  const dl = qorexDownload();
+  return { id: "qorex", text: dl.phone ? `${lead} Open Qrow inside the QoreX app’s dApp Browser.` : `${lead} Qrow connects as soon as it’s installed.`, fix: { label: dl.label, href: dl.url } };
+}
+
 /** Fees QoreX pays in the bundle, plus a margin (uqor). */
 const QOREX_FEE_UQOR = 150_000n;
 
@@ -77,7 +84,7 @@ const fmt = (units: bigint, decimals: number) => {
 /** The silent checks. Returns at most one blocker: the first thing that would stop the action. */
 export async function preflight(client: PublicClient, plan: ActionPlan): Promise<Preflight> {
   const base: Preflight = { device: { s: "none" }, firstTime: false, needsGrant: false, needsTopUp: false, needsApproval: false, convert: 0n, calls: 1, windowOpen: false };
-  if (!qorexAvailable()) return { ...base, blocker: { id: "qorex", text: "Contract actions are approved in QoreX. Open Qrow in a browser with QoreX, or in the QoreX app.", fix: { label: "Get QoreX", href: "https://qorechain.io/qorex" } } };
+  if (!qorexAvailable()) return { ...base, blocker: qorexBlocker("Contract actions are approved in QoreX.") };
   const qorexQor = await qorexAccount().catch(() => undefined);
   const userQor = evmToQor(plan.user);
   if (qorexQor !== userQor) return { ...base, blocker: { id: "account", text: "QoreX is on a different account from the one Qrow shows. Choose the same account in QoreX." } };

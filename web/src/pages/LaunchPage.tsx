@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { encodeAbiParameters, keccak256, toBytes, type Address } from "viem";
@@ -23,7 +23,7 @@ const fmtDate = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "sho
 
 export function LaunchPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const client = usePublicClient({ chainId: CHAIN.id });
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const coins = useCoins(me);

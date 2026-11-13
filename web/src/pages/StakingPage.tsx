@@ -1,8 +1,10 @@
 import { useId, useState } from "react";
 import { useAccount } from "wagmi";
 import { evmToQor } from "@qorechain/sdk";
-import { IconAlert } from "../components/Icons";
 import { ReceiptCard } from "../components/ReceiptCard";
+import { BlockerNote } from "../components/ActionFlow";
+import { qorexBlocker } from "../lib/action";
+import { useQorexInstalled } from "../lib/qorex";
 import { addReceipt, type Receipt } from "../lib/receipts";
 import { Countdown, useNow } from "../components/Countdown";
 import { displayAmount, parseAmount } from "../lib/amount";
@@ -42,6 +44,7 @@ export function StakingPage() {
     text: string;
     receipt?: Receipt;
   }>();
+  useQorexInstalled(); // re-render the moment QoreX appears
   const hasQorex = qorexAvailable();
 
   const p = params.data;
@@ -169,18 +172,7 @@ export function StakingPage() {
       </div>
 
       {!hasQorex && (
-        <div className="notice notice--warn">
-          <p className="notice__title">
-            <IconAlert /> Staking is signed in QoreX
-          </p>
-          <p>
-            QoreX isn’t available in this browser, so you can view staking but not sign.{" "}
-            <a href="https://build.qorechain.io/start" target="_blank" rel="noopener noreferrer">
-              Install QoreX
-            </a>{" "}
-            to stake.
-          </p>
-        </div>
+        <BlockerNote b={qorexBlocker("Staking is approved in QoreX. You can look around now; to stake, get QoreX.")} />
       )}
 
       <div className="stats">

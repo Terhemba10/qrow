@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { getLogsChunked } from "../lib/logs";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -46,7 +46,7 @@ function useCollection() {
 
 export function ShopPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const client = usePublicClient({ chainId: CHAIN.id });
   const col = useCollection();
   const [currency, setCurrency] = useState<"QOR" | "fUSD">("fUSD");
@@ -126,11 +126,12 @@ export function ShopPage() {
             <div className="seg">
               {(["QOR", "fUSD"] as const).map((c) => (
                 <span key={c}>
-                  <input type="radio" name="mint-cur" id={`mint-${c}`} checked={currency === c} onChange={() => setCurrency(c)} />
+                  <input type="radio" name="mint-cur" id={`mint-${c}`} checked={currency === c} disabled={c === "QOR"} onChange={() => setCurrency(c)} />
                   <label htmlFor={`mint-${c}`}>{c}</label>
                 </span>
               ))}
             </div>
+            <p className="hint">Paying with QOR comes with the next contract update. Swap QOR for fUSD on the Swap tab.</p>
           </fieldset>
           {!me ? (
             <button className="btn" type="button" onClick={openConnectModal}>

@@ -1,5 +1,5 @@
 import { useCoins } from "../lib/coins";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { useAccount } from "wagmi";
 import { IconAlert } from "../components/Icons";
 import { PaymentList } from "../components/PaymentList";
@@ -9,7 +9,7 @@ import { usePayments } from "../lib/payments";
 
 export function ReceivePage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   useCoins(); // registers launched coins so their payments show by name
   const payments = usePayments(isConnected && chainId === CHAIN.id ? address : undefined);
 

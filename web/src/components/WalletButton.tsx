@@ -1,4 +1,5 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "./QorexConnect";
 import { useAccount, useConnect } from "wagmi";
 
 /** Dev only: connect the read-only watch wallet (see wagmi.ts). Absent from production builds. */
@@ -25,9 +26,10 @@ export function WalletButton() {
 }
 
 function WalletButtonInner() {
+  const { connect, isPending } = useConnectQorex();
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
+      {({ account, chain, openAccountModal, mounted }) => {
         const ready = mounted;
         if (!ready) {
           return (
@@ -38,8 +40,8 @@ function WalletButtonInner() {
         }
         if (!account || !chain) {
           return (
-            <button className="btn" type="button" onClick={openConnectModal}>
-              Connect QoreX
+            <button className="btn" type="button" onClick={connect} aria-busy={isPending}>
+              {isPending ? "Approve in QoreX…" : "Connect QoreX"}
             </button>
           );
         }

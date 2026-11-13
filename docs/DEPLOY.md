@@ -51,7 +51,7 @@ The app calls these on its own domain, so there's no CORS and the CSP stays `'se
 | `CMC_API_KEY` | yes, for Market News prices | secret |
 | `ANTHROPIC_API_KEY` | optional | secret; without it every check still shows, just without the AI wording. Set a **monthly spend limit** in the Anthropic Console. |
 | `QROW_DAILY_AI_CAP` | optional | default 2000 AI calls per UTC day per function instance |
-| `VITE_LIVE_TABS` | optional | default `faucet,swap,portfolio,news` (honest beta); add a tab the day it works end to end, e.g. `faucet,swap,portfolio,news,send,receive` |
+| `VITE_LIVE_TABS` | optional | default: every tab (owner, 13 Nov). Set it only to switch some tabs back to "Coming soon", e.g. `faucet,swap,portfolio,news` |
 | `VITE_WALLETCONNECT_PROJECT_ID` | optional | public; lets phone wallets connect by QR |
 
 Caching: prices `s-maxage=600`, news 900, referral counts 300, so a crowd costs one upstream call per window.

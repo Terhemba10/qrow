@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { evmToQor } from "@qorechain/sdk";
@@ -32,7 +32,7 @@ const fmtDate = new Intl.DateTimeFormat(undefined, {
 
 export function PortfolioPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const receipts = useReceipts(address);
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const balances = useBalances(me);

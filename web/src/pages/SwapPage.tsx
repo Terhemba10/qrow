@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { evmToQor } from "@qorechain/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useMemo, useState } from "react";
@@ -7,7 +7,8 @@ import { IconAlert, IconCheck } from "../components/Icons";
 import { BlockerNote } from "../components/ActionFlow";
 import { TxHash, type TxStatus } from "../components/TxHash";
 import { addReceipt } from "../lib/receipts";
-import type { Blocker } from "../lib/action";
+import { qorexBlocker, type Blocker } from "../lib/action";
+import { useQorexInstalled } from "../lib/qorex";
 import { CHAIN } from "../config/network";
 import { displayAmount, formatUnitsExact, parseAmount } from "../lib/amount";
 import { bankBalances } from "../lib/faucet";
@@ -54,7 +55,8 @@ function useDebounced<T>(value: T, ms: number): T {
 export function SwapPage() {
   const ids = { amt: useId(), from: useId(), to: useId() };
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
+  useQorexInstalled(); // re-render the moment QoreX appears
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const qor = me ? evmToQor(me) : undefined;
 
@@ -274,7 +276,7 @@ export function SwapPage() {
               Connect QoreX
             </button>
           ) : !qorexAvailable() ? (
-            <p className="notice notice--warn">Swaps are signed in QoreX. Open Qrow in a browser with the QoreX extension, or in the QoreX app’s dApp Browser.</p>
+            <BlockerNote b={qorexBlocker("Swaps are approved in QoreX.")} />
           ) : (
             <div className="row">
               {reviewing ? (

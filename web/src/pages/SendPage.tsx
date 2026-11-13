@@ -1,4 +1,4 @@
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectQorex } from "../components/QorexConnect";
 import { useId, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
@@ -55,7 +55,7 @@ function NoteField({ recipient, note, setNote }: { recipient?: `0x${string}`; no
 
 export function SendPage() {
   const { address, chainId, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connect: openConnectModal } = useConnectQorex();
   const navigate = useNavigate();
   const ids = { to: useId(), amount: useId(), toErr: useId(), amtErr: useId() };
 

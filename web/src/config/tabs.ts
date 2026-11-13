@@ -19,12 +19,11 @@ export const TABS: { id: TabId; path: string; label: string; blurb: string }[] =
 ];
 
 /**
- * Live by default in the public beta (13 Nov): only what works for a normal QoreX user today (Swap:
- * QoreX signs native AMM swaps, proven 13 Nov). Send and
- * Receive (and every contract action) go live once QoreX passes the grant and window checks for the
- * device-account fallback; set VITE_LIVE_TABS then.
+ * Live by default in the public beta: every tab (owner, 13 Nov). Contract actions run through the
+ * one-approval flow (lib/action.ts); if QoreX refuses part of the combined approval, the flow shows
+ * one blocker with a manual route instead of failing silently.
  */
-const DEFAULT_LIVE: TabId[] = ["faucet", "swap", "portfolio", "news"];
+const DEFAULT_LIVE: TabId[] = TABS.map((t) => t.id);
 const fromEnv = (import.meta.env.VITE_LIVE_TABS as string | undefined)
   ?.split(",")
   .map((s) => s.trim())
