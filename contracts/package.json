@@ -29,7 +29,8 @@
     "crossvm-probe": "tsx --env-file=.env scripts/crossvm-probe.ts",
     "deploy:v3": "tsx --env-file=.env scripts/deploy-v3.ts",
     "smoke:v3": "tsx --env-file=.env scripts/smoke-v3.ts",
-    "amm-probe": "tsx --env-file=.env scripts/amm-probe.ts"
+    "amm-probe": "tsx --env-file=.env scripts/amm-probe.ts",
+    "authz-probe": "tsx --env-file=.env scripts/authz-probe.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",

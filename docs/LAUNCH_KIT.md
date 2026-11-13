@@ -22,3 +22,20 @@
 > Happy to share details. Thanks!
 
 More launch texts (X post, Telegram message, 30-second recording, How to test guide) follow once the live URL exists.
+
+## QoreChain Discord: QoreX can't display cross-VM calls or token conversion
+
+> Hi QoreChain team! Building Qrow (Post-Quantum dApp category) on testnet, we want every action signed in QoreX.
+> QoreX's `signAndBroadcast` works great for native messages (an AMM swap signed fine), but it refuses two message
+> types our dApp needs:
+>
+> - `/qorechain.crossvm.v1.MsgCrossVMCall`: "QoreX cannot show what /qorechain.crossvm.v1.MsgCrossVMCall does, so
+>   it will not sign it"
+> - `/cosmos.evm.erc20.v1.MsgConvertCoin`: same message
+>
+> Both work on testnet when signed with the SDK's hybrid signer (we tested from script accounts), so it's only the
+> wallet display. Cross-VM calls would let QoreX users use EVM dApps with no MetaMask and no EVM window, and
+> `MsgConvertCoin` is the only way to use faucet fUSD/fETH/fBTC in EVM contracts.
+>
+> Is support for displaying these planned, and roughly when? Until then we're using authz + a short EVM window
+> opened in QoreX. Happy to share test transactions. Thanks!

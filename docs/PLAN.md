@@ -592,3 +592,49 @@ Linked from the readiness card and How to test. Analytics: tab visits (aggregate
 
 Risk: if QoreX refuses to display `MsgCrossVMCall`, AMM or convert messages, the QoreX-only design needs a fallback;
 that's the first thing the owner's check answers.
+
+
+## QoreX check results and the proposed fallback (13 Nov) — awaiting the owner's OK
+
+**Owner's QoreX check** (account `qor1tvke…qjdd5f`):
+1. `MsgCrossVMCall`: refused ×3 ("QoreX cannot show what /qorechain.crossvm.v1.MsgCrossVMCall does, so it will not sign it").
+2. AMM swap 0.01 QOR → fUSD: **signed**, tx `4A676D5F23…E3CD`, code 0.
+3. `MsgConvertCoin`: refused (same reason).
+
+So Swap and Liquidity stay QoreX-only. Contract actions and Convert need another route.
+
+**Proven on chain 13 Nov (script accounts, `scripts/authz-probe.ts`):**
+- `x/authz`: an account can grant another key permission for `MsgCrossVMCall` and `MsgConvertCoin`
+  (tx `EE52AD48…5BAC`), and revoke it (tx `9E3190E5…A0E`).
+- The grantee converted the granter's bank fUSD to ERC-20 *as the granter* with `MsgExec` (tx `5E7C1AC8…6238`).
+- The grantee's cross-VM call as the granter was **refused** while the granter had no EVM window: "did not send this
+  call itself, and its EVM authorisation window does not admit it".
+- With a window the granter opened (1 tx, fUSD only), the same `MsgExec` **ran** as the granter
+  (tx `099ED9DC…D503`, allowance 10,000 → 7) and used the window up (0 txs left).
+
+**Proposed design ("QoreX authorises, this device executes"):**
+- Each browser gets a small **Qrow device account** (secp256k1 + ML-DSA-87, created behind a passkey, never shown).
+  It registers its own quantum-safe key on chain, so everything it signs is hybrid-signed.
+- **Set up once per device (QoreX, one confirmation):** send the device account about 1 test QOR for its network fees,
+  and grant it permission for `MsgCrossVMCall` (30 days). The device key is also registered in `QrowKeys`.
+- **Each protected action (send, claim, cancel, mint, list, buy, launch):**
+  1. QoreX opens a short EVM window: only the contracts this action touches, only the transactions it needs,
+     about 10 minutes, signed with the user's ML-DSA-87 key.
+  2. The device signs the `pqcVerify` authorisation (passkey prompt) and runs the calls as the user (`MsgExec`).
+  The window bounds everything: without it, the device key can do nothing on the EVM; with it, only the approved
+  contracts and transaction count.
+- **Convert:** the convert permission isn't bounded by a window and `MsgConvertCoin` names its own receiver, so a
+  stolen device key could redirect tokens while that grant lasts. It's therefore granted only together with a
+  convert, expiring after 10 minutes, then revoked.
+- Swap, Liquidity and Staking: plain QoreX (native messages it already signs).
+- Quantum-safe throughout: windows and grants need the user's ML-DSA-87 signature; the device account's own
+  transactions are hybrid-signed; Qrow's contracts still check `pqcVerify`. A leaked classical key of either account
+  can't open a window, sign a native transaction or produce a device signature. The Q-Day Drill design is unchanged.
+- No MetaMask, no recovery phrases, nothing to copy or save.
+
+**Still unknown (owner's QoreX check, tests 4 and 5):** whether QoreX signs `MsgGrant` (authz), and whether a dApp can
+ask it to open an EVM window. If the window can't be requested by the site, users open it in QoreX (Settings →
+Security → EVM access window) before each protected action; the app shows the exact settings to use.
+
+**Rejected alternative:** MetaMask holding the same account (QoreChain's documented flow) means importing a recovery
+phrase into a second wallet, which the live-user rules forbid.

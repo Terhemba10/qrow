@@ -1,4 +1,4 @@
-import { msg, qorToEvm } from "@qorechain/sdk";
+import { evmToQor, msg, openEvmWindowMsg, qorToEvm } from "@qorechain/sdk";
 import { useState } from "react";
 import { encodeFunctionData, erc20Abi, toBytes, type Address } from "viem";
 import { ESCROW, REST } from "../config/network";
@@ -64,10 +64,38 @@ export function QorexCheckPage() {
     await attempt(`3. MsgConvertCoin (${Number(have) / 1e6} fUSD)`, () => signInQorex([toErc20Msg(me, qorToEvm(me) as Address, FUSD, have)], undefined, CONVERT_GAS));
   }
 
+  /** GenericAuthorization { msg = 1 } as protobuf bytes. */
+  const genericAuth = (typeUrl: string) => {
+    const b = new TextEncoder().encode(typeUrl);
+    return new Uint8Array([0x0a, b.length, ...b]);
+  };
+
+  async function grant() {
+    const me = await account();
+    if (!me) return;
+    // Grantee: the escrow contract's address. A contract can never sign, so this grant can never be used.
+    const grantee = evmToQor(ESCROW);
+    const typeUrl = "/qorechain.crossvm.v1.MsgCrossVMCall";
+    const g = msg.authz.grant({
+      granter: me,
+      grantee,
+      grant: { authorization: { typeUrl: "/cosmos.authz.v1beta1.GenericAuthorization", value: genericAuth(typeUrl) }, expiration: { seconds: BigInt(Math.floor(Date.now() / 1000) + 600), nanos: 0 } },
+    });
+    await attempt("4a. MsgGrant (authz, 10 minutes, inert grantee)", () => signInQorex([g], undefined, 300_000));
+    await attempt("4b. MsgRevoke", () => signInQorex([msg.authz.revoke({ granter: me, grantee, msgTypeUrl: typeUrl })], undefined, 300_000));
+  }
+
+  async function openWindow() {
+    const me = await account();
+    if (!me) return;
+    const m = openEvmWindowMsg({ sender: me, blocks: 20n, maxTxs: 1n, maxValue: 750_000n, allowedTargets: [FUSD.toLowerCase()] });
+    await attempt("5. Open EVM window (1 tx, 20 blocks, fUSD only)", () => signInQorex([m], undefined, 300_000));
+  }
+
   return (
     <section className="sheet stack" aria-labelledby="qc-title">
       <h1 id="qc-title">QoreX check (dev only)</h1>
-      <p className="muted">Three harmless tests of what QoreX will sign for Qrow. Each costs a small testnet fee and changes nothing else. Run them in order and send Claude the log.</p>
+      <p className="muted">Harmless tests of what QoreX will sign for Qrow. Each costs a small testnet fee and changes nothing else. Run them in order and send Claude the log.</p>
       <div className="row">
         <button className="btn" type="button" onClick={() => void crossVm()}>
           1. Contract call
@@ -77,6 +105,12 @@ export function QorexCheckPage() {
         </button>
         <button className="btn" type="button" onClick={() => void convert()}>
           3. Convert fUSD
+        </button>
+        <button className="btn" type="button" onClick={() => void grant()}>
+          4. Grant permission
+        </button>
+        <button className="btn" type="button" onClick={() => void openWindow()}>
+          5. Open window
         </button>
       </div>
       <pre className="cmd mono" aria-live="polite">{log.join("\n") || "Not run yet."}</pre>
