@@ -27,6 +27,7 @@ describe("mainnetCheckHash", () => {
   it("accepts only an upper-case 64-hex hash, nothing else", () => {
     const h = "4A676D5F2346E9958211407068819C534FBB87164A11273B52F09E2DF7C8E3CD";
     expect(mainnetCheckHash(`/mainnet-check/${h}`)).toBe(h);
+    expect(mainnetCheckHash(`/mainnet-check/${h}?path=x`)).toBe(h); // Vercel's rewrite adds a query
     expect(mainnetCheckHash(`/mainnet-check/${h}/x`)).toBeUndefined();
     expect(mainnetCheckHash(`/mainnet-check/${h.toLowerCase()}`)).toBeUndefined();
     expect(mainnetCheckHash("/mainnet-check/../cosmos/bank")).toBeUndefined();

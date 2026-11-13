@@ -15,7 +15,8 @@ const REST_ALLOW = [/^\/cosmos\/(bank|staking|distribution|auth|tx|base|authz)\/
 const POST_ALLOW = new Set(["/cosmos/tx/v1beta1/txs", "/cosmos/tx/v1beta1/simulate"]);
 const MAINNET_REST = "https://api.qore.host";
 const MAINNET_CHECK = /^\/mainnet-check\/([0-9A-F]{64})$/;
-export const mainnetCheckHash = (path: string) => MAINNET_CHECK.exec(path)?.[1];
+/** The hash, if `path` (query ignored: Vercel's rewrite may add one) is a mainnet existence check. */
+export const mainnetCheckHash = (path: string) => MAINNET_CHECK.exec(path.split("?")[0])?.[1];
 const REST_MAX_BYTES = 4 * 1024 * 1024;
 const POST_MAX_BYTES = 128 * 1024;
 
