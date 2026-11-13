@@ -35,14 +35,17 @@ only shows what works.
   subscribed; the help page leaves any credit requirement to your agreement with ElevenLabs.
 - A hackathon entry with prizes is arguably promotional, so the safe choices are: Starter for the month you
   generate the audio (needs the owner's OK: it's paid), or the free plan with "elevenlabs.io" in the video title.
-- **Decision (owner, 13 Nov):** Starter, subscribed by the owner for the month the audio is generated, so the
-  narration has a commercial licence. The "Voiceover: AI-generated (ElevenLabs)" disclosure stays anyway.
+- **Decision (owner, 13 Nov, replaces the earlier Starter plan):** the **free plan**. So the video is
+  **non-commercial** (no monetisation, ads or sponsorships) and its **title includes "elevenlabs.io"**:
+  *Qrow: quantum-safe payments on QoreChain testnet (voice: elevenlabs.io)*. The "Voiceover: AI-generated
+  (ElevenLabs)" disclosure stays in the end card and the description.
 - Sources: [Can I publish the content I generate?](https://elevenlabs.io/docs/help-center/legal/can-i-publish-the-content-i-generate-on-the-platform),
   [Pricing](https://elevenlabs.io/pricing).
 
 ## Transparency
 
 - End card (shot s09) shows **"Voiceover: AI-generated"**.
+- YouTube title (free-plan rule): **Qrow: quantum-safe payments on QoreChain testnet (voice: elevenlabs.io)**
 - YouTube description (draft):
 
 > Qrow: escrow payments on QoreChain testnet, every step signed with a quantum-safe key (ML-DSA-87). Connect QoreX

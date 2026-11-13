@@ -50,6 +50,12 @@ async function call(path, init = {}) {
   const res = await fetch(`${API}${path}`, { ...init, headers: { "xi-api-key": apiKey(), ...(init.headers ?? {}) } });
   if (!res.ok) {
     const body = (await res.text()).slice(0, 300);
+    const missing = res.status === 401 ? body.match(/missing the permission (\w+)/) : null;
+    if (missing) {
+      const err = new Error(`The key in video/.env is missing the "${missing[1]}" permission.`);
+      err.permission = missing[1];
+      throw err;
+    }
     if (res.status === 401) fail("ElevenLabs refused the key (401). Check ELEVENLABS_API_KEY in video/.env.");
     if (res.status === 402) fail(`This voice or setting needs a paid plan (402): ${body}`);
     fail(`ElevenLabs error ${res.status}: ${body}`);
@@ -57,9 +63,24 @@ async function call(path, init = {}) {
   return res;
 }
 
+/** Pre-made voices from ElevenLabs' current docs, for keys without the voices_read permission. */
+const KNOWN_PREMADE = [
+  { name: "Sarah", voice_id: "EXAVITQu4vr4xnSDxMaL", category: "premade", labels: { gender: "female", description: "soft, warm" } },
+  { name: "George", voice_id: "JBFqnCBsd6RMkjVDRZzb", category: "premade", labels: { gender: "male", description: "narrative" } },
+  { name: "Daniel", voice_id: "onwK4e9ZLuTAKqWW03F9", category: "premade", labels: { gender: "male", description: "authoritative" } },
+];
+
 async function premadeVoices() {
-  const j = await (await call("/voices")).json();
-  return j.voices.filter((v) => v.category === "premade");
+  try {
+    const j = await (await call("/voices")).json();
+    return j.voices.filter((v) => v.category === "premade");
+  } catch (e) {
+    if (e?.permission === "voices_read") {
+      console.log("(This key can't list voices, so the pre-made voices from ElevenLabs' docs are used: Sarah, George, Daniel.)\n");
+      return KNOWN_PREMADE;
+    }
+    throw e;
+  }
 }
 
 async function resolveVoice(nameOrId) {
@@ -104,7 +125,7 @@ async function main() {
     const names = rest.filter((r) => !r.startsWith("--"));
     const voices = await premadeVoices();
     // Default picks: warm, clear narrators with a neutral (American) accent, one female and two male.
-    const wanted = names.length ? names : ["Sarah", "Brian", "George"];
+    const wanted = names.length ? names : ["Sarah", "George", "Daniel"];
     const opening = `${script.shots[0].caption} ${script.shots[1].caption.split(". ")[0]}.`;
     const model = arg("model", "eleven_v4");
     console.log(`Opening lines (${words(opening)} words), model ${model}:\n  "${opening}"\n`);
@@ -188,4 +209,7 @@ async function main() {
   console.log("Usage: node tts.mjs voices | samples [names] | shots --voice <Name> [ids] | captions");
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main().catch((e) => fail(e instanceof Error ? e.message : String(e)));
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1])
+  main().catch((e) =>
+    fail(e?.permission ? `${e.message} In ElevenLabs: Developers, API keys, edit this key and allow it. Nothing was generated.` : e instanceof Error ? e.message : String(e)),
+  );

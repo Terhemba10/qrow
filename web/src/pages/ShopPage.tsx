@@ -10,7 +10,9 @@ import { GENESIS, GENESIS_DEPLOY_BLOCK } from "../config/contracts";
 import { CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
-import { parseTokenUri } from "../lib/portfolio";
+import { parseTokenUri, useNfts } from "../lib/portfolio";
+import { Link } from "react-router-dom";
+import { ListCard, useMarket } from "./MarketPage";
 import { short } from "../lib/address";
 
 const ZERO: Address = "0x0000000000000000000000000000000000000000";
@@ -52,6 +54,7 @@ export function ShopPage() {
   const [currency, setCurrency] = useState<"QOR" | "fUSD">("fUSD");
   const [minting, setMinting] = useState(false);
   const [mintedId, setMintedId] = useState<bigint>();
+  const [afterMint, setAfterMint] = useState<"ask" | "list" | "keep" | "listed">("ask");
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const myMints = useQuery({
     queryKey: ["mintedBy", me],
@@ -60,6 +63,13 @@ export function ShopPage() {
   });
 
   const d = col.data;
+  const nfts = useNfts(me);
+  const market = useMarket();
+  const minted = mintedId !== undefined ? nfts.data?.find((n) => n.id === mintedId) : undefined;
+  const floorFor = (currency: Address) => {
+    const rows = (market.data?.rows ?? []).filter((r) => r.currency.toLowerCase() === currency.toLowerCase());
+    return rows.length ? rows.reduce((m, r) => (r.price < m ? r.price : m), rows[0].price) : undefined;
+  };
   const soldOut = d ? d.total >= d.max : false;
   const atLimit = d && myMints.data !== undefined ? myMints.data >= d.perWallet : false;
   const price = d ? (currency === "QOR" ? d.priceQor : d.priceFusd) : 0n;
@@ -162,13 +172,60 @@ export function ShopPage() {
               confirmLabel="Mint in QoreX"
               onDone={async () => {
                 setMintedId(await client!.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "totalMinted" }));
+                setAfterMint("ask");
+                void nfts.refetch();
                 void col.refetch();
                 void myMints.refetch();
               }}
               onCancel={() => setMinting(false)}
             />
           )}
-          {mintedId !== undefined && <p className="notice notice--ok">You minted Qrow Genesis #{mintedId.toString()}. It’s in your Portfolio.</p>}
+          {mintedId !== undefined && me && (
+            <section className="stack" aria-labelledby="after-mint">
+              <h3 id="after-mint">You minted Qrow Genesis #{mintedId.toString()}</h3>
+              {afterMint === "ask" && (
+                <div className="row">
+                  <button className="btn" type="button" onClick={() => setAfterMint("list")}>
+                    List it on the NFT Market
+                  </button>
+                  <button className="btn btn--quiet" type="button" onClick={() => setAfterMint("keep")}>
+                    Keep it
+                  </button>
+                </div>
+              )}
+              {(afterMint === "list" || afterMint === "listed") && (
+                <ul className="nftgrid">
+                  <ListCard
+                    me={me}
+                    tokenId={mintedId}
+                    name={minted?.name ?? `Qrow Genesis #${mintedId.toString()}`}
+                    image={minted?.image}
+                    floorFor={floorFor}
+                    onDone={() => {
+                      setAfterMint("listed");
+                      void market.refetch();
+                      void nfts.refetch();
+                    }}
+                  />
+                </ul>
+              )}
+              {afterMint === "keep" && (
+                <p className="hint">
+                  It’s in your Portfolio. You can list it any time under “Sell yours” on the <Link to="/market">NFT Market</Link>.
+                </p>
+              )}
+              {afterMint === "listed" && (
+                <p className="hint">
+                  It’s for sale now: see it on the <Link to="/market">NFT Market</Link>, where you can also take it off sale.
+                </p>
+              )}
+            </section>
+          )}
+          {mintedId === undefined && me && (nfts.data?.some((n) => !n.listed) ?? false) && (
+            <p className="hint">
+              Own one already? List it under “Sell yours” on the <Link to="/market">NFT Market</Link>.
+            </p>
+          )}
         </section>
       </div>
     </section>

@@ -31,7 +31,7 @@ interface Row {
   image?: string;
 }
 
-function useMarket() {
+export function useMarket() {
   const client = usePublicClient({ chainId: CHAIN.id });
   return useQuery({
     queryKey: ["market"],
@@ -229,7 +229,7 @@ export function MarketPage() {
   );
 }
 
-function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: string; floorFor: (c: Address) => bigint | undefined; history?: Map<string, number>; onDone: () => void }) {
+export function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: string; floorFor: (c: Address) => bigint | undefined; history?: Map<string, number>; onDone: () => void }) {
   const id = useId();
   const [currency, setCurrency] = useState<"QOR" | "fUSD">("fUSD");
   const [price, setPrice] = useState("");
@@ -290,6 +290,8 @@ function ListCard(props: { me: Address; tokenId: bigint; name: string; image?: s
           build={(auth) => ({ abi: qrowMarketAbi, functionName: "list", args: [props.tokenId, curAddr, parsed.ok ? parsed.units : 0n, auth!.validUntil, auth!.signature] })}
           describeSimulation={(r) => `Listing #${String(r)}: ${props.name} for ${price} ${currency}. The NFT moves into the market contract.`}
           confirmLabel="List in QoreX"
+          details={[{ name: "Price", value: `${price} ${currency}` }]}
+          receipt={() => ({ kind: "NFT listing", title: `Listed ${props.name} for ${price} ${currency}`, lines: [{ name: "NFT", value: props.name }] })}
           onDone={props.onDone}
           onCancel={() => setSigning(false)}
         />
