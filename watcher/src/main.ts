@@ -146,11 +146,18 @@ async function backfill() {
   const latest = await httpClient.getBlockNumber();
   const from = BigInt(state.lastBlock) + 1n;
   if (from > latest) return;
-  const logs = await httpClient.getLogs({ address: ESCROW, events: abi.filter((x) => x.type === "event"), fromBlock: from, toBlock: latest });
-  console.log(`[backfill] ${logs.length} escrow events in blocks ${from}–${latest}`);
-  for (const l of logs) await handleLog(l as never);
-  state.lastBlock = latest.toString();
-  save();
+  // The public RPC answers eth_getLogs for at most 10,000 blocks; walk the gap in 9,000-block steps and
+  // save progress after each, so a restart resumes where it stopped.
+  let total = 0;
+  for (let start = from; start <= latest; start += 9_000n) {
+    const end = start + 8_999n < latest ? start + 8_999n : latest;
+    const logs = await httpClient.getLogs({ address: ESCROW, events: abi.filter((x) => x.type === "event"), fromBlock: start, toBlock: end });
+    for (const l of logs) await handleLog(l as never);
+    total += logs.length;
+    state.lastBlock = end.toString();
+    save();
+  }
+  console.log(`[backfill] ${total} escrow events in blocks ${from}–${latest}`);
 }
 
 /** Reverted transactions to the escrow: decode the call and the reason, tell the sender. */

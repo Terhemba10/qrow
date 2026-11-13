@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getLogsChunked } from "./logs";
 import { parseAbiItem, type Address, type Hex, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { qrowEscrowAbi } from "../abi/QrowEscrow";
@@ -38,8 +39,8 @@ const tokenFor = (addr: string): Token =>
 async function load(client: PublicClient, me: Address): Promise<{ incoming: Payment[]; outgoing: Payment[] }> {
   const latest = await client.getBlockNumber();
   const [inLogs, outLogs] = await Promise.all([
-    client.getLogs({ address: ESCROW, event: created, args: { recipient: me }, fromBlock: ESCROW_DEPLOY_BLOCK, toBlock: latest }),
-    client.getLogs({ address: ESCROW, event: created, args: { sender: me }, fromBlock: ESCROW_DEPLOY_BLOCK, toBlock: latest }),
+    getLogsChunked(ESCROW_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: ESCROW, event: created, args: { recipient: me }, fromBlock, toBlock })),
+    getLogsChunked(ESCROW_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: ESCROW, event: created, args: { sender: me }, fromBlock, toBlock })),
   ]);
   const enrich = async (logs: typeof inLogs) =>
     Promise.all(
@@ -63,7 +64,7 @@ async function load(client: PublicClient, me: Address): Promise<{ incoming: Paym
   const [incoming, outgoing, notes] = await Promise.all([
     enrich(inLogs),
     enrich(outLogs),
-    client.getLogs({ address: ESCROW, event: noteEvent, args: { recipient: me }, fromBlock: ESCROW_DEPLOY_BLOCK, toBlock: latest }),
+    getLogsChunked(ESCROW_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: ESCROW, event: noteEvent, args: { recipient: me }, fromBlock, toBlock })),
   ]);
   const byId = new Map(notes.map((n) => [n.args.id!.toString(), n.args.sealedNote!]));
   for (const p of incoming) p.sealedNote = byId.get(p.id.toString());

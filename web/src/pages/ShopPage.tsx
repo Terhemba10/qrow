@@ -1,4 +1,5 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { getLogsChunked } from "../lib/logs";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { encodeAbiParameters, keccak256, parseAbiItem, type Address } from "viem";
@@ -31,7 +32,7 @@ function useCollection() {
         c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "priceFusd" }),
         c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "fusd" }),
       ]);
-      const logs = await c.getLogs({ address: GENESIS, event: minted, fromBlock: GENESIS_DEPLOY_BLOCK, toBlock: await c.getBlockNumber() });
+      const logs = await getLogsChunked(GENESIS_DEPLOY_BLOCK, await c.getBlockNumber(), (fromBlock, toBlock) => c.getLogs({ address: GENESIS, event: minted, fromBlock, toBlock }));
       const recent = await Promise.all(
         logs
           .slice(-12)

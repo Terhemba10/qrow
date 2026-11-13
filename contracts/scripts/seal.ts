@@ -45,12 +45,14 @@ async function main() {
     const id = BigInt(args[args.indexOf("--id") + 1]);
     const escrow = (JSON.parse(readFileSync("deployments/testnet.json", "utf8")) as { QrowEscrow: Address }).QrowEscrow;
     const { publicClient: c } = evmClients(acc);
-    const logs = await c.getLogs({
-      address: escrow,
-      event: parseAbiItem("event PaymentNote(uint256 indexed id, address indexed recipient, bytes sealedNote)"),
-      args: { id },
-      fromBlock: 9_978_060n,
-    });
+    // The public RPC caps eth_getLogs at 10,000 blocks: search back from the latest block in 9,000-block windows.
+    const event = parseAbiItem("event PaymentNote(uint256 indexed id, address indexed recipient, bytes sealedNote)");
+    const deployBlock = 9_978_060n;
+    let logs: Awaited<ReturnType<typeof c.getLogs<typeof event>>> = [];
+    for (let end = await c.getBlockNumber(); end >= deployBlock && !logs.length; end -= 9_000n) {
+      const start = end - 8_999n > deployBlock ? end - 8_999n : deployBlock;
+      logs = await c.getLogs({ address: escrow, event, args: { id }, fromBlock: start, toBlock: end });
+    }
     if (!logs.length) return console.log(`payment #${id} has no note`);
     const env = logs[0].args.sealedNote!;
     console.log(`envelope: ${(env.length - 2) / 2} bytes, sha-256 ${createHash("sha256").update(toBytes(env)).digest("hex").slice(0, 16)}…`);

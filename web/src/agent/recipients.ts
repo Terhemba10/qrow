@@ -1,4 +1,5 @@
 import type { Address, PublicClient } from "viem";
+import { getLogsChunked } from "../lib/logs";
 import { parseAbiItem } from "viem";
 import { ESCROW } from "../config/network";
 
@@ -46,13 +47,7 @@ export async function pastRecipients(client: PublicClient, sender: Address): Pro
   const from = BigInt(idx.scannedTo);
   const latest = await client.getBlockNumber();
   if (latest >= from) {
-    const logs = await client.getLogs({
-      address: ESCROW,
-      event: paymentCreated,
-      args: { sender },
-      fromBlock: from,
-      toBlock: latest,
-    });
+    const logs = await getLogsChunked(from, latest, (fromBlock, toBlock) => client.getLogs({ address: ESCROW, event: paymentCreated, args: { sender }, fromBlock, toBlock }));
     for (const l of logs) {
       const r = l.args.recipient?.toLowerCase();
       if (r && !(r in idx.recipients)) idx.recipients[r] = Date.now();

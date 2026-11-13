@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getLogsChunked } from "./logs";
 import { erc20Abi, parseAbiItem, type Address, type Hex, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { evmToQor, qoreAddresses } from "@qorechain/sdk";
@@ -69,8 +70,8 @@ export function parseTokenUri(uri: string): { name: string; image?: string } {
 async function loadNfts(client: PublicClient, me: Address): Promise<OwnedNft[]> {
   const latest = await client.getBlockNumber();
   const [inLogs, listLogs] = await Promise.all([
-    client.getLogs({ address: GENESIS, event: transfer, args: { to: me }, fromBlock: GENESIS_DEPLOY_BLOCK, toBlock: latest }),
-    client.getLogs({ address: MARKET, event: listed, args: { seller: me }, fromBlock: GENESIS_DEPLOY_BLOCK, toBlock: latest }),
+    getLogsChunked(GENESIS_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: GENESIS, event: transfer, args: { to: me }, fromBlock, toBlock })),
+    getLogsChunked(GENESIS_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: MARKET, event: listed, args: { seller: me }, fromBlock, toBlock })),
   ]);
   const candidates = [...new Set([...inLogs.map((l) => l.args.tokenId!), ...listLogs.map((l) => l.args.tokenId!)])];
   const out: OwnedNft[] = [];
