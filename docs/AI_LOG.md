@@ -262,3 +262,8 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 - **Owner's brief:** in the NFT Shop, choose to mint one and list it on the NFT Market; voiceover on the ElevenLabs free plan (title includes "elevenlabs.io", non-commercial).
 - **Built with Claude (Opus 5.5) in Claude Code:** after a mint the Shop asks "List it on the NFT Market" or "Keep it"; listing reuses the Market's own list card (price, floor checks, one approval, receipt), and the Shop points owners of earlier mints to "Sell yours". `video/tts.mjs` now works with restricted keys (falls back to the pre-made voices from ElevenLabs' docs when it can't list voices; names a missing permission instead of a bare 401). Video README and title follow the free-plan rules.
 - **Checked:** typecheck, 70 tests, Shop and Market render with no console errors. Not checked: the after-mint screen with a real mint (needs a QoreX signature). The voice samples were not generated: the key in video/.env lacks the `text_to_speech` permission (no credits used).
+
+## Demo video narration (13 Nov)
+- **Owner's picks:** voice Bella (ElevenLabs free plan, pre-made voice), music "Good Days" by Aylex (Free To Use, free licence).
+- **Generated with `video/tts.mjs` (Claude-written, Opus 5.5):** one clip per shot (eleven_v4), all fitting their scenes, video 2:27; no long pauses or clipping in any clip. Captions (`out/captions.srt`, 27) come from script.json, split at the voice's real pauses and at commas for long sentences.
+- **Mixed with `video/mix.mjs`:** music about −30 LUFS, looped with a crossfade, ducked under the voice; master corrected in a second pass to −14.1 LUFS, true peak −1.2 dBTP (`out/soundtrack.wav`). Audio, music and renders stay local (git-ignored).

@@ -15,7 +15,7 @@
  * non-commercial, attribution in the YouTube description (see README).
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -93,7 +93,14 @@ function main() {
   parts.push("[bed][key]sidechaincompress=threshold=0.02:ratio=8:attack=20:release=400[ducked]");
   parts.push("[voice][ducked]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1:LRA=11[mix]");
 
-  ff([...inputs, "-filter_complex", parts.join(";"), "-map", "[mix]", "-ar", "48000", ...(mode === "preview" ? ["-c:a", "libmp3lame", "-b:a", "192k"] : ["-c:a", "pcm_s16le"]), "-t", total.toFixed(2), out]);
+  // Pass 1: the mix. Pass 2: measure it and correct the gain so the master lands on -14 LUFS, with a
+  // limiter keeping the true peak at or below -1 dBTP (one-pass loudnorm on speech lands ~1.5 LU low).
+  const pre = join(outDir, `pre-${mode}.wav`);
+  ff([...inputs, "-filter_complex", parts.join(";"), "-map", "[mix]", "-ar", "48000", "-c:a", "pcm_s16le", "-t", total.toFixed(2), pre]);
+  const measured = Number(loudness(pre).match(/^\s+I:\s+(-?[\d.]+) LUFS/m)?.[1]);
+  const gain = Number.isFinite(measured) ? (-14 - measured).toFixed(2) : "0";
+  ff(["-i", pre, "-af", `volume=${gain}dB,alimiter=limit=0.84:level=false`, "-ar", "48000", ...(mode === "preview" ? ["-c:a", "libmp3lame", "-b:a", "192k"] : ["-c:a", "pcm_s16le"]), out]);
+  rmSync(pre, { force: true });
   const report = loudness(out)
     .split(/\r?\n/)
     .filter((l) => /^\s+(I:|Peak:)/.test(l))

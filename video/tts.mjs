@@ -12,7 +12,7 @@
  * Pronunciation: the voice gets each caption with script.json's phonetic spellings (Qrow -> Crow, ...);
  * captions use the real spelling, so they match the words exactly.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -106,6 +106,14 @@ function duration(file) {
 }
 
 const words = (t) => t.trim().split(/\s+/).length;
+
+/** Mid-points of the pauses in a clip (silences of 0.18 s or more), in seconds. */
+function pausesIn(file) {
+  const r = spawnSync("ffmpeg", ["-hide_banner", "-nostats", "-i", file, "-af", "silencedetect=noise=-35dB:d=0.18", "-f", "null", "-"], { encoding: "utf8" }).stderr;
+  const starts = [...r.matchAll(/silence_start: ([\d.]+)/g)].map((m) => Number(m[1]));
+  const ends = [...r.matchAll(/silence_end: ([\d.]+)/g)].map((m) => Number(m[1]));
+  return starts.map((s, i) => (ends[i] !== undefined ? (s + ends[i]) / 2 : s));
+}
 const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : fallback;
@@ -189,15 +197,32 @@ async function main() {
     for (const s of script.shots) {
       const dur = timing[s.id]?.seconds;
       if (!dur) fail(`No clip for ${s.id} yet.`);
-      // One caption per sentence, timed by its share of the clip's characters.
+      // One caption per sentence. Each split is first estimated from the sentence's share of the
+      // characters, then snapped to the nearest real pause in the clip (where the voice breathes).
       const sentences = s.caption.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g).map((x) => x.trim());
       const total = sentences.reduce((a, x) => a + x.length, 0);
-      let start = t + LEAD;
-      for (const sen of sentences) {
-        const len = (sen.length / total) * dur;
-        out.push(`${n++}\n${ts(start)} --> ${ts(start + len)}\n${sen}\n`);
-        start += len;
+      const pauses = pausesIn(join(HERE, "audio", "shots", `${s.id}.mp3`));
+      const bounds = [0];
+      let acc = 0;
+      for (const sen of sentences.slice(0, -1)) {
+        acc += (sen.length / total) * dur;
+        const near = pauses.filter((p) => p > bounds[bounds.length - 1] + 0.5 && p < dur - 0.5).sort((a, b) => Math.abs(a - acc) - Math.abs(b - acc))[0];
+        bounds.push(near !== undefined && Math.abs(near - acc) < 1.5 ? near : acc);
       }
+      bounds.push(dur);
+      sentences.forEach((sen, i) => {
+        // Captions longer than two lines (~84 characters) split at the comma nearest the middle.
+        const commas = [...sen.matchAll(/, /g)].map((m) => m.index + 1);
+        const cut = sen.length > 84 && commas.length ? commas.sort((a, b) => Math.abs(a - sen.length / 2) - Math.abs(b - sen.length / 2))[0] : -1;
+        const pieces = cut > 0 ? [sen.slice(0, cut).trim(), sen.slice(cut).trim()] : [sen];
+        let at = bounds[i];
+        const span = bounds[i + 1] - bounds[i];
+        for (const p of pieces) {
+          const len = (p.length / sen.length) * span;
+          out.push(`${n++}\n${ts(t + LEAD + at)} --> ${ts(t + LEAD + at + len)}\n${p}\n`);
+          at += len;
+        }
+      });
       t += Math.max(s.seconds, dur + 0.6);
     }
     mkdirSync(join(HERE, "out"), { recursive: true });
