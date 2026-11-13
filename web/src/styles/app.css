@@ -272,11 +272,10 @@ textarea.input { min-height: 72px; padding: var(--space-sm); resize: vertical; }
 .headlines .hint { margin: var(--space-xs) 0 0; }
 
 /* Nine tabs: below wide desktop they get their own row under the brand bar. */
-@media (max-width: 1180px) {
-  .topbar__inner { flex-wrap: wrap; height: auto; min-height: 64px; row-gap: 0; padding-top: var(--space-xs); }
-  .topbar__inner .brand { margin-inline-end: auto; }
-  .nav { order: 3; flex-basis: 100%; margin-inline-end: 0; }
-}
+/* Thirteen tabs: at every width they get their own row under the brand bar, so none is ever cut off. */
+.topbar__inner { flex-wrap: wrap; height: auto; min-height: 64px; row-gap: 0; padding-top: var(--space-xs); }
+.topbar__inner .brand { margin-inline-end: auto; }
+.nav { order: 3; flex-basis: 100%; margin-inline-end: 0; }
 
 /* Launch */
 .coinlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); }

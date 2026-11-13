@@ -42,3 +42,5 @@ watcher/data/
 # Demo video: generated audio and renders stay local (the script is in git)
 video/audio/
 video/out/
+video/.venv/
+video/raw/
