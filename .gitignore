@@ -44,3 +44,5 @@ video/audio/
 video/out/
 video/.venv/
 video/raw/
+video/hf/renders/
+video/hf/node_modules/
