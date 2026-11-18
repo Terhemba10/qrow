@@ -56,7 +56,8 @@ export function PqActionPanel(props: {
   pq?: { actionName: string; paramsHash: Hex };
   /** An ERC-20 the contract will pull: approved for exactly this amount first, in the same flow. */
   approve?: { token: Address; amount: bigint; label: string };
-  build: (auth?: { validUntil: bigint; signature: Hex }) => PqCall;
+  /** May be async: e.g. Trade fetches a fresh signed price report at the moment of sending. */
+  build: (auth?: { validUntil: bigint; signature: Hex }) => PqCall | Promise<PqCall>;
   /** Kept for callers; the simulation now runs silently just before sending. */
   describeSimulation?: (result: unknown) => string;
   confirmLabel: string;
@@ -88,7 +89,7 @@ export function PqActionPanel(props: {
               const s = await signPqAction(client, key, props.contract, props.pq.actionName, props.sender, props.pq.paramsHash);
               auth = { validUntil: s.validUntil, signature: sign(s.signature) };
             }
-            const call = props.build(auth);
+            const call = await props.build(auth);
             if (call.value) throw new XvmError("QOR can’t be attached yet; use fUSD for this. QOR payments come with the next contract update.");
             return { to: props.contract, data: encodeFunctionData({ abi: call.abi, functionName: call.functionName, args: call.args }) };
           },

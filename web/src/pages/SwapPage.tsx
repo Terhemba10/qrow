@@ -52,7 +52,8 @@ function useDebounced<T>(value: T, ms: number): T {
  * Swap tab: QOR, fUSD, fETH and fBTC on QoreChain's native AMM, signed in QoreX. Quotes and limits come
  * from the chain; Qrow checks everything the chain would refuse before QoreX is asked.
  */
-export function SwapPage() {
+/** `embedded`: inside the Trade tab (no page heading of its own). */
+export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
   const ids = { amt: useId(), from: useId(), to: useId() };
   const { address, chainId, isConnected } = useAccount();
   const { connect: openConnectModal } = useConnectQorex();
@@ -162,11 +163,17 @@ export function SwapPage() {
   }
 
   return (
-    <section className="page" aria-labelledby="swap-title">
-      <div className="sheet__head">
-        <h1 id="swap-title">Swap</h1>
-        <p className="muted">Swap test tokens on QoreChain’s built-in exchange, signed in QoreX. Test tokens have no real value.</p>
-      </div>
+    <section className={embedded ? "stack" : "page"} aria-labelledby="swap-title">
+      {embedded ? (
+        <p className="muted" id="swap-title">
+          Swap test QOR for fUSD (the testnet dollar, used as test USDT for perps and predictions) on QoreChain’s built-in exchange, signed in QoreX.
+        </p>
+      ) : (
+        <div className="sheet__head">
+          <h1 id="swap-title">Swap</h1>
+          <p className="muted">Swap test tokens on QoreChain’s built-in exchange, signed in QoreX. Test tokens have no real value.</p>
+        </div>
+      )}
 
       <div className="split">
         <section className="panel stack" aria-labelledby="swap-form">

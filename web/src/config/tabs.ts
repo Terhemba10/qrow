@@ -3,11 +3,12 @@
  * normal QoreX user's Qrow key; until then it shows "Coming soon" (never hidden, never broken).
  * Override at build time with VITE_LIVE_TABS=send,receive,... The dev server shows every tab.
  */
-export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch" | "predict" | "admin" | "create";
+export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch" | "predict" | "admin" | "create" | "trade";
 
 export const TABS: { id: TabId; path: string; label: string; blurb: string }[] = [
   { id: "faucet", path: "/faucet", label: "Faucet", blurb: "Get free test QOR, fUSD, fETH and fBTC from QoreChain’s official faucet." },
   { id: "swap", path: "/swap", label: "Swap", blurb: "Swap QOR, fUSD, fETH and fBTC on QoreChain’s built-in exchange, signed in QoreX." },
+  { id: "trade", path: "/trade", label: "Trade", blurb: "Swap QOR for test dollars and trade perps up to 100x on live prices." },
   { id: "send", path: "/send", label: "Send", blurb: "Send test tokens to anyone. They wait in escrow until claimed, or come back to you after 7 days." },
   { id: "receive", path: "/receive", label: "Receive", blurb: "Claim payments sent to you, and make a payment request link or QR code." },
   { id: "shop", path: "/shop", label: "NFT Shop", blurb: "Mint a Qrow Genesis NFT, drawn on chain, with test tokens." },

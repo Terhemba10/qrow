@@ -68,7 +68,7 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
   - `web/src/pages/HubPage.tsx` + `web/src/styles/hub.css`: CSS 3D cards (no new dependency): tilt on hover or
     touch, float, click to enter; flat grid under `prefers-reduced-motion` or on low-end devices
     (`deviceMemory`/`hardwareConcurrency`). Becomes `/`; the nav bar stays.
-- [ ] **6. Trade tab (swap + perps)**
+- [x] **6. Trade tab (swap + perps)**: QrowPerps + 8 tests (incl. 1,000-run solvency fuzz); `/api/price` live prices, candles and signed reports + 4 tests; Trade tab with 6 pairs, chart (lightweight-charts 4.2.3, Apache-2.0), long/short 1–100x, liquidation price, PnL, open/close, history; Swap QOR ⇄ fUSD embedded. Checked in dev: live ETH 1,762.38, QOR 0.06359 from the testnet pool. Deploy pending (same as task 1).
   - Swap: reuse the native AMM (`web/src/lib/swap.ts`) for QOR ⇄ fUSD.
   - Contract `contracts/src/QrowPerps.sol` (+ test): fUSD margin, long/short, 1–100x, signed price reports,
     liquidation price, PnL, close, liquidate, a small insurance pool funded at deploy.

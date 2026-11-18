@@ -1,6 +1,6 @@
 // Writes web/src/abi/<Name>.ts from contracts/out after `forge build`.
 import { readFileSync, writeFileSync } from "node:fs";
-const names = ["QrowKeys", "QrowEscrow", "QrowGenesis", "QrowMarket", "QrowCoinFactory", "QrowCoin", "QrowPredict", "QrowEditions"];
+const names = ["QrowKeys", "QrowEscrow", "QrowGenesis", "QrowMarket", "QrowCoinFactory", "QrowCoin", "QrowPredict", "QrowEditions", "QrowPerps"];
 for (const n of names) {
   const { abi } = JSON.parse(readFileSync(`out/${n}.sol/${n}.json`, "utf8"));
   const id = n[0].toLowerCase() + n.slice(1) + "Abi";
