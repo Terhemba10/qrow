@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { explainTxError, TxReviewSheet, txToast } from "../ds";
+import { EmptyState, TxReviewSheet, explainTxError, txToast } from "../ds";
 import { useAccount } from "wagmi";
 import { evmToQor } from "@qorechain/sdk";
 import { ReceiptCard } from "../components/ReceiptCard";
@@ -268,7 +268,7 @@ export function StakingPage() {
           )}
 
           <h3>Locks</h3>
-          {pos && pos.locks.filter((l) => !l.released).length === 0 && <p className="muted">No active locks.</p>}
+          {pos && pos.locks.filter((l) => !l.released).length === 0 && <EmptyState title="No locked stake" text="Lock for 3, 6 or 12 months to earn a bonus on top of staking rewards." />}
           {pos?.locks
             .filter((l) => !l.released)
             .map((l) => (

@@ -1,4 +1,5 @@
 import { createChart, type IChartApi, type ISeriesApi, type UTCTimestamp } from "lightweight-charts";
+import { EmptyState, Skeleton } from "../ds";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { encodeAbiParameters, keccak256, type Address } from "viem";
@@ -373,11 +374,11 @@ export function TradePage() {
             <>
               <section className="stack" aria-labelledby="open-title">
                 <h2 id="open-title">Open positions</h2>
-                {open.length === 0 ? <p className="muted">No open positions.</p> : <ul className="perplist">{open.map((p) => <PositionRow key={p.id.toString()} me={me} p={p} price={prices.data?.prices[p.pair]} />)}</ul>}
+                {positions.isPending ? <Skeleton lines={3} /> : open.length === 0 ? <EmptyState title="No open positions" text="Open a long or short above. Your positions and their profit or loss show here." /> : <ul className="perplist">{open.map((p) => <PositionRow key={p.id.toString()} me={me} p={p} price={prices.data?.prices[p.pair]} />)}</ul>}
               </section>
               <section className="stack" aria-labelledby="hist-title">
                 <h2 id="hist-title">Position history</h2>
-                {history.length === 0 ? <p className="muted">Closed positions appear here.</p> : <ul className="perplist">{history.map((p) => <PositionRow key={p.id.toString()} me={me} p={p} />)}</ul>}
+                {positions.isPending ? <Skeleton lines={2} /> : history.length === 0 ? <EmptyState title="No closed positions yet" text="When you close a position, or a take profit or stop loss runs, it shows here with its result." /> : <ul className="perplist">{history.map((p) => <PositionRow key={p.id.toString()} me={me} p={p} />)}</ul>}
               </section>
             </>
           )}

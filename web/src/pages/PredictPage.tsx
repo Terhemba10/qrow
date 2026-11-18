@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EmptyState } from "../ds";
 import { Link } from "react-router-dom";
 import { encodeAbiParameters, keccak256, type Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
@@ -247,7 +248,8 @@ export function PredictPage() {
       {PREDICT && (
         <>
           {markets.isPending && <span className="skeleton" style={{ width: "100%", height: 160 }} />}
-          {markets.isError && <p className="field-error">Couldn’t load the markets from the testnet.</p>}
+          {markets.isError && <p className="field-error">Couldn’t load the markets from the testnet. They’ll appear when it answers.</p>}
+          {markets.data && rows.length === 0 && <EmptyState title="No markets yet" text="The first markets open soon. Admins create them from the Admin tab." />}
           {rows.length > 0 && (
             <div className="seg" role="radiogroup" aria-label="Category">
               {cats.map((c) => (

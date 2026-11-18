@@ -1,5 +1,5 @@
 import { evmToQor } from "@qorechain/sdk";
-import { Button, EmptyState } from "../ds";
+import { Button, EmptyState, Skeleton } from "../ds";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -145,7 +145,8 @@ export function HistoryPage() {
       </div>
 
       {payments.isPending && rows.length === 0 && <span className="skeleton" style={{ width: "80%" }} />}
-      {rows.length === 0 && !payments.isPending && <p className="muted">No transactions yet. Each one you make appears here with its hash.</p>}
+      {payments.isPending && rows.length === 0 && <Skeleton lines={4} />}
+      {rows.length === 0 && !payments.isPending && <EmptyState title="No transactions yet" text="Each one you make shows up here with its own hash, so you can check it any time." action={<Button to="/trade" variant="cyan">Make your first trade</Button>} />}
       {shown.length > 0 && (
         <div className="table-wrap" tabIndex={0}>
           <table className="table">

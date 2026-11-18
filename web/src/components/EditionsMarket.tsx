@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button, EmptyState } from "../ds";
 import { Link } from "react-router-dom";
 import { encodeAbiParameters, keccak256, type Address } from "viem";
 import { qrowEditionsAbi } from "../abi/QrowEditions";
@@ -67,7 +68,7 @@ export function EditionsMarket({ me }: { me?: Address }) {
         </Link>
       </div>
       {q.isPending && <span className="skeleton" style={{ width: "100%", height: 160 }} />}
-      {q.data?.length === 0 && <p className="muted">No community NFTs listed yet.</p>}
+      {q.data?.length === 0 && <EmptyState title="No community NFTs for sale" text="Create your own and list it at your price." action={<Button to="/create">Create an NFT</Button>} />}
       <ul className="nftgrid">
         {(q.data ?? []).map((l) => (
           <li key={l.id.toString()} className="nftcard">

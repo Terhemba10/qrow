@@ -1,4 +1,5 @@
 import { AGENT } from "../config/network";
+import { EmptyState } from "../ds";
 import { useQuery } from "@tanstack/react-query";
 import { IconAlert } from "../components/Icons";
 
@@ -142,7 +143,7 @@ export function NewsPage() {
         <h2 id="hl-title">Headlines</h2>
         {news.isPending && <span className="skeleton" style={{ width: "80%", height: 160 }} />}
         {news.isError && <p className="muted">Headlines need the Qrow agent server running.</p>}
-        {news.data && news.data.data.length === 0 && <p className="muted">No headlines right now. The news feeds didn’t respond.</p>}
+        {news.data && news.data.data.length === 0 && <EmptyState title="No headlines right now" text="The news feeds didn’t answer. Prices above are still live; headlines come back on their own." />}
         {news.data && news.data.data.length > 0 && (
           <ul className="headlines">
             {news.data.data.map((h) => (

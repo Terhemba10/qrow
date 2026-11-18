@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Button, EmptyState } from "../ds";
 import { useHeldEditions } from "../lib/editions";
 import { EditionsMarket } from "../components/EditionsMarket";
 import { useConnectQorex } from "../components/QorexConnect";
@@ -183,7 +184,7 @@ export function MarketPage() {
         <h2 id="listings-title">Qrow Genesis listings</h2>
         {market.isPending && <span className="skeleton" style={{ width: "100%", height: 180 }} />}
         {market.isError && <p className="field-error">Couldn’t load the market from the testnet.</p>}
-        {market.data && market.data.rows.length === 0 && <p className="muted">No Genesis NFTs listed right now.</p>}
+        {market.data && market.data.rows.length === 0 && <EmptyState title="No Genesis NFTs for sale" text="Own one? List it below at your own price." action={<Button to="/shop" variant="light">Mint a Genesis NFT</Button>} />}
         {market.data && market.data.rows.length > 0 && (
           <ul className="nftgrid">
             {market.data.rows.map((r) => (

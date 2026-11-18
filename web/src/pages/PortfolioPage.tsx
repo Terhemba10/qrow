@@ -132,7 +132,7 @@ export function PortfolioPage() {
       <section aria-labelledby="nft-title" className="stack">
         <h2 id="nft-title">Qrow Genesis NFTs</h2>
         {nfts.isPending && <span className="skeleton" style={{ width: 160, height: 160 }} />}
-        {nfts.data && nfts.data.length === 0 && <p className="muted">You don’t own any Genesis NFTs yet. Mint one in the NFT Shop.</p>}
+        {nfts.data && nfts.data.length === 0 && <EmptyState title="No Genesis NFTs yet" text="Mint one for 1 fUSD: generative art drawn on chain." action={<Button to="/shop" variant="light">Mint a Genesis NFT</Button>} />}
         {nfts.data && nfts.data.length > 0 && (
           <ul className="nftgrid">
             {nfts.data.map((n) => (
@@ -162,7 +162,7 @@ export function PortfolioPage() {
           </Link>
         </div>
         {editions.isPending && EDITIONS && <span className="skeleton" style={{ width: 160, height: 160 }} />}
-        {(!EDITIONS || editions.data?.length === 0) && <p className="muted">None yet. Create your own in the NFT Shop, or buy one on the NFT Market.</p>}
+        {(!EDITIONS || editions.data?.length === 0) && <EmptyState title="No NFTs of your own yet" text="Upload your art and mint up to 10,000 copies, or buy one on the NFT Market." action={<Button to="/create">Create an NFT</Button>} />}
         {editions.data && editions.data.length > 0 && (
           <ul className="nftgrid">
             {editions.data.map((n) => (

@@ -1,4 +1,5 @@
 import { useConnectQorex } from "../components/QorexConnect";
+import { EmptyState } from "../ds";
 import { getLogsChunked } from "../lib/logs";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -95,7 +96,7 @@ export function ShopPage() {
           </div>
           {col.isPending && <span className="skeleton" style={{ width: "100%", height: 180 }} />}
           {col.isError && <p className="field-error">Couldn’t load the collection from the testnet.</p>}
-          {d && d.recent.length === 0 && <p className="muted">Nothing minted yet. Yours could be #1.</p>}
+          {d && d.recent.length === 0 && <EmptyState title="Nothing minted yet" text="Yours could be Genesis #1." />}
           {d && d.recent.length > 0 && (
             <ul className="nftgrid">
               {d.recent.map((n) => (

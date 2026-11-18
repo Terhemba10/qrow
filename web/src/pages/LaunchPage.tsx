@@ -1,4 +1,5 @@
 import { useConnectQorex } from "../components/QorexConnect";
+import { EmptyState } from "../ds";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { encodeAbiParameters, keccak256, toBytes, type Address } from "viem";
@@ -88,7 +89,7 @@ export function LaunchPage() {
           </div>
           {coins.isPending && <span className="skeleton" style={{ width: "100%", height: 160 }} />}
           {coins.isError && <p className="field-error">Couldn’t read the launched coins from the testnet.</p>}
-          {coins.data && coins.data.length === 0 && <p className="muted">No coins yet. The first one could be yours.</p>}
+          {coins.data && coins.data.length === 0 && <EmptyState title="No coins launched yet" text="Launch the first testnet memecoin. The anti-scam rules are built in." />}
           {coins.data && coins.data.length > 0 && (
             <ul className="coinlist">
               {coins.data.map((c) => (
