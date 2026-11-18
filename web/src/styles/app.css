@@ -388,3 +388,7 @@ button.pmcard__btn:hover { background: color-mix(in srgb, var(--surface, #121a30
 .pmside__no { background: #ff8a4c22; color: #ff9d66; }
 .pmside__yes.is-on { border-color: #33d69f; background: #33d69f; color: #04130d; }
 .pmside__no.is-on { border-color: #ff8a4c; background: #ff8a4c; color: #1a0900; }
+
+/* ---------------------------------------------------------------- Create NFT / NFT detail */
+.nftpreview { width: 100%; max-width: 360px; aspect-ratio: 1; object-fit: cover; border-radius: 16px; background: var(--surface-2, #1a2340); }
+.nftpreview--empty { display: grid; place-items: center; color: var(--muted, #8b95b5); border: 2px dashed var(--border, #2a3350); }

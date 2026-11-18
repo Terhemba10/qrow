@@ -1,3 +1,4 @@
+import { EditionsMarket } from "../components/EditionsMarket";
 import { useConnectQorex } from "../components/QorexConnect";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
@@ -225,6 +226,7 @@ export function MarketPage() {
           )}
         </section>
       )}
+      <EditionsMarket me={me} />
     </section>
   );
 }

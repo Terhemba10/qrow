@@ -54,12 +54,12 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
   - `web/src/wagmi.ts`: a QoreX connector built on that resolver (replaces the RainbowKit wallet's narrower lookup).
   - `web/src/components/QorexConnect.tsx`: "Open in QoreX" on phones without QoreX.
   - Results table below.
-- [ ] **3. Create your own NFT (editions)**
+- [x] **3. Create your own NFT (editions)**: contract + 7 tests, IPFS route + 5 tests, Create NFT tab, Portfolio section. Deploy pending (same as task 1). No extra mint fee: the network fee is paid in test QOR.
   - Contract `contracts/src/QrowEditions.sol` (ERC-1155, + test): anyone creates an edition (URI + supply), the
     creator receives all copies, a small mint fee in fUSD.
   - `web/api/ipfs.ts` + `web/server/ipfs.ts` (Pinata upload, size and type checks, rate limit).
   - `web/src/pages/CreateNftPage.tsx`; Portfolio lists editions (`web/src/lib/portfolio.ts`, `PortfolioPage.tsx`).
-- [ ] **4. NFT actions: send + list**
+- [x] **4. NFT actions: send + list**: `/nft/genesis/:id` and `/nft/edition/:id` (Send with the first 4 / last 4 check and a tick box, List, Delist); Genesis uses its existing `pqTransfer` and QrowMarket; community NFTs are listed on the NFT Market tab.
   - `QrowEditions` gains PQ-signed `send`, and a built-in listing book (`list`, `buy`, `cancel`, fUSD).
     Genesis NFTs keep using `QrowMarket` (list and cancel already exist); Genesis send goes through the
     existing PQ transfer if present, otherwise it's listed as a known issue.

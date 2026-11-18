@@ -3,7 +3,7 @@
  * normal QoreX user's Qrow key; until then it shows "Coming soon" (never hidden, never broken).
  * Override at build time with VITE_LIVE_TABS=send,receive,... The dev server shows every tab.
  */
-export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch" | "predict" | "admin";
+export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch" | "predict" | "admin" | "create";
 
 export const TABS: { id: TabId; path: string; label: string; blurb: string }[] = [
   { id: "faucet", path: "/faucet", label: "Faucet", blurb: "Get free test QOR, fUSD, fETH and fBTC from QoreChain’s official faucet." },
@@ -11,6 +11,7 @@ export const TABS: { id: TabId; path: string; label: string; blurb: string }[] =
   { id: "send", path: "/send", label: "Send", blurb: "Send test tokens to anyone. They wait in escrow until claimed, or come back to you after 7 days." },
   { id: "receive", path: "/receive", label: "Receive", blurb: "Claim payments sent to you, and make a payment request link or QR code." },
   { id: "shop", path: "/shop", label: "NFT Shop", blurb: "Mint a Qrow Genesis NFT, drawn on chain, with test tokens." },
+  { id: "create", path: "/create", label: "Create NFT", blurb: "Upload your own art and mint it as an edition of up to 10,000 copies." },
   { id: "market", path: "/market", label: "NFT Market", blurb: "List your NFT at your own price, see the floor, buy or cancel." },
   { id: "portfolio", path: "/portfolio", label: "Portfolio", blurb: "Your balances, NFTs and payments in one place, with CSV export." },
   { id: "staking", path: "/staking", label: "Staking", blurb: "Stake test QOR with a validator, lock it for a bonus, preview an early unlock." },

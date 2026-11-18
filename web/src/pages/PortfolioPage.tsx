@@ -13,6 +13,8 @@ import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { usePayments } from "../lib/payments";
 import { useCoins } from "../lib/coins";
+import { useHeldEditions } from "../lib/editions";
+import { EDITIONS } from "../config/contracts";
 import { downloadCsv, useBalances, useNfts, type ActivityRow } from "../lib/portfolio";
 
 const STATUS_WORD: Record<string, string> = {
@@ -37,6 +39,7 @@ export function PortfolioPage() {
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const balances = useBalances(me);
   const nfts = useNfts(me);
+  const editions = useHeldEditions(me);
   const payments = usePayments(me);
   const coins = useCoins(me);
   const referrals = useQuery({
@@ -206,12 +209,42 @@ export function PortfolioPage() {
               <li key={n.id.toString()} className="nftcard">
                 {n.image ? <img src={n.image} alt={`${n.name}, generative loops artwork`} width={160} height={160} /> : <span className="skeleton" style={{ width: 160, height: 160 }} />}
                 <p className="nftcard__name">{n.name}</p>
+                <Link className="btn btn--quiet" to={`/nft/genesis/${n.id}`}>
+                  Send or list
+                </Link>
                 {n.listed && (
                   <p className="hint fig">
                     Listed at {displayAmount(n.listed.price, n.listed.currency === "0x0000000000000000000000000000000000000000" ? 18 : tokenBySymbol("fUSD")!.decimals)}{" "}
                     {n.listed.currency === "0x0000000000000000000000000000000000000000" ? "QOR" : "fUSD"}
                   </p>
                 )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="ed-title" className="stack">
+        <div className="section-head">
+          <h2 id="ed-title">NFTs you created or collected</h2>
+          <Link className="btn btn--quiet" to="/create">
+            Create NFT
+          </Link>
+        </div>
+        {editions.isPending && EDITIONS && <span className="skeleton" style={{ width: 160, height: 160 }} />}
+        {(!EDITIONS || editions.data?.length === 0) && <p className="muted">None yet. Create your own in the NFT Shop, or buy one on the NFT Market.</p>}
+        {editions.data && editions.data.length > 0 && (
+          <ul className="nftgrid">
+            {editions.data.map((n) => (
+              <li key={n.id.toString()} className="nftcard">
+                {n.image ? <img src={n.image} alt={n.name} width={160} height={160} loading="lazy" /> : <span className="skeleton" style={{ width: 160, height: 160 }} />}
+                <p className="nftcard__name">{n.name}</p>
+                <p className="hint fig">
+                  {n.balance.toString()} of {n.supply.toString()}
+                </p>
+                <Link className="btn btn--quiet" to={`/nft/edition/${n.id}`}>
+                  Send or list
+                </Link>
               </li>
             ))}
           </ul>

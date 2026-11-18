@@ -24,6 +24,8 @@ import { SwapPage } from "./pages/SwapPage";
 import { VerifyPage } from "./pages/VerifyPage";
 import { PredictPage } from "./pages/PredictPage";
 import { AdminPage } from "./pages/AdminPage";
+import { CreateNftPage } from "./pages/CreateNftPage";
+import { NftDetailPage } from "./pages/NftDetailPage";
 
 captureReferral(window.location.search);
 
@@ -82,6 +84,8 @@ export function App() {
           <Route path="/staking" element={live("staking", <StakingPage />)} />
           <Route path="/news" element={live("news", <NewsPage />)} />
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
+          <Route path="/create" element={live("create", <CreateNftPage />)} />
+          <Route path="/nft/:kind/:id" element={live("portfolio", <NftDetailPage />)} />
           <Route path="/predict" element={live("predict", <PredictPage />)} />
           <Route path="/admin" element={live("admin", <AdminPage />)} />
           <Route path="/verify" element={<VerifyPage />} />
