@@ -27,13 +27,15 @@ export async function readJson(req: IncomingMessage, max: number): Promise<{ ok:
 }
 
 /**
- * Same-site POSTs only: a browser on another site can't spend Qrow's API keys. Requests without an Origin
- * (curl, server-to-server) are allowed through to the rate limit; QROW_ALLOWED_ORIGINS adds origins.
+ * Same-site browser POSTs only, so another site, or a script outside a browser, can't spend Qrow's API keys
+ * (Pinata, Anthropic, Replicate). Browsers always send Origin on POST; a request without one is refused.
+ * QROW_ALLOWED_ORIGINS adds origins (comma-separated), e.g. a preview deployment.
  */
 export function originAllowed(req: IncomingMessage): boolean {
   const origin = req.headers.origin;
-  if (!origin) return true;
+  if (!origin) return process.env.QROW_ALLOW_NO_ORIGIN === "1"; // local scripts only, never set in production
   const host = req.headers["x-forwarded-host"] ?? req.headers.host;
-  const allowed = new Set([`https://${host}`, `http://${host}`, ...(process.env.QROW_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)]);
+  const allowed = new Set([`https://${host}`, ...(process.env.NODE_ENV === "production" ? [] : [`http://${host}`]), ...(process.env.QROW_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)]);
+  if (req.headers["sec-fetch-site"] && !["same-origin", "same-site"].includes(String(req.headers["sec-fetch-site"])) && !allowed.has(origin)) return false;
   return allowed.has(origin);
 }

@@ -21,7 +21,7 @@ import { createDeviceUnlocked, deviceInfo, unlockDevice, wipe } from "./device";
 import { deviceBroadcast, deviceQor } from "./native";
 import { qorexDownload } from "./qorex";
 import type { PqKey } from "./pq";
-import { qorexAccount, qorexAvailable, registry, signInQorex } from "./staking";
+import { forgetQorexAccount, qorexAccount, qorexAvailable, registry, signInQorex } from "./staking";
 import { PER_CALL_UQOR, readWindow, runAsUser, waitForNativeTx, WINDOW_BLOCKS, windowCovers, XvmError, type Call } from "./xvm";
 
 /** One blocker, shown alone, with one fix. */
@@ -85,12 +85,16 @@ const fmt = (units: bigint, decimals: number) => {
 export async function preflight(client: PublicClient, plan: ActionPlan): Promise<Preflight> {
   const base: Preflight = { device: { s: "none" }, firstTime: false, needsGrant: false, needsTopUp: false, needsApproval: false, convert: 0n, calls: 1, windowOpen: false };
   if (!qorexAvailable()) return { ...base, blocker: qorexBlocker("Contract actions are approved in QoreX.") };
-  const qorexQor = await qorexAccount().catch(() => undefined);
   const userQor = evmToQor(plan.user);
+  // All independent reads at once (the review screen used to wait for each in turn).
+  const needsKey = plan.needsKey !== false;
+  let [qorexQor, device, local, userQorBal] = await Promise.all([qorexAccount().catch(() => undefined), deviceState(client, plan.user), deviceInfo(plan.user), bankOf(userQor, "uqor")]);
+  if (qorexQor && qorexQor !== userQor) {
+    forgetQorexAccount(); // the session's remembered account may be stale: ask QoreX once more
+    qorexQor = await qorexAccount().catch(() => undefined);
+  }
   if (qorexQor !== userQor) return { ...base, blocker: { id: "account", text: "QoreX is on a different account from the one Qrow shows. Choose the same account in QoreX." } };
 
-  const needsKey = plan.needsKey !== false;
-  const [device, local, userQorBal] = await Promise.all([deviceState(client, plan.user), deviceInfo(plan.user), bankOf(userQor, "uqor")]);
   if (needsKey && device.s === "pending") return { ...base, device, blocker: { id: "pending", text: `This device is in its 3-day safety wait (ends ${new Date(device.dueAt * 1000).toLocaleString()}). Then it works with one approval.` } };
   if (needsKey && device.s === "otherDevices")
     return { ...base, device, blocker: { id: "device", text: "This account already has a Qrow key in another browser or device. Use that one, or add this browser: for your safety it can act after 3 days, and your other device can cancel it.", fix: { label: "Add this browser", to: "/help" } } };

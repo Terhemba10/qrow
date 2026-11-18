@@ -130,12 +130,53 @@ export function qorexAvailable(): boolean {
   return qorexCanSign();
 }
 
+/**
+ * The QoreX account, asked for ONCE per browser session. `enable()` is QoreX's "connect this site" request; calling
+ * it on every check made QoreX ask to connect again each time the user came back from a QoreX popup (the action
+ * screen re-checks on focus). Now: one connect, then the account is kept for the session (sessionStorage, so a
+ * reload doesn't ask again) and re-read only with `getKey`, which doesn't prompt once the site is connected.
+ * `forget()` on disconnect or account change.
+ */
+const SESSION_KEY = "qrow.qorex.account";
+let cached: string | undefined;
+let pending: Promise<string | undefined> | undefined;
+try {
+  cached = sessionStorage.getItem(SESSION_KEY) ?? undefined;
+} catch {
+  /* storage blocked: kept in memory only */
+}
+const remember = (a: string | undefined) => {
+  cached = a;
+  try {
+    if (a) sessionStorage.setItem(SESSION_KEY, a);
+    else sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* fine */
+  }
+};
+export const forgetQorexAccount = () => remember(undefined);
+
 export async function qorexAccount(): Promise<string | undefined> {
+  if (cached) return cached;
+  if (pending) return pending; // many checks at once share one QoreX request
   const n = getQorexNative();
   if (!n) return undefined;
-  await n.enable(NATIVE_CHAIN_ID);
-  const k = (await n.getKey(NATIVE_CHAIN_ID)) as { bech32Address?: string };
-  return k.bech32Address;
+  pending = (async () => {
+    try {
+      let k: { bech32Address?: string } | undefined;
+      try {
+        k = (await n.getKey(NATIVE_CHAIN_ID)) as { bech32Address?: string }; // already connected: no prompt
+      } catch {
+        await n.enable(NATIVE_CHAIN_ID); // first time this session: QoreX asks once
+        k = (await n.getKey(NATIVE_CHAIN_ID)) as { bech32Address?: string };
+      }
+      remember(k?.bech32Address);
+      return k?.bech32Address;
+    } finally {
+      pending = undefined;
+    }
+  })();
+  return pending;
 }
 
 /** Sign and broadcast native messages in QoreX (hybrid secp256k1 + ML-DSA-87 signature). */

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAccount, useConnect, useReconnect } from "wagmi";
 import { openInQorex, pollQorexWhile, qorexDownload, qorexPresent, useQorexInstalled } from "../lib/qorex";
+import { forgetQorexAccount } from "../lib/staking";
 
 /** Whether the "Get QoreX" dialog is open (someone pressed Connect without QoreX installed). */
 let wanted = false;
@@ -36,9 +37,16 @@ export function useConnectQorex() {
 export function QorexConnect() {
   const installed = useQorexInstalled();
   const open = useWanted();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { connectors, connect } = useConnect();
   const { reconnect } = useReconnect();
+
+  // Disconnected or switched account: forget the session's remembered QoreX account (see qorexAccount).
+  const lastAddr = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (lastAddr.current && lastAddr.current !== address) forgetQorexAccount();
+    lastAddr.current = address;
+  }, [address]);
   const dialog = useRef<HTMLDialogElement>(null);
   const dl = qorexDownload();
   const [copied, setCopied] = useState<boolean | null>(null);
