@@ -47,13 +47,22 @@ export interface WindowStatus {
   remainingTxs: number;
   remainingBlocks: number;
   allowedTargets: string[];
+  /** uqor left under the window's spending cap (undefined if the chain didn't say). */
+  remainingValue?: bigint;
 }
 
 export async function readWindow(account: Address): Promise<WindowStatus> {
   const res = await fetch(`${REST}/qorechain/pqc/v1/evm_window/${evmToQor(account)}`);
   if (!res.ok) throw new XvmError(`Couldn’t read your EVM window (HTTP ${res.status}).`);
-  const w = (await res.json()) as { live: boolean; remaining_txs: string; remaining_blocks: string; allowed_targets: string[] };
-  return { live: w.live, remainingTxs: Number(w.remaining_txs || 0), remainingBlocks: Number(w.remaining_blocks || 0), allowedTargets: (w.allowed_targets ?? []).map((t) => t.toLowerCase()) };
+  const w = (await res.json()) as { live: boolean; remaining_txs: string; remaining_blocks: string; allowed_targets: string[]; remaining_value?: string };
+  const v = (w.remaining_value ?? "").replace(/uqor$/, "");
+  return {
+    live: w.live,
+    remainingTxs: Number(w.remaining_txs || 0),
+    remainingBlocks: Number(w.remaining_blocks || 0),
+    allowedTargets: (w.allowed_targets ?? []).map((t) => t.toLowerCase()),
+    remainingValue: /^\d+$/.test(v) ? BigInt(v) : undefined,
+  };
 }
 
 export const windowCovers = (w: WindowStatus, targets: Address[], txs: number) =>

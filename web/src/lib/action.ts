@@ -123,7 +123,10 @@ export async function preflight(client: PublicClient, plan: ActionPlan): Promise
 
   const targets = windowTargets(plan, firstTime, needsApproval);
   const windowOpen = windowCovers(await readWindow(plan.user), targets, calls);
-  return { device, firstTime, needsGrant, needsTopUp, needsApproval, convert, calls, windowOpen };
+  const res: Preflight = { device, firstTime, needsGrant, needsTopUp, needsApproval, convert, calls, windowOpen };
+  // QoreX already refused to open a window here, and it has nothing else to sign: go straight to the guide.
+  if (!windowOpen && qorexRefusesWindow() && !needsGrant && !needsTopUp && convert === 0n) return { ...res, blocker: new WindowBlocker("window").blocker };
+  return res;
 }
 
 const windowTargets = (plan: ActionPlan, firstTime: boolean, needsApproval: boolean): Address[] =>
@@ -142,11 +145,35 @@ export function qorexRefusal(text: string): "cancelled" | "no-key" | "cannot-sho
 
 export type Phase ="qorex" | "device" | "setup" | "convert" | "sending";
 
-/** Thrown when QoreX won't open the window from the page: the one blocker, with a manual route. */
+/**
+ * The window to open by hand when QoreX won't open one for a website: the longest QoreX allows (17,280 blocks,
+ * about 6–7 hours on testnet), enough actions for a session, and a low spending cap. QoreX's window has no
+ * contract list, so it covers every Qrow contract. One window per visit instead of one per action.
+ */
+export const WINDOW_GUIDE = { blocks: 17_280, txs: 100, capQor: 20 } as const;
+
+/** QoreX refused to open a window for this site once: don't ask it again, show the guide straight away. */
+const NO_WINDOW_KEY = "qrow.qorex.windowRefused";
+export function qorexRefusesWindow(): boolean {
+  try {
+    return localStorage.getItem(NO_WINDOW_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function rememberWindowRefusal() {
+  try {
+    localStorage.setItem(NO_WINDOW_KEY, "1");
+  } catch {
+    /* private mode: QoreX is asked again next time */
+  }
+}
+
+/** Thrown when the user's EVM window must be opened in QoreX: the one blocker, shown as a step-by-step guide. */
 export class WindowBlocker extends XvmError {
   readonly blocker: Blocker = {
     id: "window",
-    text: "QoreX didn’t open the access window from Qrow. Open it in QoreX (Settings, Security, EVM access window), then try again.",
+    text: "One more step: open Qrow’s access window in QoreX. It lets your actions run for the next few hours, and it’s what stops a stolen key from touching your account.",
     fix: { label: "How to open it", to: "/help#window" },
   };
 }
@@ -170,7 +197,8 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
     if (pre.needsGrant) bundle.push(grantMsg(userQor, device.cosmos, XVM_TYPE, 30 * 86_400));
     if (pre.convert > 0n) bundle.push(grantMsg(userQor, device.cosmos, CONVERT_COIN, 10 * 60));
     const targets = windowTargets(plan, pre.firstTime, pre.needsApproval);
-    const window = pre.windowOpen ? undefined : openEvmWindowMsg({ sender: userQor, blocks: WINDOW_BLOCKS, maxTxs: BigInt(pre.calls), maxValue: PER_CALL_UQOR * BigInt(pre.calls), allowedTargets: targets });
+    const askWindow = !pre.windowOpen && !qorexRefusesWindow();
+    const window = !askWindow ? undefined : openEvmWindowMsg({ sender: userQor, blocks: WINDOW_BLOCKS, maxTxs: BigInt(pre.calls), maxValue: PER_CALL_UQOR * BigInt(pre.calls), allowedTargets: targets });
     if (window) bundle.push(window);
     if (bundle.length) {
       onPhase("qorex");
@@ -183,6 +211,7 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
         if (kind === "cancelled") throw new XvmError("You cancelled in QoreX. Nothing was sent.");
         if (kind === "no-key") throw new XvmError("QoreX hasn’t registered your quantum-safe key yet. In QoreX, send yourself 0.01 QOR once, then try again.");
         // QoreX refused to show one message type (e.g. the window): send what it can, then ask for the window by hand.
+        if (kind === "cannot-show" && window) rememberWindowRefusal();
         const rest = bundle.filter((m) => m !== window);
         if (window && rest.length) {
           let r: { txHash: string };
@@ -199,9 +228,11 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
         throw new WindowBlocker("window");
       }
       await waitForNativeTx(hash);
-      steps.push({ label: pre.firstTime ? "QoreX: set up this device and open the window" : "QoreX: open the window", hash });
+      steps.push({ label: window ? (pre.firstTime ? "QoreX: set up this device and open the window" : "QoreX: open the window") : "QoreX: device fees and permission", hash });
       if (window && !windowCovers(await readWindow(plan.user), targets, pre.calls)) throw new WindowBlocker("window");
     }
+    // The window is opened by hand in QoreX (see WINDOW_GUIDE): stop here until it is.
+    if (!pre.windowOpen && !windowCovers(await readWindow(plan.user), targets, pre.calls)) throw new WindowBlocker("window");
 
     // 2. The device, without asking QoreX again.
     let slot = pre.device.s === "ready" ? pre.device.slot : -1;

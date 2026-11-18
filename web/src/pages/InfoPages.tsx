@@ -1,3 +1,4 @@
+import { WINDOW_GUIDE } from "../lib/action";
 import { Link } from "react-router-dom";
 import { QOREX_URL } from "../components/AddressChip";
 import { FEEDBACK_URL } from "../config/tabs";
@@ -41,10 +42,25 @@ export function HelpPage() {
       </p>
       <h3 id="chain-key">“QoreX hasn’t registered your quantum-safe key yet”</h3>
       <p>In QoreX, send yourself 0.01 QOR once. Your first transfer registers your quantum-safe (ML-DSA-87) key on chain.</p>
-      <h3 id="window">“Open the access window in QoreX”</h3>
+      <h3 id="window">“Open Qrow’s access window in QoreX”</h3>
       <p>
-        If QoreX can’t open Qrow’s short access window from the page, open it in QoreX: Settings, Security, EVM access window, for about 10 minutes, then press the button in Qrow again. The window only lets
-        this one action run, and closes by itself.
+        QoreChain only lets a contract action run for your account inside an <strong>EVM access window</strong> that your own quantum-safe key opened. QoreX can’t open one when a website asks yet, so you open it once
+        per visit:
+      </p>
+      <ol className="steps">
+        <li>
+          In QoreX: <strong>Settings → Security → EVM access window</strong>.
+        </li>
+        <li>
+          <strong>Duration: {WINDOW_GUIDE.blocks.toLocaleString()} blocks</strong> (the maximum QoreX allows: about 6–7 hours on testnet), <strong>Transactions: {WINDOW_GUIDE.txs}</strong>,{" "}
+          <strong>Spending cap: {WINDOW_GUIDE.capQor} QOR</strong>.
+        </li>
+        <li>Approve, come back to Qrow and press Continue. Every Qrow action (send, mint, list, predict, trade) then works until the window ends.</li>
+      </ol>
+      <p>
+        Why it exists: without an open window, a stolen ordinary (secp256k1) key can’t touch your account on the EVM lane. That’s QoreChain’s Q-Day protection. While a window is open, that key alone could spend
+        QOR up to the cap, so keep the cap low and close the window in QoreX when you’re done. Your Qrow NFTs and fUSD still need this device’s quantum-safe signature. Swaps, staking and AI top-ups don’t need a
+        window.
       </p>
       <h3 id="devices">“Your Qrow key lives on another device”</h3>
       <p>

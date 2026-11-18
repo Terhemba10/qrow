@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 import { usePublicClient } from "wagmi";
 import { CHAIN } from "../config/network";
 import { setUpThisDevice } from "../lib/appKey";
-import { preflight, runAction, WindowBlocker, type ActionPlan, type Blocker, type Phase } from "../lib/action";
+import { preflight, runAction, WINDOW_GUIDE, WindowBlocker, type ActionPlan, type Blocker, type Phase } from "../lib/action";
+import { readWindow } from "../lib/xvm";
+import type { Address } from "viem";
 import { addReceipt, type Receipt } from "../lib/receipts";
 import { explainError } from "./PqActionPanel";
 import { IconAlert } from "./Icons";
@@ -42,6 +44,51 @@ export function BlockerNote({ b, onFix, fixing }: { b: Blocker; onFix?: () => vo
           {b.fix.label}
         </a>
       )}
+    </div>
+  );
+}
+
+/** ~1.4 s blocks on testnet. */
+const hoursLeft = (blocks: number) => (blocks * 1.4) / 3600;
+
+/**
+ * QoreX can't open the access window for a website yet, so the user opens it once per visit in QoreX:
+ * the exact settings, why it exists, the window's live status, and Continue when it's open.
+ */
+export function WindowGuide({ user, onReady }: { user: Address; onReady: () => void }) {
+  const w = useQuery({ queryKey: ["evm-window", user], queryFn: () => readWindow(user), refetchInterval: 4000, refetchOnWindowFocus: true });
+  const open = !!w.data?.live && w.data.remainingTxs > 0;
+  return (
+    <div className="notice notice--warn blocker stack" role="alert">
+      <p className="notice__title">
+        <IconAlert /> One more step: open Qrow’s access window in QoreX
+      </p>
+      <p>QoreX can’t open it from a website yet, so you open it once and every Qrow action works for the next few hours. It’s what stops a stolen key from touching your account.</p>
+      <ol className="steps">
+        <li>
+          In QoreX, go to <strong>Settings → Security → EVM access window</strong>.
+        </li>
+        <li>
+          Set <strong>Duration: {WINDOW_GUIDE.blocks.toLocaleString()} blocks</strong> (the maximum, about {Math.floor(hoursLeft(WINDOW_GUIDE.blocks))} hours), <strong>Transactions: {WINDOW_GUIDE.txs}</strong>, <strong>Spending cap: {WINDOW_GUIDE.capQor} QOR</strong>.
+        </li>
+        <li>Approve it in QoreX, then come back here.</li>
+      </ol>
+      <p className="hint" aria-live="polite">
+        {w.isPending
+          ? "Checking your window…"
+          : open
+            ? `Window open: ${w.data!.remainingTxs} actions left, about ${hoursLeft(w.data!.remainingBlocks).toFixed(1)} hours.`
+            : "No window open yet. Qrow checks every few seconds."}
+      </p>
+      <p className="hint">Keep the spending cap low: while the window is open, your account’s ordinary key alone can spend QOR up to the cap. Your Qrow NFTs and fUSD still need this device’s quantum-safe signature.</p>
+      <div className="row">
+        <button className="btn" type="button" disabled={!open} onClick={onReady}>
+          {open ? "Continue" : "Waiting for the window…"}
+        </button>
+        <Link className="btn btn--quiet" to="/help#window">
+          Help
+        </Link>
+      </div>
     </div>
   );
 }
@@ -133,6 +180,14 @@ export function ActionFlow(props: {
         <p className="notice" role="status">
           This device is added. For your safety it can act in 3 days; your other device can cancel it before then.
         </p>
+      ) : shown?.id === "window" ? (
+        <WindowGuide
+          user={props.plan.user}
+          onReady={() => {
+            setBlocker(undefined);
+            void check.refetch();
+          }}
+        />
       ) : shown ? (
         <BlockerNote b={shown} onFix={shown.id === "device" ? () => void addDevice() : undefined} fixing={adding === "busy"} />
       ) : (
