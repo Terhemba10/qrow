@@ -2,6 +2,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/hub.css";
+import "./styles/ds.css";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
