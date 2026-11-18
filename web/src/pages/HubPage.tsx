@@ -48,15 +48,23 @@ function useFlat(): [boolean, (v: boolean) => void] {
 function Tile({ i, path, label, blurb, soon, flat }: { i: number; path: string; label: string; blurb: string; soon: boolean; flat: boolean }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const nav = useNavigate();
+  const frame = useRef(0);
+  /** Tilt toward the pointer, at most once per animation frame (smooth on phones, no layout work). */
   const tilt = (e: PointerEvent<HTMLAnchorElement>) => {
-    if (flat || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    ref.current.style.setProperty("--rx", `${(-y * 18).toFixed(2)}deg`);
-    ref.current.style.setProperty("--ry", `${(x * 22).toFixed(2)}deg`);
-    ref.current.style.setProperty("--gx", `${((x + 0.5) * 100).toFixed(0)}%`);
-    ref.current.style.setProperty("--gy", `${((y + 0.5) * 100).toFixed(0)}%`);
+    if (flat || !ref.current || frame.current) return;
+    const { clientX, clientY } = e;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const x = (clientX - r.left) / r.width - 0.5;
+      const y = (clientY - r.top) / r.height - 0.5;
+      el.style.setProperty("--rx", `${(-y * 12).toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${(x * 14).toFixed(2)}deg`);
+      el.style.setProperty("--gx", `${((x + 0.5) * 100).toFixed(0)}%`);
+      el.style.setProperty("--gy", `${((y + 0.5) * 100).toFixed(0)}%`);
+    });
   };
   const reset = () => {
     ref.current?.style.setProperty("--rx", "0deg");

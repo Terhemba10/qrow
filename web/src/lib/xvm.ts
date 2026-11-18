@@ -132,7 +132,7 @@ function friendlyChainError(log: string): string {
   if (/out of gas/i.test(log)) return "The network ran out of gas for this step. Try again: Qrow re-estimates each time.";
   if (/insufficient fee|insufficient funds/i.test(log)) return "Not enough QOR for the network fee.";
   if (/sequence/i.test(log)) return "Another transaction was in progress. Wait a few seconds and try again.";
-  if (/no open EVM authorisation window|does not admit/i.test(log)) return "Your EVM window closed or doesn’t cover this. Open it again in QoreX.";
+  if (/no open EVM authorisation window|does not admit/i.test(log)) return "Qrow’s access window in QoreX has closed or is used up. Open it again in QoreX (Settings → Security → EVM access window).";
   if (/execution reverted/i.test(log)) return "The contract refused it. Nothing moved except the network fee.";
-  return `The chain refused it: ${log.slice(0, 160)}`;
+  return `The network refused it, so nothing moved except the fee. Details: ${log.slice(0, 120)}`;
 }

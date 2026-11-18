@@ -176,7 +176,7 @@ export function StakingPage() {
       <div className="sheet__head">
         <h1 id="stk-title">Staking</h1>
         <p className="muted">
-          Stake testnet QOR with a validator on QoreChain’s native lane, and optionally lock it for a bonus. Every action is signed in QoreX with your hybrid (ECDSA + ML-DSA-87) signature. Testnet QOR
+          Stake testnet QOR with a validator on QoreChain’s native lane, and optionally lock it for a bonus. Every action is approved in QoreX and signed with your quantum-safe key. Testnet QOR
           has no value.
         </p>
       </div>

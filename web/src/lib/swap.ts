@@ -148,7 +148,7 @@ export function swapProblems(args: {
   else if (!isQor && balanceQor < FEE_RESERVE_UQOR) out.push({ id: "fee", text: "You need about 0.1 QOR for the network fee. The Faucet gives 100 QOR a day." });
   if (quote && quote.impactBps > MAX_IMPACT_BPS) out.push({ id: "impact", text: `This trade moves the pool price by ${(quote.impactBps / 100).toFixed(2)}%. The chain refuses anything above ${MAX_IMPACT_BPS / 100}%: try a smaller amount.` });
   if (quote && minReceived(quote.amountOut, slippageBps) === 0n) out.push({ id: "tiny", text: "This amount is too small: you would receive nothing. Try a bigger amount." });
-  if (slippageBps > SLIPPAGE_MAX_BPS) out.push({ id: "slippage", text: `Slippage above ${SLIPPAGE_MAX_BPS / 100}% isn’t allowed.` });
+  if (slippageBps > SLIPPAGE_MAX_BPS) out.push({ id: "slippage", text: `Price protection can’t be looser than ${SLIPPAGE_MAX_BPS / 100}%.` });
   return out;
 }
 

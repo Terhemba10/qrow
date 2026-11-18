@@ -1,47 +1,44 @@
 /* 3D tab hub (HubPage). CSS 3D transforms only; flat and still under .hub--flat or reduced motion. */
 .hub__head { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
 .hub__kicker { text-transform: uppercase; letter-spacing: 0.12em; font-size: var(--text-xs, 0.8125rem); color: var(--color-settled, #3ef0d2); margin: 0 0 6px; }
-.hub__title { font-size: clamp(2.4rem, 7vw, 4.5rem); line-height: 0.95; text-transform: uppercase; letter-spacing: -0.02em; font-weight: 700; margin: 0 0 8px; }
+.hub__title { font-family: var(--q-font-display); font-size: var(--q-t-h1); line-height: 0.92; text-transform: uppercase; font-weight: 800; margin: 0 0 8px; }
 
 .hub__grid {
   list-style: none; margin: 0; padding: 0;
   display: grid; gap: clamp(12px, 2vw, 22px);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
 }
-.hub__cell { animation: hub-float 6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.55s); transform-style: preserve-3d; }
+.hub__cell { transform-style: preserve-3d; }
 
 .hubtile {
   --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%;
   position: relative; display: block; height: 100%; min-height: 190px;
   border-radius: 22px; text-decoration: none; color: var(--tile-ink);
   background: var(--tile-bg);
-  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform: perspective(900px) translateY(var(--lift, 0)) rotateX(var(--rx)) rotateY(var(--ry));
   transform-style: preserve-3d;
-  transition: transform 180ms ease-out, box-shadow 200ms ease;
+  transition: transform var(--q-base, 200ms) var(--q-ease, ease-out), box-shadow var(--q-base, 200ms) ease;
   box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7), 0 2px 0 rgba(255, 255, 255, 0.06) inset;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.hubtile:hover, .hubtile:focus-visible { box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8); }
-.hubtile:focus-visible { outline: 3px solid var(--color-focus, #8ff7e6); outline-offset: 4px; }
+.hubtile:hover, .hubtile:focus-visible { box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8); will-change: transform; }
+.hubtile:hover { --lift: -4px; }
+.hubtile:focus-visible { outline: none; box-shadow: var(--q-focus); }
 .hubtile:active { transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) scale(0.97); }
 .hubtile__face { display: grid; gap: 8px; align-content: start; padding: 20px; height: 100%; box-sizing: border-box; transform: translateZ(22px); }
 .hubtile__num { font-size: 0.85rem; opacity: 0.7; }
-.hubtile__label { font-size: 1.45rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1.05; }
+.hubtile__label { font-family: var(--q-font-display); font-size: 1.9rem; font-weight: 800; text-transform: uppercase; line-height: 0.95; }
 .hubtile__blurb { font-size: 0.9rem; line-height: 1.35; opacity: 0.82; }
 .hubtile__go { margin-top: auto; justify-self: start; padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: var(--tile-pill); color: var(--tile-pill-ink); }
 .hubtile__glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.28), transparent 55%); opacity: 0; transition: opacity 200ms; }
 .hubtile:hover .hubtile__glare { opacity: 1; }
 
-.hubtile--sky { --tile-bg: #5fd3f5; --tile-ink: #061520; --tile-pill: #061520; --tile-pill-ink: #ffffff; }
-.hubtile--orange { --tile-bg: #ff7a1a; --tile-ink: #1a0800; --tile-pill: #1a0800; --tile-pill-ink: #ffffff; }
-.hubtile--mint { --tile-bg: #2fe39a; --tile-ink: #03170e; --tile-pill: #03170e; --tile-pill-ink: #ffffff; }
-.hubtile--ink { --tile-bg: #f4f5fb; --tile-ink: #0b0c16; --tile-pill: #0b0c16; --tile-pill-ink: #ffffff; }
+.hubtile--sky { --tile-bg: var(--q-cyan); --tile-ink: var(--q-on-accent); --tile-pill: var(--q-on-accent); --tile-pill-ink: #ffffff; }
+.hubtile--orange { --tile-bg: var(--q-orange); --tile-ink: var(--q-on-accent); --tile-pill: var(--q-on-accent); --tile-pill-ink: #ffffff; }
+.hubtile--mint { --tile-bg: var(--q-mint); --tile-ink: var(--q-on-accent); --tile-pill: var(--q-on-accent); --tile-pill-ink: #ffffff; }
+.hubtile--ink { --tile-bg: var(--q-light); --tile-ink: var(--q-on-accent); --tile-pill: var(--q-on-accent); --tile-pill-ink: #ffffff; }
 
-@keyframes hub-float {
-  0%, 100% { transform: translateY(0) rotateZ(0deg); }
-  50% { transform: translateY(-8px) rotateZ(0.4deg); }
-}
 
 .hub--flat .hub__cell { animation: none; }
 .hub--flat .hubtile { transform: none; transition: none; }

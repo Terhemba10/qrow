@@ -251,7 +251,7 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
           </div>
 
           <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend>Slippage limit</legend>
+            <legend>Price protection</legend>
             <div className="seg" role="radiogroup">
               {SLIPPAGE_CHOICES_BPS.map((b) => (
                 <span key={b}>
@@ -409,7 +409,7 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
 
 function plainSwapError(log: string): string {
   if (/impact/i.test(log)) return "The trade moved the pool price too much, so the chain refused it. Nothing was swapped: try a smaller amount.";
-  if (/slippage|min.?out|less than/i.test(log)) return "The price moved past your slippage limit before the swap ran. Nothing was swapped: try again.";
+  if (/slippage|min.?out|less than/i.test(log)) return "The price moved more than your price protection allows, so nothing was swapped. Try again, or allow a little more.";
   if (/insufficient/i.test(log)) return "Not enough balance for the swap and the network fee. Nothing was swapped.";
   return `The chain refused it: ${log.slice(0, 160)}`;
 }

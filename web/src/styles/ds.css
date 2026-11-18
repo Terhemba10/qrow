@@ -179,3 +179,8 @@
 /* The older .skeleton placeholders across the app get the same shimmer as <Skeleton>. */
 .skeleton { display: block; border-radius: var(--q-r-sm); background: linear-gradient(90deg, var(--q-surface-2) 0%, var(--q-surface-3) 50%, var(--q-surface-2) 100%); background-size: 200% 100%; animation: q-shimmer 1.4s var(--q-ease) infinite; min-height: 16px; }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* Micro-interactions for the older .btn buttons too: a 150ms press. */
+.btn { transition: transform var(--q-fast) var(--q-ease), filter var(--q-fast) var(--q-ease); }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active:not(:disabled) { transform: none; } }

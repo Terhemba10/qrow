@@ -112,7 +112,7 @@ function ReportView({ r }: { r: Report }) {
               r.to && { name: "To", value: r.call?.qrow ? `${r.call.contract} (${r.to})` : r.to },
               r.call && { name: "Action", value: r.call.action },
               ...(r.call?.args ?? []),
-              { name: "Quantum-safe", value: "Not at the transaction level: EVM transactions carry a classical signature. Qrow contract actions also check an ML-DSA signature inside the call." },
+              { name: "Quantum-safe", value: "Not on the transaction itself: EVM transactions use an ordinary signature. Qrow’s contracts also check a quantum-safe signature inside each action." },
             ]}
           />
           <p className="hint">

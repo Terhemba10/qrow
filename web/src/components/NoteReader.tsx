@@ -46,7 +46,7 @@ export function NoteReader({ me, envelope }: { me: Address; envelope: Hex }) {
             Their note: <q className="request-note">{notice.note}</q>
           </p>
         )}
-        <p className="hint">Signed by the sender: the escrow checked their ML-DSA-87 signature over this exact note.</p>
+        <p className="hint">Signed by the sender: the escrow checked their quantum-safe signature on this exact note.</p>
       </div>
     );
   }
