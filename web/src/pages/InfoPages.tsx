@@ -62,10 +62,6 @@ export function HelpPage() {
         QOR up to the cap, so keep the cap low and close the window in QoreX when you’re done. Your Qrow NFTs and fUSD still need this device’s quantum-safe signature. Swaps, staking and AI top-ups don’t need a
         window.
       </p>
-      <h3 id="devices">“Your Qrow key lives on another device”</h3>
-      <p>
-        Use the device you first used Qrow on, or add this one: for safety, a new device on an account that already has one waits 3 days before it can act, and your other device can cancel it.
-      </p>
 
       <h2>Tell us what broke</h2>
       <p>

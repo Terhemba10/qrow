@@ -93,7 +93,7 @@ export async function preflight(client: PublicClient, plan: ActionPlan): Promise
   const [device, local, userQorBal] = await Promise.all([deviceState(client, plan.user), deviceInfo(plan.user), bankOf(userQor, "uqor")]);
   if (needsKey && device.s === "pending") return { ...base, device, blocker: { id: "pending", text: `This device is in its 3-day safety wait (ends ${new Date(device.dueAt * 1000).toLocaleString()}). Then it works with one approval.` } };
   if (needsKey && device.s === "otherDevices")
-    return { ...base, device, blocker: { id: "device", text: "This account already has a Qrow key in another browser or device. Use that one, or add this browser: for your safety it can act after 3 days, and your other device can cancel it.", fix: { label: "Add this browser", to: "/help#devices" } } };
+    return { ...base, device, blocker: { id: "device", text: "This account already has a Qrow key in another browser or device. Use that one, or add this browser: for your safety it can act after 3 days, and your other device can cancel it.", fix: { label: "Add this browser", to: "/help" } } };
 
   const firstTime = needsKey && device.s === "none";
   const [grant, devBal] = local ? await Promise.all([hasGrant(userQor, local.address), deviceQor(local.address)]) : [false, 0n];
