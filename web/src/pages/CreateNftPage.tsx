@@ -57,6 +57,19 @@ export function CreateNftPage() {
           Upload your own artwork and mint it as an edition of 1 to 10,000 copies on QoreChain testnet. The image and its details are stored on IPFS; network fees are paid in test QOR. <strong>Testnet only:</strong> NFTs have no value.
         </p>
       </div>
+      <ul className="nftkinds" aria-label="Two kinds of NFT">
+        <li className="panel stack">
+          <h2>Qrow Genesis</h2>
+          <p className="muted">Generative art drawn on chain by Qrow: 256 in total, 1 fUSD each. You don’t upload anything.</p>
+          <Link className="btn btn--quiet" to="/shop">
+            Mint a Genesis NFT
+          </Link>
+        </li>
+        <li className="panel stack nftkinds--on">
+          <h2>Your own NFT</h2>
+          <p className="muted">Your image, your name, 1 to 10,000 copies. Fill in the form below.</p>
+        </li>
+      </ul>
       {!EDITIONS && <p className="notice notice--warn">The NFT editions contract is being deployed to testnet. Creating opens here as soon as it’s live.</p>}
       {done ? (
         <div className="notice notice--ok stack">

@@ -413,3 +413,7 @@ button.pmcard__btn:hover { background: color-mix(in srgb, var(--surface, #121a30
 
 /* ---------------------------------------------------------------- Window guide */
 .steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; line-height: 1.5; }
+
+/* ---------------------------------------------------------------- Create NFT: the two kinds */
+.nftkinds { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.nftkinds--on { border-color: #5fd3f5; }

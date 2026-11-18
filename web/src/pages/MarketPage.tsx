@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { useHeldEditions } from "../lib/editions";
 import { EditionsMarket } from "../components/EditionsMarket";
 import { useConnectQorex } from "../components/QorexConnect";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +66,7 @@ export function MarketPage() {
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const market = useMarket();
   const mine = useNfts(me);
+  const myEditions = useHeldEditions(me);
   const [buying, setBuying] = useState<Row>();
   const [ack, setAck] = useState(false);
   const [, setSigning] = useState(false);
@@ -177,10 +180,10 @@ export function MarketPage() {
       )}
 
       <section className="stack" aria-labelledby="listings-title">
-        <h2 id="listings-title">Listings</h2>
+        <h2 id="listings-title">Qrow Genesis listings</h2>
         {market.isPending && <span className="skeleton" style={{ width: "100%", height: 180 }} />}
         {market.isError && <p className="field-error">Couldn’t load the market from the testnet.</p>}
-        {market.data && market.data.rows.length === 0 && <p className="muted">Nothing listed yet. Own a Genesis NFT? List it below.</p>}
+        {market.data && market.data.rows.length === 0 && <p className="muted">No Genesis NFTs listed right now.</p>}
         {market.data && market.data.rows.length > 0 && (
           <ul className="nftgrid">
             {market.data.rows.map((r) => (
@@ -209,12 +212,18 @@ export function MarketPage() {
         )}
       </section>
 
+      <EditionsMarket me={me} />
+
       {me && (
         <section className="stack" aria-labelledby="sell-title">
           <h2 id="sell-title">Sell yours</h2>
           {mine.isPending && <span className="skeleton" style={{ width: 160, height: 160 }} />}
-          {mine.data && unlisted.length === 0 && myListings.length === 0 && <p className="muted">You have no Genesis NFTs to list. Mint one in the NFT Shop.</p>}
-          {(unlisted.length > 0 || myListings.length > 0) && (
+          {mine.data && unlisted.length === 0 && myListings.length === 0 && (myEditions.data ?? []).length === 0 && (
+            <p className="muted">
+              You have no NFTs to list yet. Mint a Qrow Genesis in the <Link to="/shop">NFT Shop</Link> or <Link to="/create">create your own</Link>.
+            </p>
+          )}
+          {(unlisted.length > 0 || myListings.length > 0 || (myEditions.data ?? []).length > 0) && (
             <ul className="nftgrid">
               {unlisted.map((n) => (
                 <ListCard key={n.id.toString()} me={me} tokenId={n.id} name={n.name} image={n.image} floorFor={floorFor} history={history.data} onDone={() => { void market.refetch(); void mine.refetch(); }} />
@@ -222,11 +231,22 @@ export function MarketPage() {
               {myListings.map((r) => (
                 <UnlistCard key={r.id.toString()} me={me} row={r} onDone={() => { void market.refetch(); void mine.refetch(); }} />
               ))}
+              {(myEditions.data ?? []).map((n) => (
+                <li key={`ed-${n.id}`} className="nftcard">
+                  {n.image ? <img src={n.image} alt={n.name} width={160} height={160} loading="lazy" /> : <span className="skeleton" style={{ width: 160, height: 160 }} />}
+                  <p className="nftcard__name">{n.name}</p>
+                  <p className="hint fig">
+                    Your NFT · {n.balance.toString()} of {n.supply.toString()}
+                  </p>
+                  <Link className="btn" to={`/nft/edition/${n.id}`}>
+                    List or delist
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </section>
       )}
-      <EditionsMarket me={me} />
     </section>
   );
 }

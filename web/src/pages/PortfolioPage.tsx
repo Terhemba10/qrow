@@ -1,89 +1,33 @@
 import { useConnectQorex } from "../components/QorexConnect";
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { evmToQor } from "@qorechain/sdk";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
 import { IconAlert } from "../components/Icons";
-import { ReceiptCard } from "../components/ReceiptCard";
-import { useReceipts } from "../lib/receipts";
-import { AGENT, CHAIN } from "../config/network";
+import { CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
-import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { usePayments } from "../lib/payments";
 import { useCoins } from "../lib/coins";
 import { useHeldEditions } from "../lib/editions";
 import { EDITIONS } from "../config/contracts";
-import { downloadCsv, useBalances, useNfts, type ActivityRow } from "../lib/portfolio";
-
-const STATUS_WORD: Record<string, string> = {
-  Pending: "Waiting",
-  Claimed: "Claimed",
-  Released: "Released",
-  Cancelled: "Cancelled",
-  Refunded: "Refunded",
-};
-const fmtDate = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+import { useBalances, useNfts } from "../lib/portfolio";
 
 export function PortfolioPage() {
   const { address, chainId, isConnected } = useAccount();
   const { connect: openConnectModal } = useConnectQorex();
-  const receipts = useReceipts(address);
   const me = isConnected && chainId === CHAIN.id ? address : undefined;
   const balances = useBalances(me);
   const nfts = useNfts(me);
   const editions = useHeldEditions(me);
   const payments = usePayments(me);
   const coins = useCoins(me);
-  const referrals = useQuery({
-    queryKey: ["referrals", me],
-    enabled: !!me,
-    staleTime: 300_000,
-    queryFn: async () => {
-      const r = await fetch(`${AGENT}/referrals/${evmToQor(me!)}`);
-      if (!r.ok) throw new Error("unavailable");
-      return ((await r.json()) as { count: number }).count;
-    },
-  });
 
-  const activity = useMemo<ActivityRow[]>(() => {
-    if (!payments.data || !me) return [];
-    const rows: ActivityRow[] = [
-      ...payments.data.outgoing.map((p) => ({
-        time: p.createdAt,
-        kind: "Payment sent",
-        ref: `#${p.id}`,
-        amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`,
-        counterparty: p.recipient,
-        status: STATUS_WORD[p.status] ?? p.status,
-        tx: p.createdTx,
-      })),
-      ...payments.data.incoming.map((p) => ({
-        time: p.createdAt,
-        kind: "Payment received",
-        ref: `#${p.id}`,
-        amount: `${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol}`,
-        counterparty: p.sender,
-        status: STATUS_WORD[p.status] ?? p.status,
-        tx: p.createdTx,
-      })),
-    ];
-    return rows.sort((a, b) => b.time - a.time);
-  }, [payments.data, me]);
 
   if (!me) {
     return (
       <section className="sheet" aria-labelledby="pf-title">
         <div className="sheet__head">
           <h1 id="pf-title">Portfolio</h1>
-          <p className="muted">Your balances, NFTs, listings, payments and receipts.</p>
+          <p className="muted">Your tokens, NFTs and payments in escrow.</p>
         </div>
         <div className="panel empty">
           <h2>Connect your wallet to see your portfolio</h2>
@@ -102,24 +46,10 @@ export function PortfolioPage() {
     <section className="page" aria-labelledby="pf-title">
       <div className="sheet__head">
         <h1 id="pf-title">Portfolio</h1>
-        <p className="muted">Testnet balances: these tokens have no value.</p>
+        <p className="muted">
+          Your assets: tokens, NFTs and payments waiting in escrow. Testnet only: they have no value. Every transaction is in <Link to="/history">History</Link>.
+        </p>
       </div>
-
-      <section aria-labelledby="rcpt-title" className="stack">
-        <h2 id="rcpt-title">Your receipts</h2>
-        {receipts.length === 0 ? (
-          <p className="muted">
-            After each transaction its receipt and hash appear here (in this browser). You can check any hash on <Link to="/verify">Verify</Link>.
-          </p>
-        ) : (
-          <div className="receipts">
-            {receipts.slice(0, 10).map((r) => (
-              <ReceiptCard key={r.hash} r={r} compact />
-            ))}
-            {receipts.length > 10 && <p className="hint">Showing the 10 most recent of {receipts.length}.</p>}
-          </div>
-        )}
-      </section>
 
       <section aria-labelledby="bal-title" className="stack">
         <h2 id="bal-title">Balances</h2>
@@ -251,75 +181,13 @@ export function PortfolioPage() {
         )}
       </section>
 
-      <section aria-labelledby="ref-title" className="stack">
-        <h2 id="ref-title">Referrals</h2>
-        {referrals.data !== undefined ? (
-          <p>
-            <span className={`badge${referrals.data > 0 ? " badge--earned" : ""}`}>
-              {referrals.data >= 10 ? "Connector" : referrals.data >= 3 ? "Guide" : referrals.data >= 1 ? "First referral" : "No referrals yet"}
-            </span>{" "}
-            <span className="fig">{referrals.data}</span> {referrals.data === 1 ? "person has" : "people have"} staked through your link. Tracking only: Qrow pays no commission.
-          </p>
-        ) : referrals.isError ? (
-          <p className="muted">Referral counts need the Qrow agent server running.</p>
-        ) : (
-          <span className="skeleton" style={{ width: "40%" }} />
-        )}
-        <p className="hint">
-          Your link: <span className="mono">{`${window.location.origin}/?ref=${evmToQor(me)}`}</span>
-        </p>
-      </section>
-
       <section aria-labelledby="pend-title" className="stack">
-        <h2 id="pend-title">Pending payments</h2>
+        <h2 id="pend-title">In escrow</h2>
         <p className="fig">
           {pendingIn.length} waiting for you, {pendingOut.length} you sent still in escrow
         </p>
       </section>
 
-      <section aria-labelledby="act-title" className="stack">
-        <div className="section-head">
-          <h2 id="act-title">Activity</h2>
-          <button className="btn btn--quiet" type="button" disabled={!activity.length} onClick={() => downloadCsv(activity, `qrow-activity-${me.slice(2, 8)}.csv`)}>
-            Export CSV
-          </button>
-        </div>
-        {payments.isPending && <span className="skeleton" style={{ width: "80%" }} />}
-        {payments.data && activity.length === 0 && <p className="muted">No payments yet.</p>}
-        {activity.length > 0 && (
-          <div className="table-wrap" tabIndex={0}>
-            <table className="table">
-              <caption className="visually-hidden">Payments sent and received</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Payment</th>
-                  <th scope="col" className="num">
-                    Amount
-                  </th>
-                  <th scope="col">With</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.map((r) => (
-                  <tr key={`${r.kind}${r.ref}`}>
-                    <td>{fmtDate.format(new Date(r.time * 1000))}</td>
-                    <td>{r.kind}</td>
-                    <td className="fig">{r.ref}</td>
-                    <td className="num fig">{r.amount}</td>
-                    <td className="mono" title={r.counterparty}>
-                      {short(r.counterparty)}
-                    </td>
-                    <td>{r.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
     </section>
   );
 }
