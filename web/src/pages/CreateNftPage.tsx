@@ -121,7 +121,7 @@ export function CreateNftPage() {
             {err && <p className="field-error">{err}</p>}
             {!uri && (
               <button className="btn btn--block" type="submit" disabled={!EDITIONS || (!!me && !valid) || uploading} aria-busy={uploading}>
-                {!me ? "Connect QoreX" : uploading ? "Uploading to IPFS…" : "Upload and review"}
+                {!me ? "Connect QoreX to mint" : uploading ? "Uploading to IPFS…" : "Upload and review"}
               </button>
             )}
             {uri && me && EDITIONS && (

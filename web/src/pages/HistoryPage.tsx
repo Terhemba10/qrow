@@ -1,4 +1,5 @@
 import { evmToQor } from "@qorechain/sdk";
+import { Button, EmptyState } from "../ds";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -97,9 +98,11 @@ export function HistoryPage() {
           <h1 id="hist-title">History</h1>
           <p className="muted">Every transaction you make on Qrow, each with its own hash.</p>
         </div>
-        <button className="btn" type="button" onClick={connect}>
-          Connect QoreX
-        </button>
+        <EmptyState
+          title="Your transactions appear here"
+          text="Connect QoreX to see every transaction you made on Qrow, each with its own hash to check."
+          action={<Button onClick={connect}>Connect QoreX</Button>}
+        />
       </section>
     );
 

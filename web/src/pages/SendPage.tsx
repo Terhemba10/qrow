@@ -93,28 +93,11 @@ export function SendPage() {
   const total = balance.status === "ok" ? balance.evmUnits + (balance.bankUnits ?? 0n) : undefined;
   const short = parsed.ok && total !== undefined && parsed.units > total;
 
-  if (!isConnected) {
-    return (
-      <section className="sheet" aria-labelledby="send-title">
-        <div className="sheet__head">
-          <h1 id="send-title">Send a payment</h1>
-          <p className="muted">The money waits in escrow until the recipient claims it. If they don’t claim it within {REFUND_TEXT}, it comes back to you.</p>
-        </div>
-        <div className="panel empty">
-          <h2>Connect QoreX to start</h2>
-          <p className="muted">Qrow reads your balance and checks every payment before you sign. Nothing is sent until you confirm it in QoreX.</p>
-          <button className="btn" type="button" onClick={openConnectModal}>
-            Connect QoreX
-          </button>
-        </div>
-      </section>
-    );
-  }
-
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitted(true);
     if (!recipient.ok || !parsed.ok || selfSend || wrongNetwork || short) return;
+    if (!isConnected) return openConnectModal(); // browse first; QoreX only when it's time to sign
     saveDraft({
       recipient: recipient.evm,
       recipientQor: recipient.qor,
@@ -293,9 +276,11 @@ export function SendPage() {
 
         <div className="actions">
           <button className="btn btn--block" type="submit" disabled={wrongNetwork}>
-            Review payment
+            {isConnected ? "Review payment" : "Connect QoreX to send"}
           </button>
-          <p className="hint">Next, Qrow checks the address and the amount. You’ll see every detail before you sign.</p>
+          <p className="hint">
+            {isConnected ? "Next, Qrow checks the address and the amount. You’ll see every detail before you sign." : "Fill it in now. QoreX is only needed when you sign."}
+          </p>
         </div>
       </form>
 

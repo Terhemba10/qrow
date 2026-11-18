@@ -1,4 +1,5 @@
 import { useCoins } from "../lib/coins";
+import { Button, EmptyState } from "../ds";
 import { useConnectQorex } from "../components/QorexConnect";
 import { useAccount } from "wagmi";
 import { IconAlert } from "../components/Icons";
@@ -20,12 +21,13 @@ export function ReceivePage() {
           <h1 id="recv-title">Receive</h1>
           <p className="muted">Payments sent to you wait in escrow until you claim them with your quantum-safe key.</p>
         </div>
-        <div className="panel empty">
-          <h2>Connect QoreX to see payments for you</h2>
-          <button className="btn" type="button" onClick={openConnectModal}>
-            Connect QoreX
-          </button>
-        </div>
+        <EmptyState
+          title="Payments sent to you appear here"
+          text="Connect QoreX to see what’s waiting for you, claim it, or make a payment request link and QR code."
+          action={
+            <Button onClick={openConnectModal}>Connect QoreX</Button>
+          }
+        />
       </section>
     );
   }

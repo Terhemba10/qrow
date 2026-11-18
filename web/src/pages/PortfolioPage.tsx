@@ -1,4 +1,5 @@
 import { useConnectQorex } from "../components/QorexConnect";
+import { Button, EmptyState } from "../ds";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
 import { IconAlert } from "../components/Icons";
@@ -24,17 +25,16 @@ export function PortfolioPage() {
 
   if (!me) {
     return (
-      <section className="sheet" aria-labelledby="pf-title">
+      <section className="page" aria-labelledby="pf-title">
         <div className="sheet__head">
           <h1 id="pf-title">Portfolio</h1>
-          <p className="muted">Your tokens, NFTs and payments in escrow.</p>
+          <p className="muted">Your tokens, NFTs and payments in escrow, on QoreChain testnet.</p>
         </div>
-        <div className="panel empty">
-          <h2>Connect your wallet to see your portfolio</h2>
-          <button className="btn" type="button" onClick={openConnectModal}>
-            Connect QoreX
-          </button>
-        </div>
+        <EmptyState
+          title="Your assets appear here"
+          text="Connect QoreX to see your test QOR, fUSD, NFTs and payments waiting in escrow. Nothing is sent by connecting."
+          action={<Button onClick={openConnectModal}>Connect QoreX</Button>}
+        />
       </section>
     );
   }

@@ -239,7 +239,7 @@ export function PredictPage() {
         <div className="panel stack">
           <p>Connect QoreX to trade. You can browse the markets below without connecting.</p>
           <button className="btn" type="button" onClick={connect}>
-            Connect QoreX
+            Connect QoreX to predict
           </button>
         </div>
       )}

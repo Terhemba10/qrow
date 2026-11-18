@@ -359,7 +359,7 @@ export function TradePage() {
                 <p className="notice notice--warn">The perpetuals contract is being deployed to testnet. Trading opens here as soon as it’s live.</p>
               ) : !me ? (
                 <button className="btn" type="button" onClick={connect}>
-                  Connect QoreX
+                  Connect QoreX to trade
                 </button>
               ) : (
                 <OpenForm me={me} pair={pair} price={price} />

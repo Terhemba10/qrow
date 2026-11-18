@@ -178,11 +178,7 @@ export function AiPage() {
         </li>
       </ul>
 
-      {!me ? (
-        <button className="btn" type="button" onClick={connect}>
-          Connect QoreX
-        </button>
-      ) : (
+      {(
         <>
           <div className="panel stack">
             <h2>Top up credits</h2>
@@ -191,7 +187,7 @@ export function AiPage() {
             </p>
             <div className="row">
               {[5n, 20n, 50n].map((n) => (
-                <button key={n.toString()} className="btn btn--quiet" type="button" disabled={!!busy || !info.data?.treasury} onClick={() => setReview(n * 1_000_000n)}>
+                <button key={n.toString()} className="btn btn--quiet" type="button" disabled={!!busy || (!!me && !info.data?.treasury)} onClick={() => (me ? setReview(n * 1_000_000n) : connect())}>
                   Top up {n.toString()} QOR
                 </button>
               ))}
@@ -281,9 +277,15 @@ export function AiPage() {
                 {busy}
               </p>
             )}
-            <button className="btn" type="submit" disabled={!enough || !!busy || !text.trim()} aria-busy={!!busy}>
-              {enough ? `${tab === "chat" ? "Send" : "Generate"} (${prices ? qor(prices[tab]) : "…"} QOR)` : "Top up to use this"}
-            </button>
+            {me ? (
+              <button className="btn" type="submit" disabled={!enough || !!busy || !text.trim()} aria-busy={!!busy}>
+                {enough ? `${tab === "chat" ? "Send" : "Generate"} (${prices ? qor(prices[tab]) : "…"} QOR)` : "Top up to use this"}
+              </button>
+            ) : (
+              <button className="btn" type="button" onClick={connect}>
+                Connect QoreX to use AI
+              </button>
+            )}
           </form>
         </>
       )}
