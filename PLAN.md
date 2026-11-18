@@ -79,8 +79,18 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
     in-memory with a warning), checks the QOR payment on chain (recipient, amount, not reused), rate limits.
   - `web/src/pages/AiPage.tsx`: chat / image / video, price list, balance, "Top up in QoreX".
   - `web/.env.example` updated.
-- [ ] **Phase 1 check**: `npm run build`, `npm test`, `forge test`, deploy (push to main → Vercel), check every tab
-  on the live URL at desktop and phone widths.
+- [x] **Phase 1 check (18 Nov)**: `forge test` 176/176 pass; web `vitest` 102/102 pass; `npm run build` passes (it
+  runs both typechecks; the project has no separate lint script). Pushed to main → Vercel. Live checks on
+  https://qrow-app.vercel.app: `/api/price` serves live prices from Vercel; all 18 tabs render a heading at 1024 px and
+  375 px with no sideways scroll. **Not yet testable live:** trading, creating NFTs and AI actions, until the owner
+  steps below are done (the tabs say so instead of failing).
+
+## Owner steps (needed before the new tabs can transact)
+1. Fund the deployer `0xD517…cb37` (`qor165t5…68qf9`) from the faucet: about **20 test QOR** for gas, plus **≥160 fUSD**
+   (60 seeds the six markets, 100 funds the perps pool), then convert fUSD to ERC-20 (Swap tab or `npm run …`).
+2. In `contracts/`: `forge build`, `npm run window -- open --txs 20 --blocks 400 --value 20000000`,
+   `npm run deploy:sprint2`, `npm run window -- close`. I can run these as soon as the deployer is funded.
+3. Set the Vercel env vars below, then redeploy.
 
 ## Phase 2 — Figma redesign
 - [ ] a) File "Qrow — Redesign" · b) design system · c) every screen, desktop + mobile · **d) link + screenshots to
