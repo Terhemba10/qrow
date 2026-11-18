@@ -74,7 +74,7 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
     liquidation price, PnL, close, liquidate, a small insurance pool funded at deploy.
   - `web/api/price.ts` + `web/server/price.ts` (Binance + AMM price, signed), `web/src/pages/TradePage.tsx`,
     chart with `lightweight-charts` (Apache-2.0), `web/src/config/trade.ts`.
-- [ ] **7. AI tab**
+- [x] **7. AI tab**: `/api/ai` (top-up checked on chain, single use, memo bound to a browser credit key; chat via Claude Haiku 5.5, images via FLUX schnell and video via Replicate; refunds on provider failure; 30/min/IP, 12/min/key, 20 media/hour/IP) + 4 tests; AI tab with price list (0.5 / 3 / 15 QOR), balance, top-ups 5/20/50 QOR signed in QoreX. CSP opened for the IPFS gateway and Replicate media. Credits are per browser (QoreX can't sign a login message yet).
   - `web/api/ai.ts` + `web/server/ai.ts` (+ test): price list, credit ledger (Vercel KV / Upstash if set, otherwise
     in-memory with a warning), checks the QOR payment on chain (recipient, amount, not reused), rate limits.
   - `web/src/pages/AiPage.tsx`: chat / image / video, price list, balance, "Top up in QoreX".
@@ -100,4 +100,15 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
 | Real QoreX mobile in-app browser | _Owner to check on a phone. If it still fails, open `/help`, and send me what `window.qorex`/`window.ethereum` show._ |
 
 ## Env vars the owner sets in Vercel (project `qrow`)
-Filled in as each task lands; see `web/.env.example`.
+All listed with comments in `web/.env.example`.
+
+| Variable | Used by | Where to get it |
+|---|---|---|
+| `VITE_QROW_PREDICT`, `VITE_QROW_EDITIONS`, `VITE_QROW_PERPS` | Predictions, Create NFT, Trade | printed by `npm run deploy:sprint2` (contracts/) |
+| `VITE_ADMIN_ADDRESSES` | Admin controls | your admin 0x address (default: the deployer) |
+| `PINATA_JWT` | Create NFT uploads | pinata.cloud → API Keys |
+| `PRICE_SIGNER_KEY`, `QROW_PERPS_ADDRESS` | Trade (signed prices) | the deploy script creates the signer key and prints both |
+| `ANTHROPIC_API_KEY` | AI chat | console.anthropic.com (already set if Market News explain works) |
+| `REPLICATE_API_TOKEN` | AI image + video | replicate.com → API tokens |
+| `AI_TREASURY_QOR` | AI top-ups | a qor1 testnet address you control |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (or Vercel KV) | AI balances that survive restarts | Vercel → Storage → Upstash Redis (free tier) |

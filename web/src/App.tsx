@@ -28,6 +28,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { CreateNftPage } from "./pages/CreateNftPage";
 import { NftDetailPage } from "./pages/NftDetailPage";
 import { TradePage } from "./pages/TradePage";
+import { AiPage } from "./pages/AiPage";
 
 captureReferral(window.location.search);
 
@@ -87,6 +88,7 @@ export function App() {
           <Route path="/staking" element={live("staking", <StakingPage />)} />
           <Route path="/news" element={live("news", <NewsPage />)} />
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
+          <Route path="/ai" element={live("ai", <AiPage />)} />
           <Route path="/trade" element={live("trade", <TradePage />)} />
           <Route path="/create" element={live("create", <CreateNftPage />)} />
           <Route path="/nft/:kind/:id" element={live("portfolio", <NftDetailPage />)} />
