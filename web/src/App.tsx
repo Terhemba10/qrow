@@ -3,10 +3,10 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
-import { WelcomeTip } from "./components/WelcomeTip";
+import { BottomNav } from "./components/Shell";
 import { QorexConnect } from "./components/QorexConnect";
-import { TxToastHost } from "./ds";
-import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
+import { NetworkBadge, TxToastHost } from "./ds";
+import { ESCROW, IS_DEMO } from "./config/network";
 import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
 import { captureReferral } from "./lib/staking";
 import { HelpPage, PrivacyPage } from "./pages/InfoPages";
@@ -59,16 +59,13 @@ export function App() {
             ))}
             <NavLink to="/verify">Verify</NavLink>
           </nav>
-          <span className="net">{NETWORK_NAME}</span>
+          <NetworkBadge />
           <NavLink to="/help" className="help-link">
             Help
           </NavLink>
           <WalletButton />
         </div>
       </header>
-      <p className="beta-banner" role="note">
-        <strong>Public beta: QoreChain testnet,</strong> tokens have no value.
-      </p>
       {IS_DEMO && (
         <p className="demo-banner" role="note">
           Demo escrow (<span className="mono">{ESCROW.slice(0, 10)}…</span>): refunds after 10 minutes so they can be shown live. The real Qrow escrow keeps the 7-day rule.
@@ -76,7 +73,6 @@ export function App() {
       )}
       <QorexConnect />
       <TxToastHost />
-      <WelcomeTip />
       <main id="main">
         <Routes>
           <Route path="/" element={<HubPage />} />
@@ -126,6 +122,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <BottomNav />
       <footer className="footer">
         <a className="btn btn--quiet" href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
           Feedback

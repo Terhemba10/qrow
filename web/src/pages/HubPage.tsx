@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TABS, isLive } from "../config/tabs";
+import { Onboarding } from "../components/Shell";
 
 /**
  * The 3D tab hub: every tab as a floating card that tilts toward the pointer or finger and opens on click/tap.
@@ -96,6 +97,7 @@ export function HubPage() {
   const tiles = [...TABS.map((t) => ({ ...t, soon: !isLive(t.id) })), ...EXTRA.map((t) => ({ ...t, soon: false }))];
   return (
     <section className={`page hub${flat ? " hub--flat" : ""}`} aria-labelledby="hub-title">
+      <Onboarding />
       <div className="hub__head">
         <div>
           <p className="hub__kicker">QoreChain testnet · quantum-safe</p>
