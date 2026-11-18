@@ -142,3 +142,5 @@ textarea.input { padding: var(--q-s3) var(--q-s4); }
   .sheet__head { margin-bottom: var(--q-s5); }
 }
 .trade__price { font-family: var(--q-font-display); font-weight: 800; font-size: 1.875rem; line-height: 1; color: var(--q-mint); font-variant-numeric: tabular-nums; }
+/* News: each headline is a full-width 44px tap target (WCAG 2.5.5), not just the text run. */
+.headlines a { display: flex; align-items: center; min-height: var(--q-tap); padding: 4px 0; }
