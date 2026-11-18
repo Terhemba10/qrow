@@ -9,7 +9,7 @@
  *
  * Qrow's rule: open the SMALLEST window that does the job (exact tx count, few blocks, only the
  * escrow and the token as targets), and close it straight after. A leaked ECDSA key then finds
- * no window to ride on. `--drill` uses the DRILL_ env prefix.
+ * no window to ride on. `--drill` uses the DRILL_ env prefix. `--keeper` uses KEEPER_ (the hosted keeper wallet).
  */
 import {
   buildRegisterPqcKeyMsg,
@@ -28,7 +28,7 @@ const flag = (name: string) => {
   const i = args.indexOf(`--${name}`);
   return i === -1 ? undefined : args[i + 1];
 };
-const prefix = args.includes("--drill") ? "DRILL_" : "";
+const prefix = args.includes("--drill") ? "DRILL_" : args.includes("--keeper") ? "KEEPER_" : "";
 
 async function status() {
   const net = network();
