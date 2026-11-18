@@ -27,6 +27,16 @@ export function HelpPage() {
         fingerprint, face or PIN prompt from your device. There’s nothing to write down or save.
       </p>
 
+      <h2 id="phone">Use the same account on your phone</h2>
+      <p>
+        In the official <strong>QoreX</strong> app, choose <em>Restore wallet</em> and enter your recovery phrase. Only ever type it into the QoreX app itself, never into Qrow, a website, a form or a chat.{" "}
+        <strong>Qrow never asks for it.</strong>
+      </p>
+      <p>
+        Then open Qrow in the QoreX app’s dApp browser. Swaps, staking and AI top-ups work straight away. Your phone counts as a new device for contract actions (send, mint, list, trade): for your safety it
+        can act after 3 days, unless the device you first used Qrow on approves it.
+      </p>
+
       <h2 id="receipts">Receipts and verifying</h2>
       <p>
         After every transaction Qrow shows a receipt with its hash. Your receipts stay in <Link to="/portfolio">Portfolio</Link> in this browser. Press <strong>Verify on testnet</strong>, or paste any hash on the{" "}
