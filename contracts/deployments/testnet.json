@@ -149,5 +149,32 @@
       "tx": "0xab46e5843e76f33c8bdfb9c407c76e480c0788d1bd033b934e954c25be93d5a5",
       "block": 9964369
     }
+  },
+  "sprint2": {
+    "deployedAt": "2026-11-18T18:17:54.147Z",
+    "QrowPredict": {
+      "address": "0x4bcf3b1bbd1ad5ec15e668e646b8a1569551a2c9",
+      "tx": "0xafb5af7d0357990c87a249c1fd44bee5d5b42654a47235eff50dc0da137b47a6",
+      "block": 10330155
+    },
+    "QrowEditions": {
+      "address": "0x463e5c38523a0f22264380bc2eeed10615d185c0",
+      "tx": "0x4911ecd08208d209db2c7e95eb5208d14715d8c9dc0b2527c5426c0562dd54d0",
+      "block": 10330156
+    },
+    "QrowPerps": {
+      "address": "0x43208873e622e1bb9defc02e5047975e71a9afcf",
+      "tx": "0xd59cdeb0ac76233713eaf5a0fc6a2cc371a0c61cca88134811d252e5d286f43e",
+      "block": 10330158
+    },
+    "priceSigner": "0x09F2f310Ed432aFd0B475Cb5cFb8e9ce172Eb5ab",
+    "pairs": [
+      "QOR/USDT",
+      "QOR/ETH",
+      "QOR/SOL",
+      "ETH/USDT",
+      "SOL/USDT",
+      "BNB/USDT"
+    ]
   }
 }
