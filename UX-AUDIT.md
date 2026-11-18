@@ -68,3 +68,18 @@ Note: the earlier "Qrow — Redesign" file (36 frames, 18 Nov) still exists and 
 5. Figma "Qrow UI v2" (≤ 8 calls) → your approval → implement across all tabs → verify → push only after you approve.
 
 Contract addresses, on-chain logic and env vars stay as they are.
+
+## Result after the redesign (19 Nov, dev server, before = live site)
+
+| Check (19 routes × 1280 px and 375 px) | Before | After |
+|---|---|---|
+| Mobile: where content starts | 272 px | 57 px |
+| Tap targets under 44 px per page (mobile) | 20–37 | 0 (Help: 2 inline text links, allowed by WCAG 2.5.5) |
+| Text below WCAG AA contrast | 1–3 per page (measured), gradient buttons borderline | 0 |
+| Sideways scroll | none | none |
+| Page errors | none | none |
+| Review screens before signing | 4 different, 2 flows with none | 1 (TxReviewSheet) on every transaction |
+| Transaction status | inline text, lost on tab change | TxStatusToast with explorer link and a fix |
+
+Screenshots: `docs/redesign/before/` (live site) and `docs/redesign/after/` (this build), one per tab and width.
+Figma reference: https://www.figma.com/design/WDEoFO5v9khW2C1giCrytO (Qrow UI v2).

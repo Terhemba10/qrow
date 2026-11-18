@@ -151,10 +151,10 @@ export function AdminPage() {
       <div className="hub__stats hub__stats--6">
         <StatCard tone="cyan" label="Escrow payments" value={a.data?.payments !== undefined ? Number(a.data.payments) : undefined} unit="sent" />
         <StatCard tone="orange" label="Genesis NFTs minted" value={a.data?.minted !== undefined ? Number(a.data.minted) : undefined} unit="of 256" />
-        <StatCard tone="mint" label="Prediction markets" value={a.data?.markets !== undefined ? Number(a.data.markets) : undefined} unit="markets" />
+        <StatCard tone="mint" label="Prediction markets" value={a.data?.markets !== undefined ? Number(a.data.markets) : PREDICT ? undefined : 0} unit="markets" />
         <StatCard label="Market listings" value={a.data?.listings !== undefined ? Number(a.data.listings) : undefined} unit="all time" />
         <StatCard label="Coins launched" value={a.data?.coins !== undefined ? Number(a.data.coins) : undefined} unit="coins" />
-        <StatCard label="Prediction volume" value={markets.data ? Number((markets.data ?? []).reduce((s, m) => s + m.volume, 0n)) / 1e6 : undefined} format={(n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 })} unit="fUSD" />
+        <StatCard label="Prediction volume" value={markets.data ? Number((markets.data ?? []).reduce((s, m) => s + m.volume, 0n)) / 1e6 : PREDICT ? undefined : 0} format={(n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 })} unit="fUSD" />
       </div>
 
       {admin && PREDICT && me && (
