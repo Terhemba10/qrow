@@ -184,3 +184,8 @@
 .btn { transition: transform var(--q-fast) var(--q-ease), filter var(--q-fast) var(--q-ease); }
 .btn:active:not(:disabled) { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active:not(:disabled) { transform: none; } }
+
+/* 44px minimum for the older controls too (WCAG 2.5.5, UX-AUDIT #5). */
+.btn, .seg label, .linkbtn { min-height: var(--q-tap); }
+.brand { min-height: var(--q-tap); min-width: var(--q-tap); }
+.nav a { min-height: var(--q-tap); }
