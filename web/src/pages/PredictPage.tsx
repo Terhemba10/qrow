@@ -10,8 +10,6 @@ import { CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { displayAmount, parseAmount } from "../lib/amount";
 import { Outcome, pct, quoteBuy, quoteSell, SEED_MARKETS, useMarkets, usePositions, withSlippage, type MarketRow, type Position } from "../lib/predict";
-import { qorexAccount } from "../lib/staking";
-import { evmToQor } from "@qorechain/sdk";
 
 const FUSD = tokenBySymbol("fUSD")!;
 const enc = (types: string[], values: unknown[]) => keccak256(encodeAbiParameters(types.map((t) => ({ type: t })), values));
@@ -19,55 +17,6 @@ const fusd = (u: bigint) => displayAmount(u, FUSD.decimals);
 const day = (t: number) => new Date(t * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 const OUT: Record<Outcome, string> = { [Outcome.None]: "", [Outcome.Yes]: "YES", [Outcome.No]: "NO", [Outcome.Invalid]: "Invalid (refunds)" };
 
-const AUTH_KEY = (a: string) => `qrow.predict.auth.${a.toLowerCase()}`;
-const readAuth = (a?: string) => {
-  try {
-    return !!a && localStorage.getItem(AUTH_KEY(a)) === "1";
-  } catch {
-    return false;
-  }
-};
-
-/** The authorise step: QoreX confirms which account is trading (its approval prompt), matched to the connected one. */
-function Authorise({ me, onDone }: { me: Address; onDone: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string>();
-  return (
-    <div className="panel stack">
-      <h2>Authorise Predictions</h2>
-      <p className="muted">
-        QoreX asks you to confirm the account that will trade. Nothing is sent and nothing is spent. Each trade is approved in QoreX later, with your quantum-safe key.
-      </p>
-      {err && <p className="field-error">{err}</p>}
-      <button
-        className="btn"
-        type="button"
-        disabled={busy}
-        aria-busy={busy}
-        onClick={async () => {
-          setBusy(true);
-          setErr(undefined);
-          try {
-            const qor = await qorexAccount();
-            if (qor !== evmToQor(me)) throw new Error("QoreX is on a different account from the one Qrow shows. Choose the same account in QoreX.");
-            try {
-              localStorage.setItem(AUTH_KEY(me), "1");
-            } catch {
-              /* private mode: ask again next visit */
-            }
-            onDone();
-          } catch (e) {
-            setErr(e instanceof Error ? e.message : String(e));
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        {busy ? "Approve in QoreX…" : "Authorise in QoreX"}
-      </button>
-    </div>
-  );
-}
 
 function ProbBar({ p }: { p: number }) {
   return (
@@ -251,10 +200,10 @@ export function PredictPage() {
   const markets = useMarkets();
   const rows = markets.data ?? [];
   const positions = usePositions(me, rows.map((r) => r.id));
-  const [authed, setAuthed] = useState(() => readAuth(me));
   const [open, setOpen] = useState<bigint>();
   const [filter, setFilter] = useState<string>("All");
-  const ok = authed || readAuth(me);
+  // The separate "Authorise" step is gone: every trade checks the QoreX account itself (once per session).
+  const ok = true;
   const cats = ["All", ...new Set(rows.map((r) => r.category))];
   const shown = rows.filter((r) => filter === "All" || r.category === filter);
   const current = rows.find((r) => r.id === open);
@@ -294,7 +243,6 @@ export function PredictPage() {
           </button>
         </div>
       )}
-      {PREDICT && me && !ok && <Authorise me={me} onDone={() => setAuthed(true)} />}
 
       {PREDICT && (
         <>

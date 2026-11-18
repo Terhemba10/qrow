@@ -1,4 +1,5 @@
 import { useConnectQorex } from "../components/QorexConnect";
+import { explainTxError, TxReviewSheet, txToast } from "../ds";
 import { evmToQor } from "@qorechain/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useMemo, useState } from "react";
@@ -108,7 +109,6 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
     [balances.data, amountIn, coinIn, balIn, balQor, q, slippage],
   );
   const minOut = q ? minReceived(q.amountOut, slippage) : 0n;
-  const canSwap = !!qor && !!pool && !!q && problems.length === 0 && !busy && qorexAvailable();
 
   const flip = () => {
     if (!poolFor(list, outDenom, inDenom)) return;
@@ -122,6 +122,9 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
     setError(undefined);
     setDone(undefined);
     setBusy("qorex");
+    const tid = `swap:${Date.now()}`;
+    const title = `Swap ${displayAmount(amountIn, coinIn.decimals)} ${coinIn.symbol}`;
+    txToast({ id: tid, state: "pending", title, text: "Approve in QoreX…" });
     try {
       const signer = await qorexAccount();
       if (!signer) throw new Error("QoreX didn’t share an account. Unlock QoreX and try again.");
@@ -137,10 +140,17 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
       setDone(base);
       setAmount("");
       setBusy("chain");
+      setReviewing(false);
+      txToast({ id: tid, state: "pending", title, text: "Waiting for the network…", hash: r.txHash });
       const t = await waitForTx(r.txHash);
-      if (!t) setDone({ ...base, error: "Sent, but not confirmed yet. It usually takes a few seconds: check the explorer in a minute." });
-      else if (t.code !== 0) setDone({ ...base, status: "failed", height: t.height, time: t.time, error: plainSwapError(t.rawLog) });
-      else {
+      if (!t) {
+        setDone({ ...base, error: "Sent, but not confirmed yet. It usually takes a few seconds: check the explorer in a minute." });
+        txToast({ id: tid, state: "pending", title, text: "Sent. Not confirmed yet: check History in a minute.", hash: r.txHash });
+      } else if (t.code !== 0) {
+        setDone({ ...base, status: "failed", height: t.height, time: t.time, error: plainSwapError(t.rawLog) });
+        txToast({ id: tid, state: "failed", title, text: plainSwapError(t.rawLog), hash: r.txHash });
+      } else {
+        txToast({ id: tid, state: "confirmed", title, text: "Saved to History.", hash: r.txHash });
         const s = swapFromEvents(t.events);
         setDone({ ...base, status: "confirmed", height: t.height, time: t.time, got: s?.amountOut, spent: s?.amountIn });
         if (me)
@@ -156,7 +166,9 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
       void pools.refetch();
     } catch (e) {
       const m = e instanceof Error ? e.message : "";
+      const x = explainTxError(e);
       setError(/reject|denied|cancel/i.test(m) ? "You cancelled in QoreX. Nothing was swapped." : m || "QoreX refused the request.");
+      txToast({ id: tid, state: "failed", title, text: /reject|denied|cancel/i.test(m) ? "You cancelled in QoreX. Nothing was swapped." : x.text, fix: x.fix });
     } finally {
       setBusy(false);
     }
@@ -264,38 +276,39 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
             )
           )}
 
-          {reviewing && q && (
-            <div className="panel stack swap-confirm" aria-label="Confirm the swap">
-              <p className="label">You pay</p>
-              <p className="confirm__amount fig">
-                {displayAmount(amountIn, coinIn.decimals)} <span className="confirm__unit">{coinIn.symbol}</span>
-              </p>
-              <p className="label">You receive at least</p>
-              <p className="fig">
-                {displayAmount(minOut, coinOut.decimals)} {coinOut.symbol} <span className="hint">(about {displayAmount(q.amountOut, coinOut.decimals)})</span>
-              </p>
-              <p className="hint">Exchange fee 0.30%, network fee about 0.06 QOR. One approval in QoreX.</p>
-            </div>
+          {q && (
+            <TxReviewSheet
+              open={reviewing}
+              review={{
+                title: `Swap ${coinIn.symbol} for ${coinOut.symbol}`,
+                send: [{ units: amountIn, decimals: coinIn.decimals, symbol: coinIn.symbol }],
+                get: [{ units: q.amountOut, decimals: coinOut.decimals, symbol: coinOut.symbol, estimate: true }],
+                facts: [
+                  { name: "You get at least", value: `${displayAmount(minOut, coinOut.decimals)} ${coinOut.symbol}` },
+                  { name: "Exchange fee", value: "0.30% (to the pool)" },
+                ],
+                fee: { total: { units: BigInt(SWAP_GAS / 10), decimals: 6, symbol: "QOR" }, lines: [{ label: "Network fee (QoreX charges the whole gas limit)", amount: { units: BigInt(SWAP_GAS / 10), decimals: 6, symbol: "QOR" } }] },
+                warning: "The pool’s price can move while you confirm. If you would get less than the minimum, nothing is swapped.",
+              }}
+              busy={!!busy}
+              busyText={busy === "chain" ? "Waiting for the network…" : "Approve in QoreX…"}
+              problem={error ? <p className="field-error" role="alert">{error}</p> : undefined}
+              onConfirm={() => void swap()}
+              onCancel={() => {
+                setReviewing(false);
+                setError(undefined);
+              }}
+            />
           )}
 
           {!qor ? (
             <button className="btn btn--block" type="button" onClick={openConnectModal}>
-              Connect QoreX
+              Connect QoreX to swap
             </button>
           ) : !qorexAvailable() ? (
             <BlockerNote b={qorexBlocker("Swaps are approved in QoreX.")} />
           ) : (
             <div className="row">
-              {reviewing ? (
-                <>
-                  <button className="btn" type="button" disabled={!canSwap} onClick={() => void swap()}>
-                    {busy === "qorex" ? "Approve in QoreX…" : busy === "chain" ? "Waiting for the chain…" : "Swap in QoreX"}
-                  </button>
-                  <button className="btn btn--quiet" type="button" disabled={!!busy} onClick={() => setReviewing(false)}>
-                    Change
-                  </button>
-                </>
-              ) : (
                 <button
                   className="btn btn--block"
                   type="button"
@@ -307,7 +320,6 @@ export function SwapPage({ embedded = false }: { embedded?: boolean } = {}) {
                 >
                   {q ? "Review swap" : "Enter an amount"}
                 </button>
-              )}
             </div>
           )}
           {error && (

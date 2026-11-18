@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { explainTxError, TxReviewSheet, txToast } from "../ds";
 import { useAccount } from "wagmi";
 import { evmToQor } from "@qorechain/sdk";
 import { ReceiptCard } from "../components/ReceiptCard";
@@ -18,6 +19,8 @@ const fmtDate = new Intl.DateTimeFormat(undefined, {
 });
 
 type Pending = {
+  /** uqor this action moves (stake, lock), shown as You send. */
+  send?: bigint;
   title: string;
   lines: string[];
   warn?: string[];
@@ -59,6 +62,8 @@ export function StakingPage() {
     if (!pending) return;
     setBusy(true);
     setResult(undefined);
+    const tid = `stake:${Date.now()}`;
+    txToast({ id: tid, state: "pending", title: pending.title, text: "Approve in QoreX…" });
     try {
       const signer = qorexAddr ?? (await qorexAccount());
       if (!signer) throw new Error("QoreX didn’t share an account. Unlock QoreX and try again.");
@@ -76,10 +81,13 @@ export function StakingPage() {
         at: new Date().toISOString(),
       };
       if (address) addReceipt(address, receipt);
+      txToast({ id: tid, state: "confirmed", title: pending.title, text: "Saved to History.", hash: r.txHash });
       setResult({ ok: true, text: "", receipt });
       setPending(undefined);
       void position.refetch();
     } catch (e) {
+      const x = explainTxError(e);
+      txToast({ id: tid, state: "failed", title: pending.title, text: x.text, fix: x.fix });
       setResult({
         ok: false,
         text: e instanceof Error ? e.message : "QoreX refused the request.",
@@ -99,6 +107,7 @@ export function StakingPage() {
     if (v?.jailed) warn.push("This validator is jailed and earns no rewards.");
     const memo = firstDelegation && ref ? REF_MEMO(ref) : undefined;
     setPending({
+      send: a.units,
       title: "Stake QOR",
       lines: [
         `Stake ${q(a.units)} with ${v?.moniker ?? validator} (${((v?.commission ?? 0) * 100).toFixed(0)}% commission).`,
@@ -121,6 +130,7 @@ export function StakingPage() {
     if (a.units > d.amount) warn.push(`You only have ${q(d.amount)} staked with this validator.`);
     const term = LOCK_TERMS.find((t) => t.months === months)!;
     setPending({
+      send: parseAmount(lockAmount, 6).ok ? (parseAmount(lockAmount, 6) as { units: bigint }).units : undefined,
       title: `Lock for ${term.label}`,
       lines: [
         `Lock ${q(a.units)} of your stake for ${term.label} for a +${((tier?.bonusBps ?? 0) / 100).toFixed(1)}% APY bonus on top of staking rewards.`,
@@ -191,27 +201,26 @@ export function StakingPage() {
       </div>
 
       {pending && (
-        <section className="panel stack" aria-labelledby="stk-confirm">
-          <h2 id="stk-confirm">{pending.title}</h2>
-          {pending.warn?.map((w) => (
-            <p key={w} className="notice notice--warn">
-              {w}
-            </p>
-          ))}
+        <TxReviewSheet
+          open
+          review={{
+            title: pending.title,
+            send: pending.send ? [{ units: pending.send, decimals: 6, symbol: "QOR" }] : undefined,
+            fee: { total: { units: BigInt(40_000 * pending.messages.length), decimals: 6, symbol: "QOR" }, estimate: true },
+            warning: pending.warn && pending.warn.length ? pending.warn.join(" ") : undefined,
+          }}
+          busy={busy}
+          busyText="Approve in QoreX…"
+          problem={!hasQorex ? <p className="notice notice--warn">Staking is approved in QoreX. Install QoreX to continue.</p> : undefined}
+          onConfirm={() => void sign()}
+          onCancel={() => setPending(undefined)}
+        >
           <ul className="facts-list">
             {pending.lines.map((l) => (
               <li key={l}>{l}</li>
             ))}
           </ul>
-          <div className="row">
-            <button className="btn" type="button" disabled={busy || !hasQorex} aria-busy={busy} onClick={() => void sign()}>
-              {busy ? "Approve in QoreX…" : "Approve in QoreX"}
-            </button>
-            <button className="btn btn--quiet" type="button" disabled={busy} onClick={() => setPending(undefined)}>
-              Back
-            </button>
-          </div>
-        </section>
+        </TxReviewSheet>
       )}
       {result?.receipt && <ReceiptCard r={result.receipt} />}
       {result && !result.ok && (

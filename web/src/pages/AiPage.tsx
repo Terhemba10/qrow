@@ -7,6 +7,7 @@ import { useConnectQorex } from "../components/QorexConnect";
 import { CHAIN } from "../config/network";
 import { displayAmount } from "../lib/amount";
 import { qorexAccount, signInQorex } from "../lib/staking";
+import { explainTxError, TxReviewSheet, txToast } from "../ds";
 
 type Op = "chat" | "image" | "video";
 const qor = (uqor: bigint | string) => displayAmount(BigInt(uqor), 6);
@@ -62,6 +63,7 @@ export function AiPage() {
     if (bal.data?.ok) setBalance(BigInt(bal.data.balance));
   }, [bal.data]);
   const [tab, setTab] = useState<Op>("chat");
+  const [review, setReview] = useState<bigint>();
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState<string>();
   const [msgs, setMsgs] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -76,6 +78,9 @@ export function AiPage() {
     if (!me || !key || !info.data?.treasury) return;
     setErr(undefined);
     setBusy("Approve the payment in QoreX…");
+    const tid = `ai-topup:${Date.now()}`;
+    const title = `Top up ${qor(uqor)} QOR`;
+    txToast({ id: tid, state: "pending", title, text: "Approve in QoreX…" });
     try {
       const from = await qorexAccount();
       if (from !== evmToQor(me)) throw new Error("QoreX is on a different account from the one Qrow shows.");
@@ -86,6 +91,8 @@ export function AiPage() {
         const r = await call<{ balance: string }>({ op: "topup", key, hash: txHash });
         if (r.ok) {
           setBalance(BigInt(r.balance));
+          setReview(undefined);
+          txToast({ id: tid, state: "confirmed", title, text: `${qor(r.balance)} QOR of credits.`, hash: txHash });
           return;
         }
         if (r.reason !== "not_found_yet") throw new Error(why(r.reason));
@@ -95,6 +102,8 @@ export function AiPage() {
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
       setErr(/reject|denied|cancel/i.test(m) ? "You cancelled in QoreX. Nothing was sent." : m);
+      const x = explainTxError(e);
+      txToast({ id: tid, state: "failed", title, text: /reject|denied|cancel/i.test(m) ? "You cancelled in QoreX. Nothing was sent." : x.text, fix: x.fix });
     } finally {
       setBusy(undefined);
     }
@@ -182,12 +191,37 @@ export function AiPage() {
             </p>
             <div className="row">
               {[5n, 20n, 50n].map((n) => (
-                <button key={n.toString()} className="btn btn--quiet" type="button" disabled={!!busy || !info.data?.treasury} onClick={() => void topUp(n * 1_000_000n)}>
+                <button key={n.toString()} className="btn btn--quiet" type="button" disabled={!!busy || !info.data?.treasury} onClick={() => setReview(n * 1_000_000n)}>
                   Top up {n.toString()} QOR
                 </button>
               ))}
             </div>
           </div>
+
+          {review !== undefined && info.data?.treasury && (
+            <TxReviewSheet
+              open
+              review={{
+                title: `Top up ${qor(review)} QOR of credits`,
+                send: [{ units: review, decimals: 6, symbol: "QOR" }],
+                recipient: { label: "Qrow AI wallet", address: info.data.treasury },
+                facts: [
+                  { name: "You get", value: `${qor(review)} QOR of AI credits` },
+                  { name: "That’s about", value: `${Math.floor(Number(review) / 500_000)} chats or ${Math.floor(Number(review) / 3_000_000)} images` },
+                ],
+                fee: { total: { units: 20_000n, decimals: 6, symbol: "QOR" }, estimate: true },
+                warning: "Credits belong to this browser. Test QOR only, no real money.",
+              }}
+              busy={!!busy}
+              busyText={busy}
+              problem={err ? <p className="field-error" role="alert">{err}</p> : undefined}
+              onConfirm={() => void topUp(review)}
+              onCancel={() => {
+                setReview(undefined);
+                setErr(undefined);
+              }}
+            />
+          )}
 
           <div className="seg" role="radiogroup" aria-label="AI tool">
             {(["chat", "image", "video"] as const).map((o) => (
