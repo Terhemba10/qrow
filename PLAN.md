@@ -93,8 +93,17 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
 3. Set the Vercel env vars below, then redeploy.
 
 ## Phase 2 — Figma redesign
-- [ ] a) File "Qrow — Redesign" · b) design system · c) every screen, desktop + mobile · **d) link + screenshots to
-  the owner: STOP for approval** · e) implement and redeploy.
+- [x] a) File **"Qrow — Redesign"**: https://www.figma.com/design/reR4hcTV9Z0u7eqRG1bmdG
+- [x] b) Design system page: 13 colour + 10 size variables, 9 text styles (Anton display, Inter text), components:
+  Button (Primary/Sky/Orange/Mint/Ghost pills), Pill, Wallet chip, Input, Stat card + sparkline, Activity panel,
+  Tab tile (5 accents), Top nav, Modal.
+- [x] c) Screens page: 18 screens × desktop 1440 + mobile 390 = 36 frames (Hub, Send, Receive, NFT Shop, NFT Market,
+  Create NFT, Portfolio, NFT detail, Staking, Market News, Launch, Predictions, Trade, AI, Admin, Connect modal,
+  signing state, success receipt). Review page: contact sheets → `docs/redesign/review-desktop.png`, `review-mobile.png`.
+- [ ] **d) Owner review: waiting for approval before any code changes.**
+- [ ] e) Implement and redeploy.
+- Note: the Figma account is a Starter plan with a View seat: Figma allows **20 MCP calls per month** there. Phase 2
+  used about 9; Phase 3 (prototype wiring + video export) needs a few more. A Dev or Full seat removes the limit.
 
 ## Phase 3 — Prototype + walkthrough
 - [ ] a) Clickable prototype · b) `docs/qrow-walkthrough.mp4` (Figma export, or Playwright on the live site) ·
