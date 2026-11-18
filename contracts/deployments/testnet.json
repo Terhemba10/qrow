@@ -175,6 +175,43 @@
       "ETH/USDT",
       "SOL/USDT",
       "BNB/USDT"
-    ]
+    ],
+    "seeding": {
+      "seededAt": "2026-11-18T18:24:10.452Z",
+      "markets": [
+        {
+          "question": "Will BTC close above $100,000 on 31 Dec 2026 (Binance BTC/USDT daily close)?",
+          "endTime": 1798741452,
+          "tx": "0xdbf2f60253fb28262f2f05c8cd091b30e233ad3521b04dace4268de22599ec0b"
+        },
+        {
+          "question": "Will ETH trade above $5,000 at any time before 31 Dec 2026?",
+          "endTime": 1798741452,
+          "tx": "0x96adec4955e30acf2ff46f93d371d778d97b7971ff3e3ca33e8f017e9531976a"
+        },
+        {
+          "question": "Will QOR's price on the testnet QOR/fUSD pool be above 1 fUSD on 31 Dec 2026?",
+          "endTime": 1798741452,
+          "tx": "0x7003ea785631acd0eed4433bace15cdb2dbb04fd6a6de8ae0337f18e9249bb3e"
+        },
+        {
+          "question": "Will QoreChain mainnet process more than 1 million transactions by 31 Jan 2027?",
+          "endTime": 1801419852,
+          "tx": "0x978dc878f0a38a52b41315ce49ea14f56260c6f0825f803641a942b3dd767105"
+        },
+        {
+          "question": "Will SOL close above $300 on 31 Dec 2026 (Binance SOL/USDT daily close)?",
+          "endTime": 1798741452,
+          "tx": "0xe33adb080e5e2355f04abdac100ec548c8ad513c59c4010b759564fe958a49a9"
+        },
+        {
+          "question": "Will Qrow reach 1,000 testnet users before the People's Choice vote ends (15 Dec 2026)?",
+          "endTime": 1797359052,
+          "tx": "0x17b7940b1d32603eebde88e04c967b4f040450e0f87f1506e0f96773af6d2622"
+        }
+      ],
+      "poolTx": "0x8dffb1c6220ac7c65473b44742bc6d4a4313bef89e0b0e97ae994b4cdd6b8416",
+      "poolFunded": 100
+    }
   }
 }

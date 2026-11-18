@@ -33,7 +33,9 @@
     "authz-probe": "tsx --env-file=.env scripts/authz-probe.ts",
     "smoke:device": "tsx --env-file=.env scripts/smoke-device.ts",
     "smoke:oneclick": "tsx --env-file=.env scripts/smoke-oneclick.ts",
-    "deploy:sprint2": "tsx --env-file=.env scripts/deploy-sprint2.ts"
+    "deploy:sprint2": "tsx --env-file=.env scripts/deploy-sprint2.ts",
+    "convert": "tsx --env-file=.env scripts/convert.ts",
+    "seed:sprint2": "tsx --env-file=.env scripts/seed-sprint2.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
