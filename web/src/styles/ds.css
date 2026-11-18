@@ -172,3 +172,6 @@
   .q-skel, .q-btn__spin { animation-duration: 0s; animation-iteration-count: 1; }
   .q-sheet, .q-sheet-backdrop, .q-toast, .q-toast__icon { animation: none; }
 }
+.q-sheet__intro { margin: 0 0 var(--q-s4); color: var(--q-muted); }
+.q-sheet__intro > * { margin-top: 0; }
+.q-sheet .notice, .q-sheet .blocker { margin: 0; }

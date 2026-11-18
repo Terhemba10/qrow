@@ -277,3 +277,19 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
     if (device) wipe(device);
   }
 }
+
+/**
+ * The fee shown on the review sheet, from the silent checks (all test QOR, 6 decimals). Measured on testnet
+ * (docs/TEST_NOTES.md): a contract step costs about 0.1–0.3 QOR in gas at the chain minimum; the QoreX approval
+ * about 0.03–0.1 QOR. `moved` is QOR sent to this device to pay its own fees later (not spent yet).
+ */
+export function estimateFee(pre: Preflight): { totalUqor: bigint; lines: { label: string; uqor: bigint }[]; movedUqor: bigint } {
+  const lines: { label: string; uqor: bigint }[] = [];
+  const qorexMsgs = (pre.needsTopUp ? 1 : 0) + (pre.needsGrant ? 1 : 0) + (pre.convert > 0n ? 1 : 0) + (pre.windowOpen || qorexRefusesWindow() ? 0 : 1);
+  if (qorexMsgs) lines.push({ label: "QoreX approval", uqor: BigInt(25_000 * qorexMsgs + 10_000) });
+  if (pre.firstTime) lines.push({ label: "First-time set-up on this device", uqor: 330_000n });
+  if (pre.convert > 0n) lines.push({ label: "Convert tokens for the contract", uqor: 50_000n });
+  if (pre.needsApproval) lines.push({ label: "Allow the token amount", uqor: 35_000n });
+  lines.push({ label: "The action itself", uqor: 150_000n });
+  return { totalUqor: lines.reduce((s, l) => s + l.uqor, 0n), lines, movedUqor: pre.needsTopUp ? DEVICE_TOPUP_UQOR : 0n };
+}

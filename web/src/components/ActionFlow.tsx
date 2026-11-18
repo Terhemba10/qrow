@@ -1,23 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { usePublicClient } from "wagmi";
 import { CHAIN } from "../config/network";
 import { setUpThisDevice } from "../lib/appKey";
-import { preflight, runAction, WINDOW_GUIDE, WindowBlocker, type ActionPlan, type Blocker, type Phase } from "../lib/action";
+import { estimateFee, preflight, runAction, WINDOW_GUIDE, WindowBlocker, type ActionPlan, type Blocker, type Phase } from "../lib/action";
 import { readWindow } from "../lib/xvm";
 import type { Address } from "viem";
 import { addReceipt, type Receipt } from "../lib/receipts";
 import { explainError } from "./PqActionPanel";
 import { IconAlert } from "./Icons";
 import { ReceiptCard } from "./ReceiptCard";
+import { explainTxError, TxReviewSheet, txToast } from "../ds";
 
 const PHASE: Record<Phase, string> = {
-  device: "Unlocking this device (fingerprint, face or PIN)…",
+  device: "Confirm it’s you on this device (fingerprint, face or PIN)…",
   qorex: "Approve in QoreX…",
-  setup: "Setting up secure contract actions (first time only)…",
-  convert: "Converting your tokens for the contract…",
-  sending: "Sending and waiting for the block…",
+  setup: "Getting this device ready (first time only)…",
+  convert: "Preparing your tokens…",
+  sending: "Sending. Waiting for the network…",
 };
 
 export type ReceiptDraft = Omit<Receipt, "hash" | "at" | "steps">;
@@ -94,16 +95,20 @@ export function WindowGuide({ user, onReady }: { user: Address; onReady: () => v
 }
 
 /**
- * Every contract action: one confirm screen, one QoreX approval. Checks run silently; if one fails,
- * only that one shows, with one fix. Ends with the receipt and its hash.
+ * Every contract action: ONE review sheet (TxReviewSheet: what you send, the fee and its parts, the contract, the
+ * network) and one "Confirm in QoreX". Checks run silently while the sheet is open; a blocker replaces the button
+ * with its one fix. Progress and the result go to a status toast that stays on screen across tabs; the receipt
+ * is saved to History and shown where the action started.
  */
 export function ActionFlow(props: {
   plan: ActionPlan;
   title: string;
   details: { name: string; value: string }[];
+  /** Kept for callers; the sheet always says "Confirm in QoreX" (one action name everywhere). */
   confirmLabel: string;
-  /** Hide the heading when the page above already says what this is (e.g. the Send confirm sheet). */
   hideTitle?: boolean;
+  /** Context shown inside the sheet under the title. */
+  summary?: ReactNode;
   receipt: (txHash: string) => ReceiptDraft;
   onDone?: (txHash: string) => void;
   onCancel: () => void;
@@ -111,6 +116,7 @@ export function ActionFlow(props: {
   const client = usePublicClient({ chainId: CHAIN.id })!;
   const [phase, setPhase] = useState<Phase>();
   const [error, setError] = useState<string>();
+  const [fixLink, setFixLink] = useState<{ label: string; to?: string }>();
   const [blocker, setBlocker] = useState<Blocker>();
   const [done, setDone] = useState<Receipt>();
   const [adding, setAdding] = useState<"busy" | "proposed">();
@@ -139,20 +145,34 @@ export function ActionFlow(props: {
   });
   const pre = check.data;
   const shown = blocker ?? pre?.blocker;
+  const toastId = `${props.plan.contract}:${props.title}`;
 
   async function go() {
     if (!pre || pre.blocker) return;
     setError(undefined);
+    setFixLink(undefined);
     setBlocker(undefined);
+    txToast({ id: toastId, state: "pending", title: props.title, text: "Approve in QoreX, then confirm on this device." });
     try {
-      const r = await runAction(client, props.plan, pre, setPhase);
+      const r = await runAction(client, props.plan, pre, (p) => {
+        setPhase(p);
+        txToast({ id: toastId, state: "pending", title: props.title, text: PHASE[p] });
+      });
       const rec: Receipt = { ...props.receipt(r.txHash), hash: r.txHash, at: new Date().toISOString(), steps: r.steps };
       addReceipt(props.plan.user, rec);
+      txToast({ id: toastId, state: "confirmed", title: props.title, text: "Saved to History.", hash: r.txHash });
       setDone(rec);
       props.onDone?.(r.txHash);
     } catch (e) {
-      if (e instanceof WindowBlocker) setBlocker(e.blocker);
-      else setError(explainError(e));
+      if (e instanceof WindowBlocker) {
+        setBlocker(e.blocker);
+        txToast({ id: toastId, state: "failed", title: props.title, text: "One more step: open Qrow’s access window in QoreX.", fix: { label: "How to open it", to: "/help#window" } });
+      } else {
+        const x = explainTxError(e);
+        setError(x.text === String((e as Error)?.message ?? e) ? explainError(e) : x.text);
+        setFixLink(x.fix);
+        txToast({ id: toastId, state: "failed", title: props.title, text: x.text, fix: x.fix });
+      }
       void check.refetch();
     } finally {
       setPhase(undefined);
@@ -161,61 +181,63 @@ export function ActionFlow(props: {
 
   if (done) return <ReceiptCard r={done} />;
 
+  const fee = pre && !pre.blocker ? estimateFee(pre) : undefined;
+  const QOR = { decimals: 6, symbol: "QOR" };
+  const a = props.plan.approve;
+  /** Blocks the action until fixed (the button is replaced by the fix). */
+  const blocking =
+    adding === "proposed" ? (
+      <p className="notice" role="status">
+        This device is added. For your safety it can act in 3 days; your other device can cancel it before then.
+      </p>
+    ) : shown?.id === "window" ? (
+      <WindowGuide
+        user={props.plan.user}
+        onReady={() => {
+          setBlocker(undefined);
+          void check.refetch();
+        }}
+      />
+    ) : shown ? (
+      <BlockerNote b={shown} onFix={shown.id === "device" ? () => void addDevice() : undefined} fixing={adding === "busy"} />
+    ) : undefined;
+  /** Went wrong this time; Confirm stays available to try again. */
+  const notice = error ? (
+    <p className="field-error" role="alert">
+      <IconAlert /> {error} {fixLink?.to && <Link to={fixLink.to}>{fixLink.label}</Link>}
+    </p>
+  ) : check.isError ? (
+    <p className="hint">Couldn’t finish the checks. Press Confirm to try again.</p>
+  ) : undefined;
+
   return (
-    <section className="panel signflow stack" aria-label={props.title}>
-      {!props.hideTitle && <h3>{props.title}</h3>}
-      {props.details.length > 0 && (
-        <dl className="facts">
-          {props.details.map((d) => (
-            <div key={d.name}>
-              <dt>{d.name}</dt>
-              <dd className="fig verify__value">{d.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      <div aria-live="polite" className="stack">
-
-      {adding === "proposed" ? (
-        <p className="notice" role="status">
-          This device is added. For your safety it can act in 3 days; your other device can cancel it before then.
-        </p>
-      ) : shown?.id === "window" ? (
-        <WindowGuide
-          user={props.plan.user}
-          onReady={() => {
-            setBlocker(undefined);
-            void check.refetch();
-          }}
-        />
-      ) : shown ? (
-        <BlockerNote b={shown} onFix={shown.id === "device" ? () => void addDevice() : undefined} fixing={adding === "busy"} />
-      ) : (
-        pre?.firstTime && !phase && <p className="hint">First time only: this one approval also turns on secure contract actions for this device.</p>
-      )}
-      {check.isError && !shown && <p className="hint">Couldn’t finish the checks just now: Qrow will retry when you press the button.</p>}
-      {phase && (
-        <p className="hint" aria-busy="true">
-          {PHASE[phase]}
-        </p>
-      )}
-      {error && (
-        <p className="field-error" role="alert">
-          <IconAlert /> {error}
-        </p>
-      )}
-      </div>
-
-      <div className="row">
-        {!shown && (
-          <button className="btn" type="button" disabled={!!phase || check.isFetching || (!pre && !check.isError)} onClick={() => (pre ? void go() : void check.refetch())}>
-            {phase ? "Working…" : check.isFetching && !pre ? "Checking…" : props.confirmLabel}
-          </button>
-        )}
-        <button className="btn btn--quiet" type="button" disabled={!!phase} onClick={props.onCancel}>
-          Back
-        </button>
-      </div>
-    </section>
+    <>
+      <p className="hint" aria-live="polite">
+        {phase ? PHASE[phase] : "Review it in the panel that opened."}
+      </p>
+      <TxReviewSheet
+        open
+        review={{
+          title: props.title,
+          send: a ? [{ units: a.amount, decimals: a.decimals, symbol: a.symbol }] : undefined,
+          recipient: { label: "Qrow contract", address: props.plan.contract },
+          facts: [
+            ...props.details.map((d) => ({ name: d.name, value: d.value })),
+            ...(fee && fee.movedUqor > 0n ? [{ name: "Moved to this device", value: "1 QOR for its future fees (first time)" }] : []),
+          ],
+          fee: fee ? { total: { units: fee.totalUqor, ...QOR }, estimate: true, lines: fee.lines.map((l) => ({ label: l.label, amount: { units: l.uqor, ...QOR } })) } : undefined,
+          warning: pre?.firstTime && !phase ? "First time only: this one approval also turns on secure contract actions for this device." : undefined,
+        }}
+        busy={!!phase || (check.isFetching && !pre)}
+        busyText={phase ? PHASE[phase] : "Checking…"}
+        problem={blocking}
+        hideConfirm={!!blocking && shown?.id !== "device"}
+        onConfirm={() => (pre ? void go() : void check.refetch())}
+        onCancel={props.onCancel}
+      >
+        {props.summary}
+        {notice}
+      </TxReviewSheet>
+    </>
   );
 }

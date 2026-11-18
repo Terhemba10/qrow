@@ -43,6 +43,10 @@ export function TxReviewSheet(props: {
   problem?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Context shown under the title (e.g. the big recipient check on NFT sends). */
+  children?: ReactNode;
+  /** Hide the confirm button (e.g. while a guide replaces it). */
+  hideConfirm?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -83,6 +87,7 @@ export function TxReviewSheet(props: {
         <h2 className="q-sheet__title" id={titleId}>
           {r.title}
         </h2>
+        {props.children && <div className="q-sheet__intro">{props.children}</div>}
         <dl className="q-sheet__rows">
           {r.send?.map((a, i) => (
             <div className="q-sheet__row" key={`s${i}`}>
@@ -158,9 +163,11 @@ export function TxReviewSheet(props: {
               {props.busyText}
             </p>
           )}
-          <Button block loading={props.busy} disabled={!!props.problem} onClick={props.onConfirm}>
-            {props.confirmLabel ?? "Confirm in QoreX"}
-          </Button>
+          {!props.hideConfirm && (
+            <Button block loading={props.busy} disabled={!!props.problem} onClick={props.onConfirm}>
+              {props.confirmLabel ?? "Confirm in QoreX"}
+            </Button>
+          )}
           <Button block variant="ghost" disabled={props.busy} onClick={props.onCancel}>
             Cancel
           </Button>

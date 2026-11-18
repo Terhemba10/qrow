@@ -70,8 +70,8 @@ export function PqActionPanel(props: {
   const tok = props.approve ? tokenByAddress(props.approve.token) : undefined;
   return (
     <div className="stack">
-      <div>{props.summary}</div>
       <ActionFlow
+        summary={props.summary}
         title={props.title}
         details={props.details ?? []}
         confirmLabel={props.confirmLabel}
