@@ -5,6 +5,7 @@ import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
 import { WelcomeTip } from "./components/WelcomeTip";
 import { QorexConnect } from "./components/QorexConnect";
+import { TxToastHost } from "./ds";
 import { ESCROW, IS_DEMO, NETWORK_NAME } from "./config/network";
 import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
 import { captureReferral } from "./lib/staking";
@@ -34,6 +35,7 @@ import { HistoryPage } from "./pages/HistoryPage";
 captureReferral(window.location.search);
 
 // Dev-only research page: import.meta.env.DEV is false in production builds, so this chunk isn't emitted.
+const DsGalleryPage = import.meta.env.DEV ? lazy(() => import("./pages/DsGalleryPage").then((m) => ({ default: m.DsGalleryPage }))) : null;
 const QorexCheckPage = import.meta.env.DEV ? lazy(() => import("./pages/QorexCheckPage").then((m) => ({ default: m.QorexCheckPage }))) : null;
 
 const live = (id: TabId, page: ReactElement) => (isLive(id) ? page : <ComingSoon id={id} />);
@@ -73,6 +75,7 @@ export function App() {
         </p>
       )}
       <QorexConnect />
+      <TxToastHost />
       <WelcomeTip />
       <main id="main">
         <Routes>
@@ -100,6 +103,16 @@ export function App() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/how-to-test" element={<Navigate to="/help" replace />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          {DsGalleryPage && (
+            <Route
+              path="/dev/ui"
+              element={
+                <Suspense fallback={null}>
+                  <DsGalleryPage />
+                </Suspense>
+              }
+            />
+          )}
           {QorexCheckPage && (
             <Route
               path="/dev/qorex-check"

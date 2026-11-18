@@ -112,8 +112,8 @@
 /* ------------------------------------------------------------------ TokenAmount + AddressChip */
 .q-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .q-amount__sym { color: var(--q-muted); margin-left: 0.3em; font-weight: 500; }
-.q-addr { display: inline-flex; align-items: center; gap: 2px; min-height: var(--q-tap); padding: 0 4px 0 12px; border-radius: var(--q-r-pill); background: var(--q-surface-2); color: var(--q-text); font-family: var(--q-font-mono); font-size: var(--q-t-small); }
-.q-addr__copy { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--q-muted); cursor: pointer; }
+.q-addr { display: inline-flex; align-items: center; gap: 0; min-height: var(--q-tap); padding: 0 0 0 14px; border-radius: var(--q-r-pill); background: var(--q-surface-2); color: var(--q-text); font-family: var(--q-font-mono); font-size: var(--q-t-small); }
+.q-addr__copy { display: inline-grid; place-items: center; width: var(--q-tap); height: var(--q-tap); border: 0; border-radius: 50%; background: transparent; color: var(--q-muted); cursor: pointer; }
 .q-addr__copy:hover { background: var(--q-surface-3); color: var(--q-text); }
 .q-addr__copy:focus-visible { outline: none; box-shadow: var(--q-focus); }
 
@@ -162,8 +162,8 @@
 .q-toast__title { font-weight: 600; }
 .q-toast__text { color: var(--q-muted); font-size: var(--q-t-small); margin-top: 2px; }
 .q-toast__links { display: flex; flex-wrap: wrap; gap: var(--q-s3); margin-top: var(--q-s2); font-size: var(--q-t-small); }
-.q-toast__links a { color: var(--q-brand-text); }
-.q-toast__close { width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--q-muted); cursor: pointer; }
+.q-toast__links a { color: var(--q-brand-text); display: inline-flex; align-items: center; min-height: var(--q-tap); font-weight: 600; }
+.q-toast__close { width: var(--q-tap); height: var(--q-tap); border: 0; border-radius: 50%; background: transparent; color: var(--q-muted); cursor: pointer; }
 .q-toast__close:focus-visible { outline: none; box-shadow: var(--q-focus); }
 @keyframes q-pop { from { transform: scale(0.4); } }
 
