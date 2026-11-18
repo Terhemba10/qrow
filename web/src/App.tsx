@@ -19,6 +19,7 @@ import { SendPage } from "./pages/SendPage";
 import { ShopPage } from "./pages/ShopPage";
 import { StakingPage } from "./pages/StakingPage";
 import { StartPage } from "./pages/StartPage";
+import { HubPage } from "./pages/HubPage";
 import { FaucetPage } from "./pages/FaucetPage";
 import { SwapPage } from "./pages/SwapPage";
 import { VerifyPage } from "./pages/VerifyPage";
@@ -44,7 +45,7 @@ export function App() {
           </NavLink>
           <nav className="nav" aria-label="Main">
             <NavLink to="/" end>
-              Start
+              Hub
             </NavLink>
             {TABS.map((t) => (
               <NavLink key={t.id} to={t.path}>
@@ -72,7 +73,8 @@ export function App() {
       <WelcomeTip />
       <main id="main">
         <Routes>
-          <Route path="/" element={<StartPage />} />
+          <Route path="/" element={<HubPage />} />
+          <Route path="/start" element={<StartPage />} />
           <Route path="/faucet" element={live("faucet", <FaucetPage />)} />
           <Route path="/swap" element={live("swap", <SwapPage />)} />
           <Route path="/send" element={live("send", <SendPage />)} />

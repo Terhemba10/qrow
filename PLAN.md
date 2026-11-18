@@ -64,7 +64,7 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
     Genesis NFTs keep using `QrowMarket` (list and cancel already exist); Genesis send goes through the
     existing PQ transfer if present, otherwise it's listed as a known issue.
   - `web/src/pages/NftDetailPage.tsx` (Send with the first 4 / last 4 address check from Send, List, Delist).
-- [ ] **5. 3D tab hub**
+- [x] **5. 3D tab hub**: `/` is now the hub (15 tiles: every tab + Verify + Help); tilt follows pointer or finger, glare, float; flat view toggle, automatic under reduced motion or ≤2 GB / ≤2 cores; checked at 1280 px and 375 px (no sideways scroll). The old Start page moved to `/start`.
   - `web/src/pages/HubPage.tsx` + `web/src/styles/hub.css`: CSS 3D cards (no new dependency): tilt on hover or
     touch, float, click to enter; flat grid under `prefers-reduced-motion` or on low-end devices
     (`deviceMemory`/`hardwareConcurrency`). Becomes `/`; the nav bar stays.
