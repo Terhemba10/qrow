@@ -5,7 +5,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { msg, qorechainRegistry } from "@qorechain/sdk";
-import { getQorexNative, hasCapability } from "@qorechain/qorex-types";
+import { findQorexNative as getQorexNative, qorexCanSign } from "./qorex";
 import { NATIVE_CHAIN_ID, REST } from "../config/network";
 
 export const LOCK_TERMS = [
@@ -127,8 +127,7 @@ export const registry = qorechainRegistry();
 type Eo = { typeUrl: string; value: unknown };
 
 export function qorexAvailable(): boolean {
-  const n = getQorexNative();
-  return !!n && hasCapability(n, "signAndBroadcast");
+  return qorexCanSign();
 }
 
 export async function qorexAccount(): Promise<string | undefined> {
@@ -142,7 +141,7 @@ export async function qorexAccount(): Promise<string | undefined> {
 /** Sign and broadcast native messages in QoreX (hybrid secp256k1 + ML-DSA-87 signature). */
 export async function signInQorex(messages: Eo[], memo?: string, gasLimit?: number): Promise<{ txHash: string; code: number }> {
   const n = getQorexNative();
-  if (!n || !hasCapability(n, "signAndBroadcast")) throw new Error("QoreX isn’t available in this browser.");
+  if (!n || !qorexCanSign()) throw new Error("QoreX isn’t available in this browser.");
   const r = await n.signAndBroadcast({
     chainId: NATIVE_CHAIN_ID,
     messages: messages.map((m) => ({ typeUrl: m.typeUrl, value: registry.encode(m as never) })),

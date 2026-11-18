@@ -1,6 +1,6 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAccount, useConnect, useReconnect } from "wagmi";
-import { pollQorexWhile, qorexDownload, useQorexInstalled } from "../lib/qorex";
+import { openInQorex, pollQorexWhile, qorexDownload, qorexPresent, useQorexInstalled } from "../lib/qorex";
 
 /** Whether the "Get QoreX" dialog is open (someone pressed Connect without QoreX installed). */
 let wanted = false;
@@ -25,7 +25,8 @@ export function useConnectQorex() {
   const { connectors, connect, isPending } = useConnect();
   const go = () => {
     const qorex = connectors.find((c) => c.id === "qorex");
-    if (installed && qorex) connect({ connector: qorex });
+    // Look again right now: a mobile in-app browser may have injected QoreX since the last check.
+    if ((installed || qorexPresent()) && qorex) connect({ connector: qorex });
     else setWanted(true);
   };
   return { connect: go, isPending, installed };
@@ -40,6 +41,7 @@ export function QorexConnect() {
   const { reconnect } = useReconnect();
   const dialog = useRef<HTMLDialogElement>(null);
   const dl = qorexDownload();
+  const [copied, setCopied] = useState<boolean | null>(null);
 
   // Returning visitors: QoreX injected after the page loaded, so wagmi's reconnect missed it. Try again.
   useEffect(() => {
@@ -78,8 +80,20 @@ export function QorexConnect() {
       <h2 id="getqorex-title">Get QoreX to continue</h2>
       {dl.phone ? (
         <>
-          <p>On a phone, Qrow runs inside the QoreX app: install it, then open its dApp Browser (Home, then “Enter a dApp URL”) and go to qrow-app.vercel.app.</p>
-          <a className="btn btn--block" href={dl.url} target="_blank" rel="noopener noreferrer">
+          <p>On a phone, Qrow runs inside the QoreX app. Open Qrow in QoreX: if the app doesn’t open by itself, open QoreX, tap Home, then “Enter a dApp URL” and paste the link.</p>
+          <button
+            className="btn btn--block"
+            type="button"
+            onClick={async () => setCopied((await openInQorex()).copied)}
+          >
+            Open in QoreX
+          </button>
+          {copied !== null && (
+            <p className="hint" role="status">
+              {copied ? "Link copied. Paste it in QoreX’s dApp browser." : <>Copy this link into QoreX: <span className="mono">{location.href}</span></>}
+            </p>
+          )}
+          <a className="btn btn--quiet btn--block" href={dl.url} target="_blank" rel="noopener noreferrer">
             {dl.label}
           </a>
         </>

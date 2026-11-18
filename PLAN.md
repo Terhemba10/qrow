@@ -47,7 +47,7 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
   - Web: `web/src/abi/QrowPredict.ts`, `web/src/lib/predict.ts` (+ test), `web/src/pages/PredictPage.tsx`,
     a sign-in message step (QoreX signs nothing off chain, so "authorise" = connect + confirm account match;
     see notes), Admin create/resolve in `web/src/pages/AdminPage.tsx`, tab in `web/src/config/tabs.ts`, route in `web/src/App.tsx`.
-- [ ] **2. Mobile wallet connection fix (high priority)**
+- [x] **2. Mobile wallet connection fix (high priority)** (done first because it is high priority)
   - `web/src/lib/qorex.ts` (+ `qorex.test.ts`): one provider resolver (EIP-6963 by rdns or name, `window.qorex.evm`,
     `window.ethereum` / `ethereum.providers[]` with `isQoreX`), detection that keeps watching (fast for 30 s, then
     every 3 s while not found), and `ethereum#initialized` / `qorex#initialized` events.
@@ -93,9 +93,11 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
 ## Mobile wallet test results
 | Environment | Result |
 |---|---|
-| Desktop Chrome + QoreX extension | _pending_ |
-| QoreX mobile in-app browser | _pending (needs the owner's phone)_ |
-| Plain mobile browser (no QoreX) | _pending_ |
+| Simulated: QoreX injected 2 s after load, **only as `window.ethereum`** (`isQoreX`), desktop width | **Connects** (header shows `0xD5…cb37`). Before the fix the connector only checked EIP-6963 and `window.qorex.evm.isQoreX`, so this shape failed. |
+| Unit tests (`web/src/lib/qorex.test.ts`, 11 pass) | `window.qorex.evm` without the flag, `window.ethereum` only, `ethereum.providers[]`, late injection, native provider without `signDirect`, EIP-6963 by rdns or name, another wallet's `window.ethereum` ignored |
+| Plain mobile browser, no QoreX (375 px, Android UA) | **Connect → "Open in QoreX"** (copies the link, tries `qorex://`), store link, two-tap instructions. Keeps watching, so it connects if QoreX appears. |
+| Desktop Chrome + real QoreX extension | _Owner to check on the live URL (no QoreX in my browser)._ |
+| Real QoreX mobile in-app browser | _Owner to check on a phone. If it still fails, open `/help`, and send me what `window.qorex`/`window.ethereum` show._ |
 
 ## Env vars the owner sets in Vercel (project `qrow`)
 Filled in as each task lands; see `web/.env.example`.

@@ -1,7 +1,7 @@
 // Adapted from the create-qorechain-dapp viem-wagmi template (Apache-2.0, QoreChain Association).
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { injectedWallet } from "@rainbow-me/rainbowkit/wallets";
-import { qorexWallet } from "@qorechain/qorex-rainbowkit";
+import { qrowQorexWallet } from "./lib/qorexConnector";
 import { createConfig, http, type CreateConnectorFn } from "wagmi";
 import { mock } from "wagmi/connectors";
 import type { Address } from "viem";
@@ -20,7 +20,7 @@ const connectors = connectorsForWallets(
   [
     {
       groupName: "Wallets",
-      wallets: [() => qorexWallet({ pollAccountsOnFocus: true }), injectedWallet],
+      wallets: [qrowQorexWallet, injectedWallet],
     },
   ],
   { appName: "Qrow", projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "unused" },
