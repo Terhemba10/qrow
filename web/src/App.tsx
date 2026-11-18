@@ -22,6 +22,8 @@ import { StartPage } from "./pages/StartPage";
 import { FaucetPage } from "./pages/FaucetPage";
 import { SwapPage } from "./pages/SwapPage";
 import { VerifyPage } from "./pages/VerifyPage";
+import { PredictPage } from "./pages/PredictPage";
+import { AdminPage } from "./pages/AdminPage";
 
 captureReferral(window.location.search);
 
@@ -80,6 +82,8 @@ export function App() {
           <Route path="/staking" element={live("staking", <StakingPage />)} />
           <Route path="/news" element={live("news", <NewsPage />)} />
           <Route path="/launch" element={live("launch", <LaunchPage />)} />
+          <Route path="/predict" element={live("predict", <PredictPage />)} />
+          <Route path="/admin" element={live("admin", <AdminPage />)} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/how-to-test" element={<Navigate to="/help" replace />} />

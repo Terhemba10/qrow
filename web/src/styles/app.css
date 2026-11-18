@@ -371,3 +371,20 @@ select.input { max-width: 100%; text-overflow: ellipsis; }
 .getqorex::backdrop { background: rgb(7 8 26 / 0.7); }
 .getqorex h2 { margin: 0; }
 .getqorex p { margin: 0; }
+
+/* ---------------------------------------------------------------- Prediction markets */
+.pmlist { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-3, 12px); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.pmcard { border: 1px solid var(--border, #2a3350); border-radius: 16px; background: var(--surface, #121a30); }
+.pmcard__btn { all: unset; box-sizing: border-box; display: grid; gap: 10px; padding: 16px; width: 100%; cursor: pointer; border-radius: 16px; }
+button.pmcard__btn:focus-visible { outline: 2px solid var(--focus, #5ad1e6); outline-offset: 2px; }
+button.pmcard__btn:hover { background: color-mix(in srgb, var(--surface, #121a30) 85%, white); }
+.pmcard__q { font-weight: 600; line-height: 1.35; }
+.probbar { display: flex; height: 28px; border-radius: 999px; overflow: hidden; font-size: 0.8rem; font-weight: 700; background: #ff8a4c33; }
+.probbar__yes { background: #33d69f; color: #04130d; display: flex; align-items: center; padding-inline: 10px; white-space: nowrap; }
+.probbar__no { flex: 1; display: flex; align-items: center; justify-content: flex-end; padding-inline: 10px; color: #ffb48a; white-space: nowrap; }
+.pmside { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pmside button { min-height: 48px; border-radius: 12px; border: 2px solid transparent; font-weight: 700; cursor: pointer; font: inherit; }
+.pmside__yes { background: #33d69f22; color: #33d69f; }
+.pmside__no { background: #ff8a4c22; color: #ff9d66; }
+.pmside__yes.is-on { border-color: #33d69f; background: #33d69f; color: #04130d; }
+.pmside__no.is-on { border-color: #ff8a4c; background: #ff8a4c; color: #1a0900; }

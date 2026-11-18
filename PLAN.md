@@ -40,13 +40,13 @@ Testnet only (`qorechain-diana`, EVM 9800). The long-running build history and e
 
 ## Phase 1 — Features
 
-- [ ] **1. Prediction Markets tab**
+- [x] **1. Prediction Markets tab**: contract (11 tests incl. a 1,000-run solvency fuzz), tab, Admin & Analytics page. **Deploy pending: the deployer holds 0.27 QOR / 0.01 fUSD (owner funds it, see "Owner steps").** Note: the Admin tab did not exist in the code yet; it is new.
   - Contract `contracts/src/QrowPredict.sol` (+ `test/Predict.t.sol`): create market (admin), buy and sell YES/NO
     (CPMM in fUSD, 1% fee), resolve (admin; YES, NO or Invalid → refund), claim. Device-key PQ checks via `PqAuth`.
   - Deploy plus seed 6 markets: `contracts/scripts/deploy-predict.ts`; address in `deployments/testnet.json`.
   - Web: `web/src/abi/QrowPredict.ts`, `web/src/lib/predict.ts` (+ test), `web/src/pages/PredictPage.tsx`,
-    a sign-in message step (QoreX signs nothing off chain, so "authorise" = connect + confirm account match;
-    see notes), Admin create/resolve in `web/src/pages/AdminPage.tsx`, tab in `web/src/config/tabs.ts`, route in `web/src/App.tsx`.
+    an "Authorise in QoreX" step (QoreX refuses off-chain message signing today, so it confirms the trading
+    account in QoreX's own approval prompt; every trade is then signed with the quantum-safe key), Admin create/resolve in `web/src/pages/AdminPage.tsx`, tab in `web/src/config/tabs.ts`, route in `web/src/App.tsx`.
 - [x] **2. Mobile wallet connection fix (high priority)** (done first because it is high priority)
   - `web/src/lib/qorex.ts` (+ `qorex.test.ts`): one provider resolver (EIP-6963 by rdns or name, `window.qorex.evm`,
     `window.ethereum` / `ethereum.providers[]` with `isQoreX`), detection that keeps watching (fast for 30 s, then

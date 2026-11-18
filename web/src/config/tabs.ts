@@ -3,7 +3,7 @@
  * normal QoreX user's Qrow key; until then it shows "Coming soon" (never hidden, never broken).
  * Override at build time with VITE_LIVE_TABS=send,receive,... The dev server shows every tab.
  */
-export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch";
+export type TabId = "faucet" | "swap" | "send" | "receive" | "shop" | "market" | "portfolio" | "staking" | "news" | "launch" | "predict" | "admin";
 
 export const TABS: { id: TabId; path: string; label: string; blurb: string }[] = [
   { id: "faucet", path: "/faucet", label: "Faucet", blurb: "Get free test QOR, fUSD, fETH and fBTC from QoreChain’s official faucet." },
@@ -16,6 +16,8 @@ export const TABS: { id: TabId; path: string; label: string; blurb: string }[] =
   { id: "staking", path: "/staking", label: "Staking", blurb: "Stake test QOR with a validator, lock it for a bonus, preview an early unlock." },
   { id: "news", path: "/news", label: "Market News", blurb: "Live crypto prices from CoinMarketCap and the latest headlines." },
   { id: "launch", path: "/launch", label: "Launch", blurb: "Launch a testnet memecoin with anti-scam rules built in." },
+  { id: "predict", path: "/predict", label: "Predictions", blurb: "Predict YES or NO on crypto and QoreChain questions. Prices show the odds." },
+  { id: "admin", path: "/admin", label: "Admin & Analytics", blurb: "Live Qrow numbers from the testnet, and market controls for the admin." },
 ];
 
 /**
