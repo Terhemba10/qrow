@@ -32,13 +32,20 @@ contract PerpsTest is PqBase {
         r = QrowPerps.PriceReport(pair, price, t, abi.encodePacked(rr, s, v));
     }
 
-    function _open(bool isLong, uint256 margin, uint256 lev) internal returns (uint256) {
-        uint256 limit = isLong ? P * 101 / 100 : P * 99 / 100;
+    function _order(bool isLong, uint256 margin, uint256 lev, uint256 limit, uint256 tp, uint256 sl) internal pure returns (QrowPerps.OpenOrder memory) {
+        return QrowPerps.OpenOrder(ETH, isLong, margin, lev, limit, tp, sl);
+    }
+
+    function _openWith(QrowPerps.OpenOrder memory o) internal returns (uint256) {
         uint64 v = _validUntil();
-        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(ETH, isLong, margin, lev, limit)), v);
+        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(o)), v);
         QrowPerps.PriceReport memory r = _report(ETH, P);
         vm.prank(alice);
-        return x.open(ETH, isLong, margin, lev, limit, r, v, sig);
+        return x.open(o, r, v, sig);
+    }
+
+    function _open(bool isLong, uint256 margin, uint256 lev) internal returns (uint256) {
+        return _openWith(_order(isLong, margin, lev, isLong ? P * 101 / 100 : P * 99 / 100, 0, 0));
     }
 
     function _close(uint256 id, uint256 price) internal returns (uint256) {
@@ -87,32 +94,32 @@ contract PerpsTest is PqBase {
         uint64 v = _validUntil();
         QrowPerps.PriceReport memory r = _report(ETH, P);
         r.price = 1e8; // tampered
-        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(ETH, true, 100 * U, uint256(10), P * 2)), v);
+        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(_order(true, 100 * U, 10, P * 2, 0, 0))), v);
         vm.prank(alice);
         vm.expectRevert(QrowPerps.BadReport.selector);
-        x.open(ETH, true, 100 * U, 10, P * 2, r, v, sig);
+        x.open(_order(true, 100 * U, 10, P * 2, 0, 0), r, v, sig);
 
         QrowPerps.PriceReport memory old = _report(ETH, P);
         vm.warp(block.timestamp + 3 minutes);
         v = _validUntil();
-        sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(ETH, true, 100 * U, uint256(10), P * 2)), v);
+        sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(_order(true, 100 * U, 10, P * 2, 0, 0))), v);
         vm.prank(alice);
         vm.expectRevert(QrowPerps.StaleReport.selector);
-        x.open(ETH, true, 100 * U, 10, P * 2, old, v, sig);
+        x.open(_order(true, 100 * U, 10, P * 2, 0, 0), old, v, sig);
 
         QrowPerps.PriceReport memory fresh = _report(ETH, P);
         vm.prank(alice);
         vm.expectRevert(QrowPerps.BadLeverage.selector);
-        x.open(ETH, true, 100 * U, 101, P * 2, fresh, v, sig);
+        x.open(_order(true, 100 * U, 101, P * 2, 0, 0), fresh, v, sig);
     }
 
     function test_priceLimitProtectsTrader() public {
         uint64 v = _validUntil();
-        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(ETH, true, 100 * U, uint256(10), P - 1)), v);
+        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(_order(true, 100 * U, 10, P - 1, 0, 0))), v);
         QrowPerps.PriceReport memory r = _report(ETH, P);
         vm.prank(alice);
         vm.expectRevert(QrowPerps.PriceLimit.selector);
-        x.open(ETH, true, 100 * U, 10, P - 1, r, v, sig);
+        x.open(_order(true, 100 * U, 10, P - 1, 0, 0), r, v, sig);
     }
 
     function test_onlyTraderCloses_andNeedsPq() public {
@@ -146,5 +153,58 @@ contract PerpsTest is PqBase {
             }
         }
         assertGe(fusd.balanceOf(address(x)), x.lockedMargin());
+    }
+
+    // ---------------------------------------------------------------- take profit / stop loss
+
+    function _setTpSl(uint256 id, uint256 tp, uint256 sl) internal {
+        uint64 v = _validUntil();
+        bytes memory sig = _pqSig(x, alice, x.ACTION_TPSL(), keccak256(abi.encode(id, tp, sl)), v);
+        vm.prank(alice);
+        x.setTpSl(id, tp, sl, v, sig);
+    }
+
+    function test_takeProfitTriggersForAnyoneAndPaysTrader() public {
+        uint256 id = _openWith(_order(true, 100 * U, 10, P * 101 / 100, 3300e8, 2900e8));
+        QrowPerps.PriceReport memory below = _report(ETH, 3299e8);
+        vm.expectRevert(QrowPerps.NotTriggered.selector);
+        x.executeTpSl(id, below);
+        uint256 before = fusd.balanceOf(alice);
+        QrowPerps.PriceReport memory hit = _report(ETH, 3300e8);
+        vm.prank(carol); // a keeper, not the trader
+        x.executeTpSl(id, hit);
+        assertEq(x.getPosition(id).closedBy, 3);
+        assertEq(fusd.balanceOf(alice) - before, 199 * U); // same as a manual close at +10%
+        assertEq(fusd.balanceOf(carol), 0); // the keeper earns nothing
+    }
+
+    function test_stopLossOnShort() public {
+        uint256 id = _openWith(_order(false, 100 * U, 5, P * 99 / 100, 2700e8, 3150e8));
+        assertEq(x.tpSlTriggered(id, 3100e8), 0);
+        assertEq(x.tpSlTriggered(id, 3150e8), 4);
+        QrowPerps.PriceReport memory hit = _report(ETH, 3150e8);
+        x.executeTpSl(id, hit);
+        assertEq(x.getPosition(id).closedBy, 4);
+        assertEq(x.lockedMargin(), 0);
+    }
+
+    function test_badTpSlRejected_andEditable() public {
+        uint64 v = _validUntil();
+        QrowPerps.OpenOrder memory wrong = _order(true, 100 * U, 10, P * 101 / 100, 2900e8, 0); // TP below entry on a long
+        bytes memory sig = _pqSig(x, alice, x.ACTION_OPEN(), keccak256(abi.encode(wrong)), v);
+        QrowPerps.PriceReport memory r = _report(ETH, P);
+        vm.prank(alice);
+        vm.expectRevert(QrowPerps.BadTpSl.selector);
+        x.open(wrong, r, v, sig);
+
+        uint256 id = _open(true, 100 * U, 10);
+        _setTpSl(id, 3500e8, 2800e8);
+        assertEq(x.getTpSl(id).takeProfit, 3500e8);
+        _setTpSl(id, 0, 0); // cleared
+        assertEq(x.tpSlTriggered(id, 1e8), 0);
+        v = _validUntil();
+        vm.prank(mallory);
+        vm.expectRevert(QrowPerps.NotTrader.selector);
+        x.setTpSl(id, 3500e8, 0, v, _forgedSig());
     }
 }

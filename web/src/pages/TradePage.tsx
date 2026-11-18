@@ -10,7 +10,7 @@ import { PERPS } from "../config/contracts";
 import { CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { displayAmount, parseAmount } from "../lib/amount";
-import { fetchReport, fmtPrice, limitFor, MAX_LEVERAGE, pairId, PAIRS, pnlAt, quotePerp, useCandles, usePositions, usePrices, type Pair, type PerpPosition } from "../lib/trade";
+import { fetchReport, fmtPrice, limitFor, MAX_LEVERAGE, pairId, PAIRS, pnlAt, quotePerp, quoteOf, tpSlProblem, useCandles, usePositions, usePrices, type Pair, type PerpPosition } from "../lib/trade";
 import { SwapPage } from "./SwapPage";
 
 const FUSD = tokenBySymbol("fUSD")!;
@@ -18,6 +18,31 @@ const fusd = (u: bigint) => displayAmount(u < 0n ? -u : u, FUSD.decimals);
 const signed = (u: bigint) => `${u < 0n ? "−" : "+"}${fusd(u)} fUSD`;
 const enc = (types: string[], values: unknown[]) => keccak256(encodeAbiParameters(types.map((t) => ({ type: t })), values));
 const reportArg = (r: Awaited<ReturnType<typeof fetchReport>>) => ({ pair: r.pair, price: r.price, timestamp: r.timestamp, signature: r.signature });
+/** A typed trigger price in 1e8 units (empty = none, -1 = not a number). */
+const priceE8 = (v: string) => {
+  if (!v.trim()) return 0n;
+  const p = parseAmount(v, 8);
+  return p.ok ? p.units : -1n;
+};
+const ORDER_TYPES = ["bytes32", "bool", "uint256", "uint256", "uint256", "uint256", "uint256"];
+const CLOSED_BY: Record<number, string> = { 2: " (liquidated)", 3: " (take profit)", 4: " (stop loss)" };
+const BAD_PRICE = "Enter a price like 1850.5, or leave it empty.";
+
+/** Take profit / stop loss fields: prices in the pair's quote coin, both optional. */
+function TpSlFields(props: { pair: Pair; tp: string; sl: string; setTp: (v: string) => void; setSl: (v: string) => void }) {
+  return (
+    <div className="row">
+      <label className="field">
+        <span>Take profit ({quoteOf(props.pair)}, optional)</span>
+        <input className="input" inputMode="decimal" value={props.tp} placeholder="None" onChange={(e) => props.setTp(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>Stop loss ({quoteOf(props.pair)}, optional)</span>
+        <input className="input" inputMode="decimal" value={props.sl} placeholder="None" onChange={(e) => props.setSl(e.target.value)} />
+      </label>
+    </div>
+  );
+}
 
 function Chart({ pair, live }: { pair: Pair; live?: bigint }) {
   const el = useRef<HTMLDivElement>(null);
@@ -75,13 +100,19 @@ function OpenForm({ me, pair, price }: { me: Address; pair: Pair; price?: bigint
   const [side, setSide] = useState<"long" | "short">("long");
   const [margin, setMargin] = useState("10");
   const [lev, setLev] = useState(10);
+  const [tpIn, setTp] = useState("");
+  const [slIn, setSl] = useState("");
   const [signing, setSigning] = useState(false);
   const isLong = side === "long";
+  const tp = priceE8(tpIn);
+  const sl = priceE8(slIn);
   const m = parseAmount(margin, FUSD.decimals);
   const units = m.ok ? m.units : 0n;
   const q = price && units > 0n ? quotePerp(price, units, lev, isLong) : undefined;
   const limit = price ? limitFor(price, isLong, true) : 0n;
-  const ok = !!q && units >= 1_000_000n && units <= 10_000_000_000n;
+  const tpSlErr = tp < 0n || sl < 0n ? BAD_PRICE : q && price ? tpSlProblem(isLong, price, q.liqPrice, tp, sl) : undefined;
+  const ok = !!q && units >= 1_000_000n && units <= 10_000_000_000n && !tpSlErr;
+  const order = [pairId(pair), isLong, units, BigInt(lev), limit, tp > 0n ? tp : 0n, sl > 0n ? sl : 0n] as const;
 
   if (signing && q && price)
     return (
@@ -91,11 +122,16 @@ function OpenForm({ me, pair, price }: { me: Address; pair: Pair; price?: bigint
         title={`${isLong ? "Long" : "Short"} ${pair} ${lev}x`}
         summary={<p className="muted">Filled at a fresh signed price when you approve; refused if it moved more than 1% from {fmtPrice(price, pair)}.</p>}
         approve={{ token: FUSD.address!, amount: units, label: "fUSD" }}
-        pq={{ actionName: "ACTION_OPEN", paramsHash: enc(["bytes32", "bool", "uint256", "uint256", "uint256"], [pairId(pair), isLong, units, BigInt(lev), limit]) }}
+        pq={{ actionName: "ACTION_OPEN", paramsHash: enc(ORDER_TYPES, [...order]) }}
         build={async (auth) => ({
           abi: qrowPerpsAbi,
           functionName: "open",
-          args: [pairId(pair), isLong, units, BigInt(lev), limit, reportArg(await fetchReport(pair)), auth!.validUntil, auth!.signature],
+          args: [
+            { pair: order[0], isLong: order[1], margin: order[2], leverage: order[3], acceptablePrice: order[4], takeProfit: order[5], stopLoss: order[6] },
+            reportArg(await fetchReport(pair)),
+            auth!.validUntil,
+            auth!.signature,
+          ],
         })}
         confirmLabel={`Open ${side} in QoreX`}
         details={[
@@ -104,6 +140,8 @@ function OpenForm({ me, pair, price }: { me: Address; pair: Pair; price?: bigint
           { name: "Entry (about)", value: fmtPrice(price, pair) },
           { name: "Liquidation price", value: fmtPrice(q.liqPrice, pair) },
           { name: "Fee", value: `${fusd(q.fee)} fUSD (0.05% of size)` },
+          { name: "Take profit", value: tp > 0n ? fmtPrice(tp, pair) : "None" },
+          { name: "Stop loss", value: sl > 0n ? fmtPrice(sl, pair) : "None" },
         ]}
         receipt={() => ({ kind: "Perp", title: `Opened ${side} ${pair} ${lev}x with ${margin} fUSD`, lines: [] })}
         onDone={() => setSigning(false)}
@@ -153,6 +191,9 @@ function OpenForm({ me, pair, price }: { me: Address; pair: Pair; price?: bigint
           </div>
         </dl>
       )}
+      <TpSlFields pair={pair} tp={tpIn} sl={slIn} setTp={setTp} setSl={setSl} />
+      {tpSlErr && <p className="field-error">{tpSlErr}</p>}
+      {(tp > 0n || sl > 0n) && !tpSlErr && <p className="hint">When the price reaches it, the position closes at that market price, even while you are offline. A fast market can move past a trigger before it runs.</p>}
       {lev >= 50 && <p className="notice notice--warn">At {lev}x a move of about {(100 / lev).toFixed(1)}% against you wipes out the margin.</p>}
       <button className="btn btn--block" type="submit" disabled={!ok || !price}>
         Review {side}
@@ -163,6 +204,13 @@ function OpenForm({ me, pair, price }: { me: Address; pair: Pair; price?: bigint
 
 function PositionRow({ me, p, price }: { me: Address; p: PerpPosition; price?: bigint }) {
   const [closing, setClosing] = useState(false);
+  const [editing, setEditing] = useState<"form" | "sign">();
+  const [tpIn, setTp] = useState(p.takeProfit ? (Number(p.takeProfit) / 1e8).toString() : "");
+  const [slIn, setSl] = useState(p.stopLoss ? (Number(p.stopLoss) / 1e8).toString() : "");
+  const tp = priceE8(tpIn);
+  const sl = priceE8(slIn);
+  const liq = quotePerp(p.entryPrice, p.margin, Number(p.size / (p.margin || 1n)), p.isLong).liqPrice;
+  const editErr = tp < 0n || sl < 0n ? BAD_PRICE : tpSlProblem(p.isLong, p.entryPrice, liq, tp, sl);
   const live = price ? pnlAt(p.size, p.entryPrice, price, p.isLong) : undefined;
   const limit = price ? limitFor(price, p.isLong, false) : 0n;
   return (
@@ -175,12 +223,62 @@ function PositionRow({ me, p, price }: { me: Address; p: PerpPosition; price?: b
           Margin {fusd(p.margin)} · Entry {fmtPrice(p.entryPrice, p.pair)}
           {p.open ? ` · Now ${fmtPrice(price, p.pair)}` : ` · Exit ${fmtPrice(p.exitPrice, p.pair)}`}
         </span>
+        {(p.takeProfit > 0n || p.stopLoss > 0n) && (
+          <span className="hint fig">
+            TP {p.takeProfit > 0n ? fmtPrice(p.takeProfit, p.pair) : "none"} · SL {p.stopLoss > 0n ? fmtPrice(p.stopLoss, p.pair) : "none"}
+          </span>
+        )}
       </div>
-      <span className={`fig ${(p.open ? (live ?? 0n) : p.pnl) >= 0n ? "pnl--up" : "pnl--down"}`}>{p.open ? (live !== undefined ? signed(live) : "–") : `${signed(p.pnl)}${p.closedBy === 2 ? " (liquidated)" : ""}`}</span>
-      {p.open && !closing && (
-        <button className="btn btn--quiet" type="button" onClick={() => setClosing(true)} disabled={!price}>
-          Close
-        </button>
+      <span className={`fig ${(p.open ? (live ?? 0n) : p.pnl) >= 0n ? "pnl--up" : "pnl--down"}`}>{p.open ? (live !== undefined ? signed(live) : "–") : `${signed(p.pnl)}${CLOSED_BY[p.closedBy] ?? ""}`}</span>
+      {p.open && !closing && !editing && (
+        <div className="row">
+          <button className="btn btn--quiet" type="button" onClick={() => setEditing("form")}>
+            {p.takeProfit || p.stopLoss ? "Edit TP / SL" : "Set TP / SL"}
+          </button>
+          <button className="btn btn--quiet" type="button" onClick={() => setClosing(true)} disabled={!price}>
+            Close
+          </button>
+        </div>
+      )}
+      {p.open && editing === "form" && (
+        <form
+          className="stack"
+          style={{ flexBasis: "100%" }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!editErr) setEditing("sign");
+          }}
+        >
+          <TpSlFields pair={p.pair} tp={tpIn} sl={slIn} setTp={setTp} setSl={setSl} />
+          <p className="hint">Leave a field empty to remove it. Liquidation price: {fmtPrice(liq, p.pair)}.</p>
+          {editErr && <p className="field-error">{editErr}</p>}
+          <div className="row">
+            <button className="btn" type="submit" disabled={!!editErr}>
+              Review
+            </button>
+            <button className="btn btn--quiet" type="button" onClick={() => setEditing(undefined)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+      {p.open && editing === "sign" && (
+        <PqActionPanel
+          sender={me}
+          contract={PERPS!}
+          title={`TP / SL for #${p.id}`}
+          summary={<p className="muted">The position closes by itself when the price reaches your take profit or stop loss.</p>}
+          pq={{ actionName: "ACTION_TPSL", paramsHash: enc(["uint256", "uint256", "uint256"], [p.id, tp, sl]) }}
+          build={(auth) => ({ abi: qrowPerpsAbi, functionName: "setTpSl", args: [p.id, tp, sl, auth!.validUntil, auth!.signature] })}
+          confirmLabel="Save in QoreX"
+          details={[
+            { name: "Take profit", value: tp > 0n ? fmtPrice(tp, p.pair) : "None" },
+            { name: "Stop loss", value: sl > 0n ? fmtPrice(sl, p.pair) : "None" },
+          ]}
+          receipt={() => ({ kind: "Perp", title: `Set TP / SL on ${p.isLong ? "long" : "short"} ${p.pair}`, lines: [] })}
+          onDone={() => setEditing(undefined)}
+          onCancel={() => setEditing("form")}
+        />
       )}
       {p.open && closing && (
         <PqActionPanel

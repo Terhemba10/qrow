@@ -98,6 +98,14 @@ export const pnlAt = (size: bigint, entry: bigint, price: bigint, isLong: boolea
 export const limitFor = (price: bigint, isLong: boolean, opening: boolean, bps = 100n) =>
   (isLong === opening ? price * (10_000n + bps) : price * (10_000n - bps)) / 10_000n;
 
+/** A TP / SL is on the right side of entry: long TP above, SL below; short the reverse (0 = none). Mirrors QrowPerps._checkTpSl. */
+export function tpSlProblem(isLong: boolean, entry: bigint, liq: bigint, tp: bigint, sl: bigint): string | undefined {
+  if (tp && (isLong ? tp <= entry : tp >= entry)) return `Take profit must be ${isLong ? "above" : "below"} the entry price.`;
+  if (sl && (isLong ? sl >= entry : sl <= entry)) return `Stop loss must be ${isLong ? "below" : "above"} the entry price.`;
+  if (sl && (isLong ? sl <= liq : sl >= liq)) return "This stop loss is past the liquidation price, so liquidation would come first.";
+  return undefined;
+}
+
 export interface PerpPosition {
   id: bigint;
   pair: Pair;
@@ -111,6 +119,8 @@ export interface PerpPosition {
   entryPrice: bigint;
   exitPrice: bigint;
   pnl: bigint;
+  takeProfit: bigint;
+  stopLoss: bigint;
 }
 
 export function usePositions(me: Address | undefined) {
@@ -137,7 +147,8 @@ export function usePositions(me: Address | undefined) {
             exitPrice: bigint;
             pnl: bigint;
           };
-          return { id, ...p, pair: pairById(p.pair) ?? "ETH/USDT", openedAt: Number(p.openedAt), closedAt: Number(p.closedAt) };
+          const t = (await c.readContract({ address: PERPS!, abi: qrowPerpsAbi, functionName: "getTpSl", args: [id] })) as { takeProfit: bigint; stopLoss: bigint };
+          return { id, ...p, pair: pairById(p.pair) ?? "ETH/USDT", openedAt: Number(p.openedAt), closedAt: Number(p.closedAt), takeProfit: t.takeProfit, stopLoss: t.stopLoss };
         }),
       );
       return rows;

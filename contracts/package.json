@@ -35,7 +35,9 @@
     "smoke:oneclick": "tsx --env-file=.env scripts/smoke-oneclick.ts",
     "deploy:sprint2": "tsx --env-file=.env scripts/deploy-sprint2.ts",
     "convert": "tsx --env-file=.env scripts/convert.ts",
-    "seed:sprint2": "tsx --env-file=.env scripts/seed-sprint2.ts"
+    "seed:sprint2": "tsx --env-file=.env scripts/seed-sprint2.ts",
+    "deploy:perps-v2": "tsx --env-file=.env scripts/deploy-perps-v2.ts",
+    "keeper": "tsx --env-file=.env scripts/keeper.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",

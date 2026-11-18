@@ -24,6 +24,7 @@ interface IERC20Perp {
 contract QrowPerps is ReentrancyGuard, PqAuth {
     bytes32 public constant ACTION_OPEN = keccak256("PERP_OPEN");
     bytes32 public constant ACTION_CLOSE = keccak256("PERP_CLOSE");
+    bytes32 public constant ACTION_TPSL = keccak256("PERP_TPSL");
     bytes32 public constant PRICE_TAG = keccak256("QROW_PRICE_V1");
 
     uint256 public constant MAX_LEVERAGE = 100;
@@ -40,7 +41,7 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         bytes32 pair;
         bool isLong;
         bool open;
-        uint8 closedBy; // 0 open, 1 trader, 2 liquidation
+        uint8 closedBy; // 0 open, 1 trader, 2 liquidation, 3 take profit, 4 stop loss
         uint64 openedAt;
         uint64 closedAt;
         uint256 margin; // fUSD units
@@ -48,6 +49,22 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         uint256 entryPrice; // 1e8
         uint256 exitPrice; // 1e8
         int256 pnl; // fUSD units, after fees
+    }
+
+    /// @notice An order: tp / sl are trigger prices (1e8), 0 = none. Long: tp above entry, sl below; short: the reverse.
+    struct OpenOrder {
+        bytes32 pair;
+        bool isLong;
+        uint256 margin;
+        uint256 leverage;
+        uint256 acceptablePrice;
+        uint256 takeProfit;
+        uint256 stopLoss;
+    }
+
+    struct TpSl {
+        uint256 takeProfit;
+        uint256 stopLoss;
     }
 
     struct PriceReport {
@@ -65,6 +82,7 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
     uint256 public positionCount;
     mapping(uint256 => Position) private _positions;
     mapping(address => uint256[]) private _byTrader;
+    mapping(uint256 => TpSl) private _tpSl;
     /// @notice fUSD reserved to pay out open positions' margins (not available as pool profit).
     uint256 public lockedMargin;
     uint256 public openInterest;
@@ -74,6 +92,7 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
     event Opened(uint256 indexed id, address indexed trader, bytes32 indexed pair, bool isLong, uint256 margin, uint256 size, uint256 price);
     event Closed(uint256 indexed id, address indexed trader, uint256 price, int256 pnl, uint256 paid, bool liquidated, address by);
     event PoolFunded(address indexed from, uint256 amount);
+    event TpSlSet(uint256 indexed id, uint256 takeProfit, uint256 stopLoss);
 
     error NotOwner();
     error PairOff();
@@ -87,6 +106,8 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
     error NotLiquidatable();
     error PaymentFailed();
     error PoolTooSmall();
+    error BadTpSl();
+    error NotTriggered();
 
     constructor(address fusd_, address priceSigner_, string memory nativeChainId_, address keys_)
         PqAuth(keccak256("QROW_PERPS_V1"), nativeChainId_, keys_)
@@ -122,25 +143,43 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
 
     // ================================================================== trading
 
-    /// @param acceptablePrice for a long, the highest entry price accepted; for a short, the lowest (1e8).
-    function open(
-        bytes32 pair,
-        bool isLong,
-        uint256 margin,
-        uint256 leverage,
-        uint256 acceptablePrice,
-        PriceReport calldata report,
-        uint64 validUntil,
-        bytes calldata pqSig
-    ) external nonReentrant returns (uint256 id) {
-        if (!pairEnabled[pair]) revert PairOff();
-        if (leverage == 0 || leverage > MAX_LEVERAGE) revert BadLeverage();
-        if (margin < MIN_MARGIN || margin > MAX_MARGIN) revert BadMargin();
-        _requirePq(msg.sender, ACTION_OPEN, keccak256(abi.encode(pair, isLong, margin, leverage, acceptablePrice)), validUntil, pqSig);
-        uint256 price = _price(pair, report);
-        if (isLong ? price > acceptablePrice : price < acceptablePrice) revert PriceLimit();
+    /// @notice Open a position. `o.acceptablePrice`: for a long the highest entry accepted, for a short the lowest (1e8).
+    ///         Optional take profit / stop loss are set in the same signed call.
+    function open(OpenOrder calldata o, PriceReport calldata report, uint64 validUntil, bytes calldata pqSig) external nonReentrant returns (uint256 id) {
+        if (!pairEnabled[o.pair]) revert PairOff();
+        if (o.leverage == 0 || o.leverage > MAX_LEVERAGE) revert BadLeverage();
+        if (o.margin < MIN_MARGIN || o.margin > MAX_MARGIN) revert BadMargin();
+        _requirePq(msg.sender, ACTION_OPEN, keccak256(abi.encode(o)), validUntil, pqSig);
+        uint256 price = _price(o.pair, report);
+        if (o.isLong ? price > o.acceptablePrice : price < o.acceptablePrice) revert PriceLimit();
+        _checkTpSl(o.isLong, price, o.takeProfit, o.stopLoss);
+        id = _openAt(o.pair, o.isLong, o.margin, o.margin * o.leverage, price);
+        if (o.takeProfit != 0 || o.stopLoss != 0) {
+            _tpSl[id] = TpSl(o.takeProfit, o.stopLoss);
+            emit TpSlSet(id, o.takeProfit, o.stopLoss);
+        }
+    }
 
-        id = _openAt(pair, isLong, margin, margin * leverage, price);
+    /// @notice Change (or clear with 0) the take profit and stop loss of the caller's open position.
+    function setTpSl(uint256 id, uint256 takeProfit, uint256 stopLoss, uint64 validUntil, bytes calldata pqSig) external nonReentrant {
+        Position storage p = _positions[id];
+        if (!p.open) revert NotOpen();
+        if (p.trader != msg.sender) revert NotTrader();
+        _requirePq(msg.sender, ACTION_TPSL, keccak256(abi.encode(id, takeProfit, stopLoss)), validUntil, pqSig);
+        _checkTpSl(p.isLong, p.entryPrice, takeProfit, stopLoss);
+        _tpSl[id] = TpSl(takeProfit, stopLoss);
+        emit TpSlSet(id, takeProfit, stopLoss);
+    }
+
+    /// @notice Anyone can close a position whose take profit or stop loss the price has reached. The trader gets
+    ///         exactly what a close at this signed price would pay; the caller earns nothing.
+    function executeTpSl(uint256 id, PriceReport calldata report) external nonReentrant returns (uint256 paid) {
+        Position storage p = _positions[id];
+        if (!p.open) revert NotOpen();
+        uint256 price = _price(p.pair, report);
+        uint8 reason = _tpSlHit(p.isLong, _tpSl[id], price);
+        if (reason == 0) revert NotTriggered();
+        paid = _settle(id, p, price, reason);
     }
 
     function _openAt(bytes32 pair, bool isLong, uint256 margin, uint256 size, uint256 price) private returns (uint256 id) {
@@ -170,7 +209,7 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         _requirePq(msg.sender, ACTION_CLOSE, keccak256(abi.encode(id, acceptablePrice)), validUntil, pqSig);
         uint256 price = _price(p.pair, report);
         if (p.isLong ? price < acceptablePrice : price > acceptablePrice) revert PriceLimit();
-        paid = _settle(id, p, price, false);
+        paid = _settle(id, p, price, 1);
     }
 
     /// @notice Anyone can liquidate a position whose equity fell to the maintenance margin; they earn 5% of what's left.
@@ -179,13 +218,23 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         if (!p.open) revert NotOpen();
         uint256 price = _price(p.pair, report);
         if (!_liquidatable(p, price)) revert NotLiquidatable();
-        _settle(id, p, price, true);
+        _settle(id, p, price, 2);
     }
 
     // ================================================================== views
 
     function getPosition(uint256 id) external view returns (Position memory) {
         return _positions[id];
+    }
+
+    function getTpSl(uint256 id) external view returns (TpSl memory) {
+        return _tpSl[id];
+    }
+
+    /// @notice 0 = not triggered, 3 = take profit, 4 = stop loss, at `price`.
+    function tpSlTriggered(uint256 id, uint256 price) external view returns (uint8) {
+        Position storage p = _positions[id];
+        return p.open ? _tpSlHit(p.isLong, _tpSl[id], price) : 0;
     }
 
     function positionsOf(address trader) external view returns (uint256[] memory) {
@@ -233,7 +282,23 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         return equity <= int256((p.size * MAINT_BPS) / 10_000);
     }
 
-    function _settle(uint256 id, Position storage p, uint256 price, bool liquidation) private returns (uint256 paid) {
+    function _checkTpSl(bool isLong, uint256 entry, uint256 tp, uint256 sl) private pure {
+        if (isLong ? (tp != 0 && tp <= entry) || (sl != 0 && sl >= entry) : (tp != 0 && tp >= entry) || (sl != 0 && sl <= entry)) revert BadTpSl();
+    }
+
+    function _tpSlHit(bool isLong, TpSl storage t, uint256 price) private view returns (uint8) {
+        if (isLong) {
+            if (t.takeProfit != 0 && price >= t.takeProfit) return 3;
+            if (t.stopLoss != 0 && price <= t.stopLoss) return 4;
+        } else {
+            if (t.takeProfit != 0 && price <= t.takeProfit) return 3;
+            if (t.stopLoss != 0 && price >= t.stopLoss) return 4;
+        }
+        return 0;
+    }
+
+    function _settle(uint256 id, Position storage p, uint256 price, uint8 reason) private returns (uint256 paid) {
+        bool liquidation = reason == 2;
         int256 pnl = pnlAt(id, price);
         uint256 fee = (p.size * FEE_BPS) / 10_000;
         int256 equity = int256(p.margin) + pnl - int256(fee);
@@ -242,7 +307,7 @@ contract QrowPerps is ReentrancyGuard, PqAuth {
         p.open = false;
         p.closedAt = uint64(block.timestamp);
         p.exitPrice = price;
-        p.closedBy = liquidation ? 2 : 1;
+        p.closedBy = reason;
 
         uint256 toTrader;
         uint256 toLiquidator;

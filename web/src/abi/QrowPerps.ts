@@ -54,6 +54,19 @@ export const qrowPerpsAbi = [
   },
   {
     "type": "function",
+    "name": "ACTION_TPSL",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "DOMAIN_TAG",
     "inputs": [],
     "outputs": [
@@ -310,6 +323,52 @@ export const qrowPerpsAbi = [
   },
   {
     "type": "function",
+    "name": "executeTpSl",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "report",
+        "type": "tuple",
+        "internalType": "struct QrowPerps.PriceReport",
+        "components": [
+          {
+            "name": "pair",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "price",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "paid",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "fundPool",
     "inputs": [
       {
@@ -409,6 +468,37 @@ export const qrowPerpsAbi = [
             "name": "pnl",
             "type": "int256",
             "internalType": "int256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getTpSl",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct QrowPerps.TpSl",
+        "components": [
+          {
+            "name": "takeProfit",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "stopLoss",
+            "type": "uint256",
+            "internalType": "uint256"
           }
         ]
       }
@@ -524,29 +614,46 @@ export const qrowPerpsAbi = [
     "name": "open",
     "inputs": [
       {
-        "name": "pair",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "isLong",
-        "type": "bool",
-        "internalType": "bool"
-      },
-      {
-        "name": "margin",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "leverage",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "acceptablePrice",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "o",
+        "type": "tuple",
+        "internalType": "struct QrowPerps.OpenOrder",
+        "components": [
+          {
+            "name": "pair",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "isLong",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "margin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "leverage",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "acceptablePrice",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "takeProfit",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "stopLoss",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
       },
       {
         "name": "report",
@@ -821,6 +928,63 @@ export const qrowPerpsAbi = [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "setTpSl",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "takeProfit",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "stopLoss",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "validUntil",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "pqSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "tpSlTriggered",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "price",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
     "type": "event",
     "name": "Closed",
     "inputs": [
@@ -970,6 +1134,31 @@ export const qrowPerpsAbi = [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "TpSlSet",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "takeProfit",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "stopLoss",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "BadLeverage",
     "inputs": []
@@ -987,6 +1176,11 @@ export const qrowPerpsAbi = [
   {
     "type": "error",
     "name": "BadReport",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadTpSl",
     "inputs": []
   },
   {
@@ -1017,6 +1211,11 @@ export const qrowPerpsAbi = [
   {
     "type": "error",
     "name": "NotTrader",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotTriggered",
     "inputs": []
   },
   {
