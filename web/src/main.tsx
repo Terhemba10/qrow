@@ -4,6 +4,7 @@ import "./styles/app.css";
 import "./styles/hub.css";
 import "./styles/ds.css";
 import "./styles/shell.css";
+import "./styles/skin.css";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";

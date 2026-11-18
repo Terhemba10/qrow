@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { StatCard } from "../ds";
 import { useState } from "react";
 import type { Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
@@ -11,7 +12,7 @@ import { PqActionPanel } from "../components/PqActionPanel";
 import { COIN_FACTORY, GENESIS, isAdmin, MARKET, PREDICT } from "../config/contracts";
 import { CHAIN, ESCROW } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
-import { displayAmount, parseAmount } from "../lib/amount";
+import { parseAmount } from "../lib/amount";
 import { Outcome, pct, useMarkets } from "../lib/predict";
 
 const FUSD = tokenBySymbol("fUSD")!;
@@ -139,7 +140,6 @@ export function AdminPage() {
   const a = useAnalytics();
   const markets = useMarkets();
   const admin = isAdmin(me);
-  const n = (v?: bigint) => (v === undefined ? "–" : v.toString());
   const now = Date.now() / 1000;
 
   return (
@@ -148,32 +148,14 @@ export function AdminPage() {
         <h1 id="admin-title">Admin &amp; Analytics</h1>
         <p className="muted">Live numbers read from Qrow’s testnet contracts. Admin controls appear only for Qrow’s admin address; no admin key can move anyone’s funds or NFTs.</p>
       </div>
-      <ul className="stats">
-        <li className="stat">
-          <span className="hint">Escrow payments</span>
-          <strong className="fig">{n(a.data?.payments)}</strong>
-        </li>
-        <li className="stat">
-          <span className="hint">Genesis NFTs minted</span>
-          <strong className="fig">{n(a.data?.minted)}</strong>
-        </li>
-        <li className="stat">
-          <span className="hint">Market listings</span>
-          <strong className="fig">{n(a.data?.listings)}</strong>
-        </li>
-        <li className="stat">
-          <span className="hint">Coins launched</span>
-          <strong className="fig">{n(a.data?.coins)}</strong>
-        </li>
-        <li className="stat">
-          <span className="hint">Prediction markets</span>
-          <strong className="fig">{n(a.data?.markets)}</strong>
-        </li>
-        <li className="stat">
-          <span className="hint">Prediction volume</span>
-          <strong className="fig">{displayAmount((markets.data ?? []).reduce((s, m) => s + m.volume, 0n), FUSD.decimals)} fUSD</strong>
-        </li>
-      </ul>
+      <div className="hub__stats hub__stats--6">
+        <StatCard tone="cyan" label="Escrow payments" value={a.data?.payments !== undefined ? Number(a.data.payments) : undefined} unit="sent" />
+        <StatCard tone="orange" label="Genesis NFTs minted" value={a.data?.minted !== undefined ? Number(a.data.minted) : undefined} unit="of 256" />
+        <StatCard tone="mint" label="Prediction markets" value={a.data?.markets !== undefined ? Number(a.data.markets) : undefined} unit="markets" />
+        <StatCard label="Market listings" value={a.data?.listings !== undefined ? Number(a.data.listings) : undefined} unit="all time" />
+        <StatCard label="Coins launched" value={a.data?.coins !== undefined ? Number(a.data.coins) : undefined} unit="coins" />
+        <StatCard label="Prediction volume" value={markets.data ? Number((markets.data ?? []).reduce((s, m) => s + m.volume, 0n)) / 1e6 : undefined} format={(n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 })} unit="fUSD" />
+      </div>
 
       {admin && PREDICT && me && (
         <>

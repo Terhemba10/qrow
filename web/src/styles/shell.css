@@ -48,3 +48,35 @@
   .q-sticky-action { position: sticky; bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 5; }
 }
 @media (prefers-reduced-motion: reduce) { .q-more { animation: none; } }
+
+/* Desktop nav: one row + More menu */
+.topbar__inner { flex-wrap: nowrap; }
+.topbar .nav { order: 0; flex-basis: auto; overflow: visible; margin-inline-end: auto; }
+.q-navmore { position: relative; }
+.q-navmore__btn { display: inline-flex; align-items: center; gap: 6px; min-height: var(--q-tap); padding: 0 var(--q-s3); border: 0; border-radius: var(--q-r-pill); background: none; color: var(--q-muted); font: 500 var(--q-t-small)/1 var(--q-font-body); cursor: pointer; }
+.q-navmore__btn:hover, .q-navmore__btn[aria-expanded="true"], .q-navmore__btn.active { background: var(--q-surface-3); color: var(--q-text); }
+.q-navmore__btn:focus-visible { outline: none; box-shadow: var(--q-focus); }
+.q-navmore__panel { position: absolute; z-index: 40; top: calc(100% + 8px); left: 0; min-width: 280px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: var(--q-s2); border-radius: var(--q-r-lg); background: var(--q-surface-1); border: 1px solid var(--q-line); box-shadow: var(--q-shadow-raised); animation: q-rise var(--q-base) var(--q-ease); }
+.q-navmore__panel a { display: flex; align-items: center; min-height: var(--q-tap); padding: 0 var(--q-s3); border-radius: var(--q-r-md); color: var(--q-text); text-decoration: none; font: 500 var(--q-t-small)/1 var(--q-font-body); white-space: nowrap; }
+.q-navmore__panel a:hover, .q-navmore__panel a[aria-current="page"] { background: var(--q-surface-3); }
+.q-navmore__panel a:focus-visible { outline: none; box-shadow: var(--q-focus); }
+@media (min-width: 768px) and (max-width: 1100px) { .topbar .help-link { display: none; } .nav a { padding: 0 8px; } }
+@media (prefers-reduced-motion: reduce) { .q-navmore__panel { animation: none; } }
+/* The bar must never overlap: nav keeps its size, Help lives under More on desktop. */
+@media (min-width: 768px) {
+  .topbar__inner { max-width: 1344px; gap: var(--q-s3); }
+  .topbar .nav { flex: 0 1 auto; min-width: 0; }
+  .topbar .help-link { display: none; }
+  .topbar__inner > .q-net { flex: none; }
+}
+@media (min-width: 768px) and (max-width: 1180px) { .topbar .nav a, .q-navmore__btn { padding: 0 8px; } }
+/* Narrower desktops: the last tabs move into More (which lists them only at those widths). */
+.q-navmore__primary { display: none !important; }
+@media (min-width: 768px) and (max-width: 1100px) {
+  .topbar .nav > a:nth-of-type(n+7) { display: none; }
+  .q-navmore__primary:nth-of-type(n+6) { display: flex !important; }
+}
+@media (min-width: 768px) and (max-width: 920px) {
+  .topbar .nav > a:nth-of-type(n+6) { display: none; }
+  .q-navmore__primary:nth-of-type(n+5) { display: flex !important; }
+}

@@ -349,7 +349,7 @@ export function TradePage() {
             <section className="panel stack" aria-labelledby="chart-title">
               <div className="section-head">
                 <h2 id="chart-title">{pair}</h2>
-                <span className="fig">{fmtPrice(price, pair)}</span>
+                <span className="trade__price">{fmtPrice(price, pair)}</span>
               </div>
               <Chart pair={pair} live={price} />
               <p className="hint">Source: {prices.data?.sources[pair] ?? "…"}</p>

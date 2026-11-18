@@ -3,11 +3,11 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ComingSoon } from "./components/ComingSoon";
 import { Logo } from "./components/Logo";
 import { WalletButton } from "./components/WalletButton";
-import { BottomNav } from "./components/Shell";
+import { BottomNav, DesktopNav } from "./components/Shell";
 import { QorexConnect } from "./components/QorexConnect";
 import { NetworkBadge, TxToastHost } from "./ds";
 import { ESCROW, IS_DEMO } from "./config/network";
-import { FEEDBACK_URL, TABS, isLive, type TabId } from "./config/tabs";
+import { FEEDBACK_URL, isLive, type TabId } from "./config/tabs";
 import { captureReferral } from "./lib/staking";
 import { HelpPage, PrivacyPage } from "./pages/InfoPages";
 import { LaunchPage } from "./pages/LaunchPage";
@@ -48,17 +48,7 @@ export function App() {
           <NavLink to="/" className="brand" aria-label="Qrow, home">
             <Logo />
           </NavLink>
-          <nav className="nav" aria-label="Main">
-            <NavLink to="/" end>
-              Hub
-            </NavLink>
-            {TABS.map((t) => (
-              <NavLink key={t.id} to={t.path}>
-                {t.label}
-              </NavLink>
-            ))}
-            <NavLink to="/verify">Verify</NavLink>
-          </nav>
+          <DesktopNav />
           <NetworkBadge />
           <NavLink to="/help" className="help-link">
             Help

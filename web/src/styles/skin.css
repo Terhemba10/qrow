@@ -1,0 +1,144 @@
+/* Qrow UI v2 skin (approved Figma "Qrow UI v2", 19 Nov). Loaded LAST: maps the older token names and shared
+   classes onto the v2 tokens (ds.css), so every tab takes the approved look without rewriting each page.
+   Specs from the Figma frames: headings Big Shoulders 800 uppercase (page 76/70, section 30/30), body 16/24,
+   captions 13/18 600; cards 24px radius, 24px padding, 16px gaps; controls 48px, 16px radius; pill buttons. */
+
+/* ------------------------------------------------------------------ 1. old token names -> v2 values */
+:root {
+  --color-paper: var(--q-ink);
+  --color-desk: var(--q-ink);
+  --color-paper-2: var(--q-surface-1);
+  --color-cotton: var(--q-surface-1);
+  --color-paper-3: var(--q-surface-2);
+  --color-ink: var(--q-text);
+  --color-ink-2: #cfd1e6;
+  --color-muted: var(--q-muted);
+  --color-rule: var(--q-line);
+  --color-rule-2: var(--q-surface-3);
+  --color-link: var(--q-brand-text);
+  --color-settled: var(--q-mint);
+  --color-addr: var(--q-text);
+  --color-accent-a: var(--q-cyan);
+  --color-accent-b: var(--q-brand);
+  --color-on-accent: var(--q-on-accent);
+  --color-warn: var(--q-warn);
+  --color-danger: var(--q-danger);
+  --color-ok: var(--q-ok);
+  --gradient-accent: var(--q-brand);
+  --font-display: var(--q-font-display);
+  --radius-input: var(--q-r-md);
+  --radius-card: var(--q-r-lg);
+  --radius-sheet: var(--q-r-lg);
+  --control: 48px;
+  --hit: var(--q-tap);
+  --focus-ring: 2px solid #fff;
+}
+body { background: var(--q-ink); color: var(--q-text); }
+:focus-visible { outline: none; box-shadow: var(--q-focus); border-radius: 6px; }
+
+/* ------------------------------------------------------------------ 2. type */
+main h1 { font-family: var(--q-font-display); font-weight: 800; text-transform: uppercase; font-size: var(--q-t-h1); line-height: 0.92; letter-spacing: 0.005em; }
+main h2 { font-family: var(--q-font-display); font-weight: 800; text-transform: uppercase; font-size: 1.875rem; line-height: 1; letter-spacing: 0.005em; }
+main h3 { font-size: var(--q-t-title); font-weight: 600; line-height: 1.27; letter-spacing: 0; }
+/* Token symbols keep their real case inside uppercase headings (fUSD, not FUSD). */
+main h1 .keepcase, main h2 .keepcase { text-transform: none; }
+.sheet__head { gap: var(--q-s2); margin-bottom: var(--q-s6); }
+.sheet__head .muted { max-width: 64ch; font-size: var(--q-t-body); }
+.muted { color: var(--q-muted); }
+.hint { color: var(--q-muted); }
+.label, .field > label, .field legend, .field > span:first-child { font: 600 var(--q-t-caption)/1.38 var(--q-font-body); color: var(--q-muted); }
+.mono, .addr { color: var(--q-text); }
+.fig { font-family: var(--q-font-body); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ 3. surfaces */
+.panel, .confirm, .signflow { background: var(--q-surface-1); border: 0; border-radius: var(--q-r-lg); padding: var(--q-s5); box-shadow: var(--q-shadow-rest); }
+.panel.stack, .stack { gap: var(--q-s4); }
+.nftcard { background: var(--q-surface-1); border: 0; border-radius: var(--q-r-lg); padding: var(--q-s4); box-shadow: var(--q-shadow-rest); }
+.nftcard img { border-radius: var(--q-r-md); }
+.nftcard__name { font-weight: 600; }
+.notice { border-radius: var(--q-r-md); border: 0; background: var(--q-surface-2); padding: var(--q-s4); }
+.notice--warn { background: rgb(255 210 122 / 0.1); color: var(--q-warn); }
+.notice--danger { background: rgb(255 107 129 / 0.12); color: var(--q-danger); }
+.notice--ok { background: rgb(47 227 160 / 0.12); color: var(--q-ok); }
+.badge { border-radius: var(--q-r-pill); background: var(--q-surface-2); color: var(--q-text); font: 600 var(--q-t-caption)/1 var(--q-font-body); padding: 7px 12px; border: 0; }
+.footer { border-top-color: var(--q-line); color: var(--q-muted); }
+
+/* ------------------------------------------------------------------ 4. controls */
+.btn, .btn:not(.btn--quiet) {
+  min-height: 48px; padding: 0 var(--q-s5); border: 0; border-radius: var(--q-r-pill);
+  background: var(--q-brand); color: var(--q-on-accent); font: 600 var(--q-t-body)/1 var(--q-font-body); filter: none;
+}
+.btn::after { display: none; }
+.btn:not(.btn--quiet):hover { background: var(--q-brand); filter: brightness(1.08); }
+.btn--quiet, .btn--quiet:hover { background: var(--q-surface-2); color: var(--q-text); border: 0; box-shadow: none; }
+.btn--quiet:hover { background: var(--q-surface-3); }
+.btn--block { width: 100%; }
+.btn:focus-visible { box-shadow: var(--q-focus); }
+.input {
+  min-height: 48px; border-radius: var(--q-r-md); background: var(--q-surface-2); border: 1px solid var(--q-line);
+  color: var(--q-text); font: 600 var(--q-t-body)/1.5 var(--q-font-body); padding: 0 var(--q-s4);
+}
+textarea.input { padding: var(--q-s3) var(--q-s4); }
+.input::placeholder { color: var(--q-faint); font-weight: 400; }
+.input:hover { border-color: var(--q-surface-3); }
+.input:focus-visible { border-color: var(--q-brand); box-shadow: 0 0 0 3px rgb(155 107 255 / 0.35); outline: none; }
+.input[aria-invalid="true"] { border-color: var(--q-danger); }
+.seg { border: 0; background: transparent; padding: 0; gap: 6px; }
+.seg label { min-height: 48px; padding: 0 var(--q-s4); border-radius: var(--q-r-md); background: var(--q-surface-2); color: var(--q-text); font: 600 var(--q-t-small)/1 var(--q-font-body); }
+.seg label:hover { background: var(--q-surface-3); }
+.seg input:checked + label { background: var(--q-light); color: var(--q-on-accent); box-shadow: none; }
+.seg input:focus-visible + label { box-shadow: var(--q-focus); outline: none; }
+.field-error { color: var(--q-danger); font-weight: 600; }
+.linkbtn { color: var(--q-brand-text); }
+
+/* ------------------------------------------------------------------ 5. data */
+.stats > div, .stats > .stat, .stats > li { background: var(--q-surface-1); border: 0; border-radius: var(--q-r-lg); padding: var(--q-s5); }
+.stat { font-family: var(--q-font-display); font-weight: 800; font-size: clamp(2rem, 1.5rem + 2vw, 3rem); line-height: 0.95; }
+.stats .hint { font-family: var(--q-font-body); }
+.facts { border-top-color: var(--q-line); }
+.facts dt { color: var(--q-muted); font-size: var(--q-t-small); }
+.facts dd { font-weight: 600; }
+.table th { color: var(--q-muted); font: 600 var(--q-t-caption)/1.3 var(--q-font-body); text-transform: none; }
+.table td, .table th { border-color: var(--q-line); }
+.table tr:hover td { background: var(--q-surface-1); }
+
+/* ------------------------------------------------------------------ 6. shell */
+.topbar { background: var(--q-ink); border-bottom: 1px solid var(--q-line); }
+.nav a { min-height: var(--q-tap); padding: 0 var(--q-s3); border-radius: var(--q-r-pill); color: var(--q-muted); font: 500 var(--q-t-small)/1 var(--q-font-body); }
+.nav a:hover { background: var(--q-surface-1); color: var(--q-text); }
+.nav a[aria-current="page"] { background: var(--q-surface-3); color: var(--q-text); box-shadow: none; border-radius: var(--q-r-pill); }
+.help-link { color: var(--q-muted); }
+
+/* ------------------------------------------------------------------ 7. tab-specific pieces (Figma frames) */
+/* Trade */
+.pairchip { border: 0; border-radius: var(--q-r-md); background: var(--q-surface-1); min-height: 48px; padding: 8px 14px; }
+.pairchip > span:first-child { font: 600 var(--q-t-caption)/1.38 var(--q-font-body); }
+.pairchip.is-on { background: var(--q-cyan); color: var(--q-on-accent); }
+.pairchip.is-on .hint { color: var(--q-on-accent); }
+.perprow { background: var(--q-surface-1); border: 0; border-radius: var(--q-r-lg); padding: var(--q-s4); }
+.pnl--up { color: var(--q-mint); font-size: var(--q-t-title); font-weight: 600; }
+.pnl--down { color: var(--q-danger); font-size: var(--q-t-title); font-weight: 600; }
+.chart .hint { color: var(--q-faint); font-weight: 600; font-size: var(--q-t-caption); }
+/* Predictions */
+.pmcard { background: var(--q-surface-1); border: 2px solid transparent; border-radius: var(--q-r-lg); }
+.pmcard:has(button:focus-visible), .pmcard:hover { border-color: var(--q-surface-3); }
+.pmcard__q { font-size: var(--q-t-title); line-height: 1.27; font-weight: 600; }
+.probbar { height: 32px; border-radius: var(--q-r-pill); background: rgb(255 122 47 / 0.22); font: 600 var(--q-t-caption)/1 var(--q-font-body); }
+.probbar__yes { background: var(--q-mint); color: var(--q-on-accent); }
+.probbar__no { color: var(--q-orange); }
+.pmside button { min-height: 52px; border-radius: var(--q-r-md); }
+.pmside__yes { background: rgb(47 227 160 / 0.16); color: var(--q-mint); }
+.pmside__no { background: rgb(255 122 47 / 0.18); color: var(--q-orange); }
+.pmside__yes.is-on { background: var(--q-mint); border-color: var(--q-mint); color: var(--q-on-accent); }
+.pmside__no.is-on { background: var(--q-orange); border-color: var(--q-orange); color: var(--q-on-accent); }
+/* Chat */
+.chatlog__msg--user { background: var(--q-cyan); color: var(--q-on-accent); }
+.chatlog__msg--assistant { background: var(--q-surface-2); border: 0; }
+/* Hub tiles already use v2 tokens (hub.css). */
+
+@media (max-width: 767px) {
+  main h1 { font-size: clamp(2.5rem, 11vw, 3.25rem); }
+  main h2 { font-size: 1.625rem; }
+  .sheet__head { margin-bottom: var(--q-s5); }
+}
+.trade__price { font-family: var(--q-font-display); font-weight: 800; font-size: 1.875rem; line-height: 1; color: var(--q-mint); font-variant-numeric: tabular-nums; }

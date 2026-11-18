@@ -145,3 +145,56 @@ export function Onboarding() {
     </aside>
   );
 }
+
+/** Desktop: the main tabs in one row (approved Figma "Qrow UI v2") and every other tab under More. */
+const PRIMARY = ["/trade", "/predict", "/send", "/market", "/portfolio", "/history", "/ai"];
+export function DesktopNav() {
+  const [open, setOpen] = useState(false);
+  const loc = useLocation();
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const c = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("keydown", k);
+    document.addEventListener("mousedown", c);
+    box.current?.querySelector<HTMLElement>(".q-navmore__panel a")?.focus();
+    return () => {
+      document.removeEventListener("keydown", k);
+      document.removeEventListener("mousedown", c);
+    };
+  }, [open]);
+  const primary = PRIMARY.map((p) => TABS.find((t) => t.path === p)!).filter(Boolean);
+  const rest = TABS.filter((t) => !PRIMARY.includes(t.path));
+  const inMore = rest.some((t) => loc.pathname === t.path) || ["/verify", "/help"].includes(loc.pathname);
+  return (
+    <nav className="nav" aria-label="Main">
+      <NavLink to="/" end>
+        Hub
+      </NavLink>
+      {primary.map((t) => (
+        <NavLink key={t.id} to={t.path}>
+          {t.id === "market" ? "NFTs" : t.id === "predict" ? "Predict" : t.label}
+        </NavLink>
+      ))}
+      <div className="q-navmore" ref={box}>
+        <button type="button" className={`q-navmore__btn${inMore ? " active" : ""}`} aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((o) => !o)}>
+          More
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        {open && (
+          <div className="q-navmore__panel" role="menu">
+            {[...primary.map((t) => ({ ...t, label: t.id === "market" ? "NFT Market" : t.label, primary: true })), ...rest, { id: "verify", path: "/verify", label: "Verify" }, { id: "help", path: "/help", label: "Help" }].map((t) => (
+              <NavLink key={t.id} to={t.path} role="menuitem" className={"primary" in t ? "q-navmore__primary" : undefined}>
+                {t.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}

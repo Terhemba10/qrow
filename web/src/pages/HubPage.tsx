@@ -2,6 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import { Link, useNavigate } from "react-router-dom";
 import { TABS, isLive } from "../config/tabs";
 import { Onboarding } from "../components/Shell";
+import { useAccount } from "wagmi";
+import { CHAIN } from "../config/network";
+import { Button, Card, StatCard } from "../ds";
+import { useBalances } from "../lib/portfolio";
+import { useMarkets } from "../lib/predict";
+import { PREDICT } from "../config/contracts";
+import { useCandles, usePrices } from "../lib/trade";
 
 /**
  * The 3D tab hub: every tab as a floating card that tilts toward the pointer or finger and opens on click/tap.
@@ -100,6 +107,40 @@ function Tile({ i, path, label, blurb, soon, flat }: { i: number; path: string; 
   );
 }
 
+
+/** The three live numbers above the tiles: your QOR, ETH on Trade, and the prediction markets. */
+function HubStats() {
+  const { address, chainId, isConnected } = useAccount();
+  const me = isConnected && chainId === CHAIN.id ? address : undefined;
+  const bal = useBalances(me);
+  const prices = usePrices();
+  const candles = useCandles("ETH/USDT");
+  const markets = useMarkets();
+  const qor = bal.data?.rows.find((r) => r.token.symbol === "QOR");
+  const eth = prices.data?.prices["ETH/USDT"];
+  const vol = (markets.data ?? []).reduce((s, m) => s + m.volume, 0n);
+  const ethSpark = (candles.data ?? []).slice(-24).map((k) => k.c);
+  return (
+    <div className="hub__stats">
+      {me ? (
+        <StatCard tone="cyan" label="Your balance" value={qor ? Number(qor.evm / 10n ** 12n) / 1e6 : undefined} format={(n) => n.toLocaleString(undefined, { maximumFractionDigits: 2 })} unit="QOR" delta="Test QOR, no real value" />
+      ) : (
+        <Card tone="cyan" className="q-stat" as="div">
+          <span className="q-stat__label">Your balance</span>
+          <span className="q-stat__value">Connect</span>
+          <span className="q-card__sub">QoreX shows your test QOR here.</span>
+        </Card>
+      )}
+      <StatCard tone="orange" label="ETH on Trade" value={eth !== undefined ? Number(eth) / 1e8 : undefined} format={(n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 })} unit="USDT" spark={ethSpark.length > 1 ? ethSpark : undefined} delta="Live Binance price, last 24 hours" />
+      <StatCard tone="mint" label="Prediction markets" value={markets.data ? markets.data.length : PREDICT ? undefined : 0} unit="open" delta={`${(Number(vol) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 0 })} fUSD traded`}>
+        <Button to="/predict" variant="light" size="sm">
+          See the markets
+        </Button>
+      </StatCard>
+    </div>
+  );
+}
+
 export function HubPage() {
   const [flat, setFlat] = useFlat();
   const tiles = [...TABS.map((t) => ({ ...t, soon: !isLive(t.id) })), ...EXTRA.map((t) => ({ ...t, soon: false }))];
@@ -118,6 +159,7 @@ export function HubPage() {
           {flat ? "3D view" : "Flat view"}
         </button>
       </div>
+      <HubStats />
       <ul className="hub__grid" aria-label="All tabs">
         {tiles.map((t, i) => (
           <Tile key={t.id} i={i} path={t.path} label={t.label} blurb={t.blurb} soon={t.soon} flat={flat} />

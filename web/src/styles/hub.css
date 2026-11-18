@@ -53,3 +53,8 @@
   .hubtile { min-height: 150px; }
   .hubtile__label { font-size: 1.25rem; }
 }
+
+/* Stat cards above the tiles (Figma "Hub"), reused by Admin */
+.hub__stats { display: grid; gap: var(--q-s4, 16px); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin-bottom: var(--q-s6, 32px); }
+.hub__stats--6 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.hub__stats .q-stat .q-btn { justify-self: start; margin-top: 4px; }
