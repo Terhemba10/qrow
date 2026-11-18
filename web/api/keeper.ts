@@ -1,7 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { send } from "../server/http.js";
-import { keeperConfig, keeperPass } from "../server/keeper.js";
 
 /** Vercel: up to 60 s for one pass (a trigger waits for its receipt; opening a window adds ~10 s). */
 export const config = { maxDuration: 60 };
@@ -23,6 +22,16 @@ let running = false;
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== "GET" && req.method !== "POST") return send(res, 405, { ok: false, reason: "get_only" });
   if (!cronAuthorized(req.headers.authorization, process.env.KEEPER_CRON_SECRET?.trim())) return send(res, 401, { ok: false, reason: "unauthorized" });
+  // The chain libraries load only after the secret checks out, so unauthorised calls stay cheap and a load
+  // failure is reported to the (authorised) caller instead of crashing the function.
+  let mod: typeof import("../server/keeper.js");
+  try {
+    mod = await import("../server/keeper.js");
+  } catch (e) {
+    console.error(`[keeper] failed to load: ${e instanceof Error ? e.message.slice(0, 300) : e}`);
+    return send(res, 500, { ok: false, reason: "load_failed", detail: e instanceof Error ? e.message.slice(0, 300) : String(e) });
+  }
+  const { keeperConfig, keeperPass } = mod;
   const cfg = keeperConfig();
   if (!cfg.ok) {
     console.error(`[keeper] not configured, missing: ${cfg.missing.join(", ")}`);
