@@ -66,15 +66,24 @@ async function main() {
   };
   let stop = false;
   process.on("SIGINT", () => (stop = true));
+  const ts = () => new Date().toLocaleTimeString();
+  console.log(`${ts()} keeper started: checking QrowPerps ${perps} every 20 s (Ctrl+C to stop)`);
+  let lastStatus = "";
+  let lastPrint = 0;
   do {
     try {
       const count = (await c.readContract({ address: perps, abi, functionName: "positionCount" })) as bigint;
       const px = await prices();
+      let open = 0;
+      let withTpSl = 0;
       for (let id = 1n; id <= count; id++) {
         const p = (await c.readContract({ address: perps, abi, functionName: "getPosition", args: [id] })) as { open: boolean; pair: Hex };
         if (!p.open) continue;
         const pair = pairOf.get(p.pair.toLowerCase());
         if (!pair) continue;
+        open++;
+        const t = (await c.readContract({ address: perps, abi, functionName: "getTpSl", args: [id] })) as { takeProfit: bigint; stopLoss: bigint };
+        if (t.takeProfit || t.stopLoss) withTpSl++;
         const reason = (await c.readContract({ address: perps, abi, functionName: "tpSlTriggered", args: [id, px[pair]] })) as number;
         const r = await report(pair, px[pair]);
         let fn: "executeTpSl" | "liquidate" | undefined = reason ? "executeTpSl" : undefined;
@@ -92,6 +101,15 @@ async function main() {
         const hash = await w.writeContract({ address: perps, abi, functionName: fn, args: [id, r], nonce, account, chain: w.chain });
         const rc = await c.waitForTransactionReceipt({ hash });
         console.log(`${new Date().toISOString()} #${id} ${pair} ${fn === "liquidate" ? "liquidated" : reason === 3 ? "take profit" : "stop loss"} at ${Number(px[pair]) / 1e8}: ${rc.status} (tx ${hash})`);
+      }
+      // Status line: when the open positions change, and at least every 5 minutes so you can see it's alive.
+      const status = `${open} open position${open === 1 ? "" : "s"} (${withTpSl} with TP/SL), nothing to trigger`;
+      if (status !== lastStatus || Date.now() - lastPrint > 300_000) {
+        const fmt = (n: number) => (n >= 1 ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : n.toPrecision(3));
+        const prices = PAIRS.map((p) => `${p} ${fmt(Number(px[p]) / 1e8)}`).join(", ");
+        console.log(`${ts()} checked: ${status}. Prices: ${prices}`);
+        lastStatus = status;
+        lastPrint = Date.now();
       }
     } catch (e) {
       console.error(`${new Date().toISOString()} keeper pass failed: ${e instanceof Error ? e.message.slice(0, 200) : e}`);
