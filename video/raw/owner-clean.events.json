@@ -1,0 +1,126 @@
+{
+ "shot": "owner-clean",
+ "note": "Hand-placed from frames of the owner's recording (clean timeline): where the clicks, typing and key moments are, for zooms and labels.",
+ "events": [
+  {
+   "t": 16.3,
+   "kind": "click",
+   "label": "Connect in QoreX",
+   "text": "",
+   "box": [
+    1166,
+    305,
+    233,
+    54
+   ]
+  },
+  {
+   "t": 23.0,
+   "kind": "type",
+   "label": "Type the amount here",
+   "text": "20",
+   "box": [
+    173,
+    424,
+    567,
+    62
+   ]
+  },
+  {
+   "t": 28.3,
+   "kind": "point",
+   "label": "Minimum, fee and price impact, before you sign",
+   "text": "",
+   "box": [
+    170,
+    621,
+    735,
+    351
+   ]
+  },
+  {
+   "t": 36.0,
+   "kind": "point",
+   "label": "One approval in QoreX",
+   "text": "",
+   "box": [
+    888,
+    86,
+    540,
+    819
+   ]
+  },
+  {
+   "t": 57.2,
+   "kind": "point",
+   "label": "Swap confirmed: receipt and hash",
+   "text": "",
+   "box": [
+    967,
+    419,
+    820,
+    391
+   ]
+  },
+  {
+   "t": 64.0,
+   "kind": "paste",
+   "label": "Paste the recipient's address",
+   "text": "",
+   "box": [
+    572,
+    467,
+    778,
+    60
+   ]
+  },
+  {
+   "t": 76.4,
+   "kind": "type",
+   "label": "Type the amount",
+   "text": "12",
+   "box": [
+    570,
+    378,
+    656,
+    59
+   ]
+  },
+  {
+   "t": 78.2,
+   "kind": "point",
+   "label": "Choose how it's released",
+   "text": "",
+   "box": [
+    570,
+    553,
+    777,
+    127
+   ]
+  },
+  {
+   "t": 87.9,
+   "kind": "point",
+   "label": "Lookalike check before you send",
+   "text": "",
+   "box": [
+    135,
+    135,
+    1652,
+    130
+   ]
+  },
+  {
+   "t": 109.6,
+   "kind": "point",
+   "label": "Share a QR code or link",
+   "text": "",
+   "box": [
+    1428,
+    230,
+    311,
+    310
+   ]
+  }
+ ]
+}

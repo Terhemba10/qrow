@@ -6,7 +6,7 @@
 Skills: make-a-video (gates), hyperframes + gsap (framework rules), video-storytelling (persistent journey
 rail, one spotlight at a time, camera is the edit, open loop closed at the end), style-library (Kallaway
 "aurora glass" labels re-tinted to Qrow: tokens.css, DESIGN.md), motion-showreel (Q-motif opener and the
-held logo lockup, timed to the music's beat grid).
+held logo lockup, timed to the music's beat grid), 3dviz-pro-max (the 3D 'why it matters' signature plates).
 
 Inputs: ../out/edl*.json (where each footage segment sits), ../raw/<clip>.events.json (what was clicked,
 typed or pointed at, where and when), ../out/captions*.srt, ../out/soundtrack*.wav.
@@ -34,14 +34,9 @@ def beat(n: float, after_loop=False) -> float:
     return (LOOP_AT if after_loop else 0.0) + PHASE + n * PERIOD
 
 
-RAIL = ["CONNECT", "FAUCET", "SWAP", "SEND", "CLAIM", "VERIFY"]
-SCENE_STEP = {"s03-connect-faucet": [0, 1], "s04-swap": [2], "s05-send": [3], "s05-alt": [3], "s06-claim": [4], "s07-verify": [5]}
-OWNER_NOTES = {  # labels over the owner's real QoreX clips (no coordinates: placed in the window's lower right)
-    "s03a-connect.mp4": [(0.4, "Connect once, in QoreX")],
-    "s04-swap.mp4": [(0.5, "Type the amount here"), (0.42, "Review, then one approval in QoreX"), (0.78, "Your receipt and its hash")],
-    "s05b-send.mp4": [(0.15, "One approval in QoreX"), (0.75, "Your receipt and its hash")],
-    "s06-claim.mp4": [(0.2, "Claim with one approval"), (0.75, "Claimed: receipt and hash")],
-}
+RAIL = ["CONNECT", "SWAP", "SEND", "RECEIVE", "VERIFY"]
+SCENE_STEP = {"s03-connect": [0], "s04-swap": [1], "s05-send": [2], "s06-receive": [3], "s07-verify": [4]}
+OWNER_NOTES: dict = {}  # cut 2: the owner's clip has hand-placed events (raw/owner-clean.events.json) instead
 STEPS3 = ["Type", "Review", "Approve"]
 
 
@@ -197,11 +192,12 @@ def main():
         if not sc:
             continue
         t0, dur = sc["start"], sc["dur"]
-        if sid == "s05-send":
-            form = sc["segments"][0]
-            lights = [form["start"] + 1.0, form["start"] + form["slot"] - 0.2, form["start"] + form["slot"] + 0.35 * (dur - form["slot"])]
+        sg = sc["segments"]
+        if sid == "s05-send":  # the owner's send stops on the confirm screen: Type and Review only (no faked approval)
+            lights = [sg[0]["start"] + 1.0, sg[2]["start"] + 0.2]
+            dur = sg[3]["start"] - t0 + 0.2
         else:
-            lights = [t0 + 0.25 * dur, t0 + 0.42 * dur, t0 + 0.6 * dur]
+            lights = [sg[0]["start"] + 1.0, sg[0]["start"] + 6.6, sg[1]["start"] + 0.2]
         overlays.append(steps3(f"st-{sid}", t0 + 0.4, dur - 0.6, next_track()))
         js.append(f'tl.from("#st-{sid}", {{y: -18, opacity: 0, duration: 0.6, ease: "expo.out"}}, {t0 + 0.5:.3f});')
         for k, tl_ in enumerate(lights):
@@ -259,6 +255,11 @@ def main():
         lanes[lane] = a + d
         overlays.append(f'<div id="cap{i}" class="cap clip" data-start="{a:.3f}" data-duration="{d:.3f}" data-track-index="{90 + lane}">{esc(text)}</div>')
         js.append(f'tl.from("#cap{i}", {{opacity: 0, y: 8, duration: 0.25, ease: "power2.out"}}, {a:.3f});')
+
+    if "s07b-why" in sc_by_id:
+        why_html, why_js = why_card(sc_by_id["s07b-why"], caps, next_track())
+        overlays.append(why_html)
+        js.extend(why_js)
 
     hook_js, end_js = hook_timeline(), end_timeline(end_start)
     page = TEMPLATE.format(
@@ -330,6 +331,148 @@ def key_js(i, t):
 def steps3(i, t, d, tr):
     pills = "".join(f'<div class="s step{k}"><span class="num">{k + 1}</span>{n}</div>' for k, n in enumerate(STEPS3))
     return f'<div id="{i}" class="steps3 clip" data-start="{t:.3f}" data-duration="{d:.3f}" data-track-index="{tr}">{pills}</div>'
+
+
+# ---------------------------------------------------------------- 3dviz-pro-max: the "why it matters" takeover
+PW, PH, PD = 560, 340, 18           # signature plate: width, height, thickness (px, real CSS 3D depth)
+FRAG_COLS, FRAG_ROWS = 4, 3
+
+
+def plate_faces(cls, front_inner, frags=False):
+    """A slab with real thickness: front, back and four edge faces in one preserve-3d group."""
+    if frags:  # the front face as tiles that can fly apart (each tile clips its own copy of the face)
+        fw, fh = PW / FRAG_COLS, PH / FRAG_ROWS
+        tiles = "".join(
+            f'<div class="frag f{r * FRAG_COLS + c}" style="left:{c * fw:.1f}px;top:{r * fh:.1f}px;width:{fw:.1f}px;height:{fh:.1f}px">'
+            f'<div class="face-in" style="left:{-c * fw:.1f}px;top:{-r * fh:.1f}px">{front_inner}</div></div>'
+            for r in range(FRAG_ROWS) for c in range(FRAG_COLS))
+        front = f'<div class="face front tiles">{tiles}</div>'
+    else:
+        front = f'<div class="face front"><div class="face-in">{front_inner}</div></div>'
+    return (f'<div class="plate {cls}">{front}<div class="face back"></div>'
+            f'<div class="edge er"></div><div class="edge el"></div><div class="edge et"></div><div class="edge eb"></div></div>')
+
+
+def cap_time(caps, needle, frac=0.0):
+    for a, c, text in caps:
+        if needle in text:
+            return a + frac * (c - a)
+    raise KeyError(needle)
+
+
+WHY_CSS = """
+    .why { position: absolute; inset: 0; z-index: 28; background: radial-gradient(70% 70% at 50% 46%, #1b1d3c 0%, #0d0f22 72%); overflow: hidden; }
+    .why .kick { position: absolute; left: 160px; top: 118px; font: 500 22px var(--font-mono); letter-spacing: .22em; color: var(--accent); }
+    .why .stage { position: absolute; inset: 0; perspective: 1700px; perspective-origin: 50% 42%; }
+    .why .pair { position: absolute; left: 50%; top: 47%; width: 0; height: 0; transform-style: preserve-3d; }
+    .why .slot { position: absolute; transform-style: preserve-3d; }
+    .why .plate { position: absolute; left: -PW2px; top: -PH2px; width: PWpx; height: PHpx; transform-style: preserve-3d; }
+    .why .face { position: absolute; inset: 0; border-radius: 20px; backface-visibility: hidden; transform: translateZ(PD2px); overflow: hidden; }
+    .why .face.tiles { overflow: visible; transform-style: preserve-3d; border-radius: 0; }
+    .why .face.back { transform: rotateY(180deg) translateZ(PD2px); background: #0b0c1d; }
+    .why .face-in { position: absolute; left: 0; top: 0; width: PWpx; height: PHpx; box-sizing: border-box; padding: 34px 40px; border-radius: 20px; }
+    .why .frag { position: absolute; overflow: hidden; }
+    .why .edge { position: absolute; background: #2a2d52; }
+    .why .er, .why .el { width: PDpx; height: PHm20px; top: 10px; left: EXpx; }
+    .why .er { transform: rotateY(90deg) translateZ(PW2m1px); } .why .el { transform: rotateY(-90deg) translateZ(PW2m1px); background: #353966; }
+    .why .et, .why .eb { height: PDpx; width: PWm20px; left: 10px; top: EYpx; }
+    .why .et { transform: rotateX(90deg) translateZ(PH2m1px); background: #3c4170; } .why .eb { transform: rotateX(-90deg) translateZ(PH2m1px); background: #1d1f3d; }
+    .why .ec .face-in { background: linear-gradient(150deg, #34375e 0%, #24264a 55%, #1b1d3a 100%); box-shadow: inset 0 0 0 1.5px rgba(238,240,255,.18); }
+    .why .pq .face-in { background: linear-gradient(150deg, #173f4a 0%, #142c3e 50%, #1a1f40 100%); box-shadow: inset 0 0 0 2px rgba(62,240,210,.75), inset 0 0 60px rgba(62,240,210,.14); }
+    .why .pq .edge { background: #0f6b63; } .why .pq .et { background: #19a493; } .why .pq .el { background: #12867a; }
+    .why .pk { margin: 0; font: 500 18px var(--font-mono); letter-spacing: .18em; color: var(--text-dim); }
+    .why .pt { margin: 18px 0 0; font: 600 54px var(--font-display); color: var(--text); letter-spacing: -.01em; }
+    .why .hx { margin: 18px 0 0; font: 400 21px/1.45 var(--font-mono); color: rgba(238,240,255,.7); max-width: 400px; }
+    .why .ft { position: absolute; left: 40px; bottom: 30px; margin: 0; font: 600 24px var(--font-body); color: #ff8a8a; }
+    .why .ft.ok { color: var(--accent); }
+    .why .shield { position: absolute; right: 36px; top: 34px; width: 74px; height: 84px; fill: rgba(62,240,210,.12); stroke: var(--accent); stroke-width: 3.5; stroke-linejoin: round; }
+    .why .shield .tick { fill: none; stroke-linecap: round; stroke-dasharray: 40; stroke-dashoffset: 40; }
+    .why .crack { position: absolute; left: -PW2px; top: -PH2px; width: PWpx; height: PHpx; transform: translateZ(CZpx); overflow: visible; }
+    .why .crack path { fill: none; stroke: #ffd2d2; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(255,120,120,.9)); stroke-dasharray: 900; stroke-dashoffset: 900; }
+    .why .glow { position: absolute; left: GXpx; top: GYpx; width: GWpx; height: GHpx; border-radius: 60px; transform: translateZ(-30px);
+                 background: radial-gradient(closest-side, rgba(62,240,210,.45), rgba(62,240,210,0)); opacity: 0; }
+    .why .spec { position: absolute; left: -PW2px; top: -PH2px; width: PWpx; height: PHpx; overflow: hidden; border-radius: 20px; transform: translateZ(SZpx); pointer-events: none; }
+    .why .spec i { position: absolute; top: 0; bottom: 0; left: 0; width: 60%; background: linear-gradient(105deg, transparent, rgba(255,255,255,.18), transparent); transform: translateX(-120%); }
+    .why .verdict { position: absolute; left: 0; right: 0; top: 790px; text-align: center; font: 600 50px var(--font-display); letter-spacing: -.01em; color: var(--text); }
+    .why .verdict b { color: var(--accent); font-weight: 600; }
+    .why .tag { position: absolute; font: 600 20px var(--font-mono); letter-spacing: .2em; padding: 8px 16px; border-radius: 10px; }
+    .why .tag.bad { left: 420px; top: 700px; color: #ff9a9a; background: rgba(255,90,90,.12); box-shadow: inset 0 0 0 1.5px rgba(255,120,120,.5); }
+    .why .tag.good { left: 1210px; top: 700px; color: var(--accent); background: rgba(62,240,210,.10); box-shadow: inset 0 0 0 1.5px rgba(62,240,210,.6); }
+"""
+
+
+def why_css():
+    rep = {"PW2m1": PW / 2 - 1, "PH2m1": PH / 2 - 1, "PHm20": PH - 20, "PWm20": PW - 20, "PW2": PW / 2, "PH2": PH / 2, "PD2": PD / 2,
+           "PW": PW, "PH": PH, "PD": PD, "EX": (PW - PD) / 2, "EY": (PH - PD) / 2, "CZ": PD / 2 + 2, "SZ": PD / 2 + 1,
+           "GX": -PW / 2 - 60, "GY": -PH / 2 - 60, "GW": PW + 120, "GH": PH + 120}
+    out = WHY_CSS
+    for k in sorted(rep, key=len, reverse=True):
+        out = out.replace(k + "px", f"{rep[k]:g}px")
+    return out
+
+
+def why_card(sc, caps, tr):
+    t0, dur = sc["start"], sc["dur"]
+    t_forged = cap_time(caps, "can be forged", 0.42)      # on "forged"
+    t_cant = cap_time(caps, "ML-DSA-87 can")              # "ML-DSA-87 can't."
+    t_both = cap_time(caps, "carries both")               # "Every Qrow action carries both."
+    sig = "3045 0221 00c7 9e1a 44fb 2d0b 77a1 e590 0220 5b3c"
+    ec_inner = ('<p class="pk">TODAY · ECDSA secp256k1</p><p class="pt">Classical signature</p>'
+                f'<p class="hx">{sig}</p><p class="ft">A quantum computer can forge it</p>')
+    pq_inner = ('<p class="pk">QORECHAIN · FIPS 204</p><p class="pt">ML-DSA-87</p>'
+                '<p class="hx">Lattice signature, checked by the chain on every Qrow action</p><p class="ft ok">Quantum-safe</p>'
+                '<svg class="shield" viewBox="0 0 64 72"><path d="M32 3 L59 13 V35 C59 52 47 63 32 69 C17 63 5 52 5 35 V13 Z"/><path class="tick" d="M20 37 L29 46 L45 27"/></svg>')
+    crack = (f'<svg class="crack" viewBox="0 0 {PW} {PH}"><path d="M300 0 L282 70 L318 120 L268 182 L296 240 L250 340 '
+             'M282 70 L200 96 L120 80 M268 182 L400 210 L560 196 M318 120 L430 92"/></svg>')
+    html_ = (f'<div id="why" class="why clip" data-start="{t0:.3f}" data-duration="{dur:.3f}" data-track-index="{tr}">'
+             f'<style>{why_css()}</style>'
+             '<div class="kick">WHY IT MATTERS</div>'
+             '<div class="stage"><div class="pair">'
+             f'<div class="slot s-ec">{plate_faces("ec", ec_inner, frags=True)}{crack}</div>'
+             f'<div class="slot s-pq"><div class="glow"></div>{plate_faces("pq", pq_inner)}<div class="spec"><i></i></div></div>'
+             '</div></div>'
+             '<div class="tag bad">FORGEABLE AFTER Q-DAY</div><div class="tag good">HOLDS</div>'
+             '<div class="verdict">Every Qrow action carries <b>both</b></div></div>')
+    r = mulberry(87)
+    js = [
+        # entrance: the plates arrive from depth, turned, then settle
+        f'tl.from("#why .kick", {{opacity: 0, x: -30, duration: 0.6, ease: "expo.out"}}, {t0 + 0.25:.3f});',
+        f'tl.fromTo("#why .s-ec", {{x: -330, z: -900, rotationY: 38, opacity: 0}}, {{x: -330, z: 0, rotationY: 0, opacity: 1, duration: 1.2, ease: "power3.out"}}, {t0 + 0.2:.3f});',
+        f'tl.fromTo("#why .s-pq", {{x: 330, z: -900, rotationY: -38, opacity: 0}}, {{x: 330, z: 0, rotationY: 0, opacity: 1, duration: 1.2, ease: "power3.out"}}, {t0 + 0.42:.3f});',
+        f'tl.fromTo("#why .pair", {{rotationX: 10, rotationY: 0}}, {{rotationX: 6, rotationY: -6, duration: {t_both - t0 - 0.4:.2f}, ease: "sine.inOut"}}, {t0 + 0.2:.3f});',
+        # "forged": the classical plate cracks, then shatters in depth
+        f'tl.to("#why .crack path", {{strokeDashoffset: 0, duration: 0.55, ease: "power2.in"}}, {t_forged - 0.6:.3f});',
+        f'tl.to("#why .ec", {{x: 8, duration: 0.05, yoyo: true, repeat: 5, ease: "none"}}, {t_forged - 0.1:.3f});',
+        f'tl.to("#why .crack", {{opacity: 0, duration: 0.15}}, {t_forged + 0.25:.3f});',
+        f'tl.to("#why .ec .edge, #why .ec .back", {{opacity: 0, duration: 0.2}}, {t_forged + 0.25:.3f});',
+        f'tl.from("#why .tag.bad", {{opacity: 0, y: 14, duration: 0.45, ease: "back.out(1.6)"}}, {t_forged + 0.4:.3f});',
+    ]
+    for i in range(FRAG_COLS * FRAG_ROWS):
+        c, row = i % FRAG_COLS, i // FRAG_COLS
+        dx = (c - (FRAG_COLS - 1) / 2) * (120 + 140 * r())
+        dy = (row - (FRAG_ROWS - 1) / 2) * (120 + 120 * r()) + 60 * r()
+        z = 200 + 520 * r()
+        rx, ry, rz = (r() - 0.5) * 220, (r() - 0.5) * 260, (r() - 0.5) * 120
+        js.append(f'tl.to("#why .ec .f{i}", {{x: {dx:.0f}, y: {dy:.0f}, z: {z:.0f}, rotationX: {rx:.0f}, rotationY: {ry:.0f}, rotationZ: {rz:.0f}, opacity: 0.35, duration: 1.5, ease: "power3.out"}}, {t_forged + 0.25 + 0.03 * i:.3f});')
+        # "carries both": the fragments come back together, behind the quantum-safe plate
+        js.append(f'tl.to("#why .ec .f{i}", {{x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, rotationZ: 0, opacity: 1, duration: 0.9, ease: "power3.inOut"}}, {t_both - 0.1 + 0.02 * i:.3f});')
+    js += [
+        # "ML-DSA-87 can't": the quantum-safe plate holds: shield ticks, glow, a light sweep across its face
+        f'tl.to("#why .pq .shield .tick", {{strokeDashoffset: 0, duration: 0.45, ease: "power2.out"}}, {t_cant + 0.05:.3f});',
+        f'tl.to("#why .s-pq .glow", {{opacity: 1, duration: 0.5, ease: "power2.out"}}, {t_cant:.3f});',
+        f'tl.to("#why .s-pq", {{z: 70, duration: 0.5, ease: "back.out(1.7)"}}, {t_cant:.3f});',
+        f'tl.to("#why .s-pq .spec i", {{x: "260%", duration: 0.9, ease: "power2.inOut"}}, {t_cant + 0.1:.3f});',
+        f'tl.from("#why .tag.good", {{opacity: 0, y: 14, duration: 0.45, ease: "back.out(1.6)"}}, {t_cant + 0.2:.3f});',
+        # "carries both": the tags clear; the rebuilt classical plate slides in behind; the pair turns as one hybrid signature
+        f'tl.to("#why .tag", {{opacity: 0, duration: 0.3}}, {t_both - 0.2:.3f});',
+        f'tl.to("#why .ec .edge, #why .ec .back", {{opacity: 1, duration: 0.3}}, {t_both + 0.6:.3f});',
+        f'tl.to("#why .s-ec", {{x: 300, y: -46, z: -110, duration: 1.1, ease: "power3.inOut"}}, {t_both + 0.2:.3f});',
+        f'tl.to("#why .s-pq", {{x: 330, y: 0, z: 40, duration: 1.1, ease: "power3.inOut"}}, {t_both + 0.2:.3f});',
+        f'tl.to("#why .pair", {{x: -315, rotationX: 12, rotationY: -28, duration: 1.3, ease: "power2.inOut"}}, {t_both + 0.2:.3f});',
+        f'tl.to("#why .pair", {{rotationY: 16, duration: {t0 + dur - t_both - 1.6:.2f}, ease: "sine.inOut"}}, {t_both + 1.5:.3f});',
+        f'tl.from("#why .verdict", {{opacity: 0, y: 24, duration: 0.6, ease: "expo.out"}}, {t_both + 0.3:.3f});',
+    ]
+    return html_, js
 
 
 # ---------------------------------------------------------------- motion-showreel: the Q motif opener and the lockup

@@ -126,18 +126,24 @@ def s07_verify(b):  # 20 s scene
     return finish(page, ctx, "s07-verify", trim_start=1.5)
 
 
-def s08_more(b):  # 12 s scene: quick cuts
-    ctx = new_context(b, address=TEST_ADDRESS, name="s08")
-    page = open_page(ctx, "/portfolio")
-    time.sleep(2.0)
-    smooth_scroll(page, 260, seconds=1.4)
-    time.sleep(0.6)
-    smooth_scroll(page, 0, seconds=0.6)
-    for label in ["NFT Shop", "Staking", "Launch"]:
-        nav(page, label, pause=2.6)
-        smooth_scroll(page, 200, seconds=1.0)
-        smooth_scroll(page, 0, seconds=0.4)
-    time.sleep(1.0)
+OWNER_ADDRESS = "0x5b2d9c0f45aef4ab45574ad8bcc7c7b1ab03304a"  # the owner's public QoreX address (read-only view)
+
+
+def s08_more(b):  # 15 s scene: the newer tabs, quick cuts (UI v2)
+    ctx = new_context(b, address=OWNER_ADDRESS, name="s08")
+    page = open_page(ctx, "/")
+    time.sleep(1.2)
+    point(page, page.locator("main h1, h1").first, "The Hub: trade, predict, mint and more", hold=1.6)
+    for path, label in [("/portfolio", "Your Genesis NFT, read from the chain"), ("/market", "NFT Market"), ("/staking", "Staking"), ("/launch", "Coin launcher with anti-scam checks"), ("/trade", "New: perps trading up to 100x"), ("/predict", "New: prediction markets")]:
+        page.goto(SITE + path)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(900)
+        target = page.locator("#nft-title").first if path == "/portfolio" else page.locator("main h1, h1").first
+        if path == "/portfolio":
+            target.scroll_into_view_if_needed()
+            page.wait_for_timeout(500)
+        point(page, target, label, hold=1.7)
+    time.sleep(0.8)
     return finish(page, ctx, "s08-more", trim_start=1.5)
 
 

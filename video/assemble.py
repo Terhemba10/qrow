@@ -1,7 +1,6 @@
 """Assemble the demo video: footage cut to each scene, the soundtrack, captions. Under 3:00.
 
-    .venv/Scripts/python assemble.py          the full cut  -> out/qrow-demo.mp4
-    .venv/Scripts/python assemble.py --alt    payments not live in QoreX yet: s05-alt, no s06 -> out/qrow-demo-alt.mp4
+    .venv/Scripts/python assemble.py          -> out/qrow-demo.mp4
 
 Rules: the voice is never changed. Each scene lasts max(scene length, voice clip + 0.6 s), exactly as mix.mjs
 lays out the soundtrack, so picture and voice stay in sync. Footage longer than its slot is trimmed, or sped
@@ -16,7 +15,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RAW, OUT, TMP = HERE / "raw", HERE / "out", HERE / "out" / "_segments"
-ALT = "--alt" in sys.argv
+ALT = False  # cut 2 has one version
 FPS, MAX_SPEED = 30, 1.35
 FONT = "C\\:/Windows/Fonts/segoeui.ttf"
 
@@ -31,10 +30,7 @@ def duration(f: Path) -> float:
 
 
 def shot_list(script):
-    if not ALT:
-        return script["shots"]
-    alt = next(a for a in script.get("alternates", []) if a["id"] == "s05-alt")
-    return [alt if s["id"] == "s05-send" else s for s in script["shots"] if s["id"] != "s06-claim"]
+    return script["shots"]
 
 
 def slate(path: Path, seconds: float, label: str):
@@ -62,6 +58,14 @@ def main():
         sid = shot["id"]
         scene = max(shot["seconds"], timing[sid]["seconds"] + 0.6)
         segs = []
+        if not edit[sid]:  # motion-only scene: a plain navy plate under the HyperFrames takeover
+            out = TMP / f"{sid}-0.mp4"
+            run(["-f", "lavfi", "-i", f"color=c=0x14162c:s=1920x1080:r={FPS}:d={scene:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", str(out)])
+            edl.append({"id": sid, "start": round(total, 3), "dur": round(scene, 3), "segments": [{"file": "", "segment": out.name, "start": round(total, 3), "slot": round(scene, 3), "in": 0.0, "speed": 1.0, "owner": False, "missing": True}]})
+            parts.append(out)
+            report.append(f"{sid}: motion-only ({scene:.1f} s)")
+            total += scene
+            continue
         for s in edit[sid]:
             src = RAW / s["file"]
             if not src.exists():

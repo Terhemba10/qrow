@@ -277,3 +277,8 @@ Running log kept during the build. Each entry: what was asked, what AI (Claude C
 ## 2026-11-19 — Genesis NFTs missing from Portfolio; one QoreX approval per transaction (Claude Code)
 - Found that cross-VM calls (how QoreX users mint, list and buy) leave no EVM logs, so Portfolio and the Shop's "Recently minted" saw nothing (the owner's Genesis #1 was on chain). NFTs are now read from contract state: `ownerOf` over 1..totalMinted and the market's `activeListingIds`.
 - Owner rule: every transaction must be authorised in the wallet. Each contract action now signs a fresh 10-minute permission in QoreX (memo names the action) before the device runs it; device set-up and key proposals do the same. The long access window only caps what Qrow may do.
+
+## 2026-11-19 — Demo video cut 2 (Claude Code, Herk Edit Kit skills + 3dviz-pro-max)
+- Built around the owner's own screen recording (connect, swap, send form, receive); browser chrome cropped; skipped the password unlock, a fumble, a toast, the failed send and blanks. Hand-placed zoom/label events in `video/raw/owner-clean.events.json`.
+- New Bella script (ElevenLabs free plan, now at its 10,000-credit limit), pause-aligned captions, -14 LUFS mix. s08 re-recorded on the new UI with the owner's address in a read-only view (shows Genesis #1 in Portfolio). Claim dropped: there was nothing to claim on camera; Send stops on the confirm screen (no faked approval).
+- New 3D "why it matters" takeover (CSS 3D slabs with real thickness; the classical plate shatters in depth on "forged" and rebuilds behind the ML-DSA-87 plate on "carries both").

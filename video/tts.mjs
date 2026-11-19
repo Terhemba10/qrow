@@ -57,7 +57,7 @@ async function call(path, init = {}) {
       err.permission = missing[1];
       throw err;
     }
-    if (res.status === 401) fail("ElevenLabs refused the key (401). Check ELEVENLABS_API_KEY in video/.env.");
+    if (res.status === 401) fail(`ElevenLabs refused the request (401): ${body}`);
     if (res.status === 402) fail(`This voice or setting needs a paid plan (402): ${body}`);
     fail(`ElevenLabs error ${res.status}: ${body}`);
   }
