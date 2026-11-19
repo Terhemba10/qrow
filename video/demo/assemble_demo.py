@@ -17,6 +17,7 @@ OUT = HERE / "out"
 SEG = OUT / "segments"
 MUSIC = HERE.parent / "audio" / "music" / "good-days-aylex.mp3"
 FPS, LIMIT, VOICE_AT, MAX_IDLE = 30, 180.0, 0.35, 1.8
+VOICE_GAIN, QUIET_BOOST, TARGET_LUFS = 2.0, 1.6, -13.0   # voice +6 dB over the music; music up where nobody speaks
 script = json.loads((HERE / "script.json").read_text(encoding="utf-8"))
 timing = json.loads((HERE / "audio" / "timing.json").read_text())
 
@@ -65,6 +66,10 @@ def scene_video(s, length: float, out: Path):
     if kind == "intro":
         ff(["-i", str(OUT / "intro3d.mp4"), "-vf", vf_tail.replace(",fade=t=in:st=0:d=0.25", ""), "-an", "-c:v", "libx264", "-crf", "17", "-preset", "medium", str(out)])
         return {"source": "intro3d.mp4"}
+    if kind == "thumb":
+        ff(["-loop", "1", "-i", str(OUT / "thumbnail-1080.png"), "-vf", f"fps={FPS},format=yuv420p,trim=duration={length:.3f},fade=t=out:st={length - 0.3:.3f}:d=0.3",
+            "-t", f"{length:.3f}", "-an", "-c:v", "libx264", "-crf", "16", str(out)])
+        return {"source": "thumbnail-1080.png"}
     if kind == "card":
         png = OUT / ("title.png" if s["id"].endswith("title") else "outro.png")
         zoom = f"zoompan=z='1+0.035*on/({length * FPS:.0f})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={round(length * FPS)}:s=1920x1080:fps={FPS}"
@@ -95,15 +100,16 @@ def main():
 
     # Sound: each voice clip at its scene's start (+0.35 s), the music bed ducked under the voice, -14 LUFS.
     voiced = [e for e in edl if e["voice"]]
+    intro_end = next(e["start"] + e["dur"] for e in edl if e["id"] == "d01-intro3d")
     inputs = []
     for e in voiced:
         inputs += ["-i", str(HERE / "audio" / f"{e['id']}.mp3")]
     inputs += ["-stream_loop", "-1", "-i", str(MUSIC)]
     m = len(voiced)
     fc = "".join(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,adelay={int((e['start'] + VOICE_AT) * 1000)}:all=1[v{i}];" for i, e in enumerate(voiced))
-    fc += "".join(f"[v{i}]" for i in range(m)) + f"amix=inputs={m}:normalize=0:duration=longest,apad=whole_dur={total:.3f},atrim=0:{total:.3f}[voice];"
+    fc += "".join(f"[v{i}]" for i in range(m)) + f"amix=inputs={m}:normalize=0:duration=longest,apad=whole_dur={total:.3f},atrim=0:{total:.3f},acompressor=threshold=0.1:ratio=3:attack=5:release=120:makeup=1.6,volume={VOICE_GAIN}[voice];"
     fc += "[voice]asplit=2[vk][vm];"
-    fc += f"[{m}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:{total:.3f},volume=1.5,volume='if(lt(t,4.6)+gt(t,{total - 3.2:.3f}),2.5,1)':eval=frame,afade=t=in:st=0:d=0.6,afade=t=out:st={total - 2.5:.3f}:d=2.5[mus];"
+    fc += f"[{m}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:{total:.3f},volume=1.5,volume='if(lt(t,{intro_end:.3f})+gt(t,{total - 3.2:.3f}),{QUIET_BOOST},1)':eval=frame,afade=t=in:st=0:d=0.6,afade=t=out:st={total - 2.5:.3f}:d=2.5[mus];"
     fc += "[mus][vk]sidechaincompress=threshold=0.02:ratio=8:attack=15:release=450[duck];"
     fc += "[vm][duck]amix=inputs=2:normalize=0[a]"
     raw_mix = OUT / "soundtrack-raw.wav"
@@ -112,7 +118,7 @@ def main():
     r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(raw_mix), "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True).stderr
     measured = float(r.rsplit("I:", 1)[1].split("LUFS")[0])
     sound = OUT / "soundtrack.wav"
-    ff(["-i", str(raw_mix), "-af", f"volume={-14.0 - measured:.2f}dB,alimiter=limit=0.84:level=false", "-ar", "48000", str(sound)])
+    ff(["-i", str(raw_mix), "-af", f"volume={TARGET_LUFS - measured:.2f}dB,alimiter=limit=0.84:level=false", "-ar", "48000", str(sound)])
 
     final = OUT / "demo_final.mp4"
     # Final safety step: hard limit at 3:00 whatever happened above.

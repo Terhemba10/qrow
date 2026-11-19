@@ -13,6 +13,12 @@
   },
   "scenes": [
     {
+      "id": "d00-thumb",
+      "seconds": 1.8,
+      "kind": "thumb",
+      "caption": ""
+    },
+    {
       "id": "d01-intro3d",
       "seconds": 4.6,
       "kind": "intro",

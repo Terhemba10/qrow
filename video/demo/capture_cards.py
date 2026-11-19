@@ -23,4 +23,10 @@ with sync_playwright() as p:
         page.screenshot(path=str(OUT / name), clip={"x": 0, "y": 0, "width": w, "height": h})
         page.close()
         print(OUT / name)
+        if card == "thumb":  # the same thumbnail at 1920x1080, for the video's first frame
+            page = b.new_page(viewport={"width": w, "height": h}, device_scale_factor=1.5)
+            page.goto((HERE / "cards.html").as_uri() + "#thumb")
+            page.wait_for_timeout(900)
+            page.screenshot(path=str(OUT / "thumbnail-1080.png"), clip={"x": 0, "y": 0, "width": w, "height": h})
+            page.close()
     b.close()
