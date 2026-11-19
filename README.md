@@ -1,5 +1,7 @@
 # Qrow
 
+[![Built on QoreChain](https://build.qorechain.io/badge/qrow.svg)](https://build.qorechain.io/p/qrow)
+
 **Escrow payments, swaps, NFTs, staking and trading on QoreChain, every action signed with a quantum-safe key.**
 Public beta on QoreChain testnet (`qorechain-diana`, EVM chain 9800). Testnet tokens have no value.
 
