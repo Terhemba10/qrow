@@ -19,7 +19,12 @@ export const XVM_TYPE = "/qorechain.crossvm.v1.MsgCrossVMCall";
 /** The device account keeps about this much QOR for its own fees; topped up from QoreX when below MIN. */
 export const DEVICE_TOPUP_UQOR = 1_000_000n; // 1 QOR
 export const DEVICE_MIN_UQOR = 300_000n; // 0.3 QOR
-const GRANT_DAYS = 30;
+/**
+ * Every transaction is authorised in QoreX (owner rule, 19 Nov): the device's permission to act for the
+ * user lasts only long enough for one action's steps, and each action asks QoreX for a fresh one, with
+ * the action named in the memo. Nothing runs on an older approval.
+ */
+export const ACTION_GRANT_SECONDS = 10 * 60;
 
 export type DeviceState =
   | { s: "none" }
@@ -95,10 +100,10 @@ export async function setUpThisDevice(client: PublicClient, user: Address, onSte
   }
 
   // QoreX: fees for the device and the permission to act inside the user's windows.
-  const [bal, granted] = await Promise.all([deviceQor(local.address), hasGrant(userQor, local.address)]);
+  const bal = await deviceQor(local.address);
   const msgs = [];
   if (bal < DEVICE_MIN_UQOR) msgs.push(msg.bank.send({ fromAddress: userQor, toAddress: local.address, amount: [{ denom: "uqor", amount: DEVICE_TOPUP_UQOR.toString() }] }));
-  if (!granted) msgs.push(grantMsg(userQor, local.address, XVM_TYPE, GRANT_DAYS * 86_400));
+  msgs.push(grantMsg(userQor, local.address, XVM_TYPE, ACTION_GRANT_SECONDS));
   if (msgs.length) {
     onStep("qorex");
     const r = await signInQorex(msgs, "Qrow: set up this device", 200_000 * msgs.length);
@@ -143,6 +148,11 @@ export async function topUpDevice(user: Address) {
 
 /** Finish or cancel a 3-day proposal (as the user, inside a window). */
 async function keysCall(client: PublicClient, user: Address, functionName: "finishProposal" | "cancelProposal") {
+  const local = await deviceInfo(user);
+  if (!local) throw new Error("Set up this device first.");
+  const userQor = await qorexFor(user);
+  const r = await signInQorex([grantMsg(userQor, local.address, XVM_TYPE, ACTION_GRANT_SECONDS)], functionName === "finishProposal" ? "Qrow: finish adding this device" : "Qrow: cancel the device proposal", 200_000);
+  await waitForNativeTx(r.txHash);
   await ensureWindow(user, [KEYS], 1);
   const device = await unlockDevice(user);
   try {

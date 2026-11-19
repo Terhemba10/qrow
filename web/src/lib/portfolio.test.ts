@@ -20,3 +20,23 @@ describe("parseTokenUri", () => {
     expect(parseTokenUri("garbage")).toEqual({ name: "Qrow Genesis" });
   });
 });
+
+describe("NFT reads from contract state", () => {
+  it("lists Genesis ids 1..totalMinted", async () => {
+    const { genesisIds } = await import("./portfolio");
+    expect(genesisIds(0n)).toEqual([]);
+    expect(genesisIds(3n)).toEqual([1n, 2n, 3n]);
+  });
+  it("maps a few at a time and keeps order", async () => {
+    const { mapLimit } = await import("./portfolio");
+    let running = 0, peak = 0;
+    const out = await mapLimit([5, 1, 3, 2], 2, async (n) => {
+      running++; peak = Math.max(peak, running);
+      await new Promise((r) => setTimeout(r, n));
+      running--;
+      return n * 10;
+    });
+    expect(out).toEqual([50, 10, 30, 20]);
+    expect(peak).toBe(2);
+  });
+});

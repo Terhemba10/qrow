@@ -64,7 +64,7 @@ export function WindowGuide({ user, onReady }: { user: Address; onReady: () => v
       <p className="notice__title">
         <IconAlert /> One more step: open Qrow’s access window in QoreX
       </p>
-      <p>QoreX can’t open it from a website yet, so you open it once and every Qrow action works for the next few hours. It’s what stops a stolen key from touching your account.</p>
+      <p>QoreX can’t open it from a website yet, so you open it once: it caps what Qrow may do for the next few hours. Each action still asks you to approve it in QoreX first.</p>
       <ol className="steps">
         <li>
           In QoreX, go to <strong>Settings → Security → EVM access window</strong>.
@@ -154,7 +154,7 @@ export function ActionFlow(props: {
     setBlocker(undefined);
     txToast({ id: toastId, state: "pending", title: props.title, text: "Approve in QoreX, then confirm on this device." });
     try {
-      const r = await runAction(client, props.plan, pre, (p) => {
+      const r = await runAction(client, { ...props.plan, label: props.plan.label ?? props.title }, pre, (p) => {
         setPhase(p);
         txToast({ id: toastId, state: "pending", title: props.title, text: PHASE[p] });
       });

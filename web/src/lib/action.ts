@@ -15,7 +15,7 @@ import { encodeFunctionData, erc20Abi, keccak256, toHex, type Address, type Hex,
 import { qrowKeysAbi } from "../abi/QrowKeys";
 import { KEYS } from "../config/contracts";
 import { NATIVE_CHAIN_ID, REST } from "../config/network";
-import { DEVICE_MIN_UQOR, DEVICE_TOPUP_UQOR, deviceState, grantMsg, hasGrant, signOnKeys, withSlot, XVM_TYPE, type DeviceState } from "./appKey";
+import { ACTION_GRANT_SECONDS, DEVICE_MIN_UQOR, DEVICE_TOPUP_UQOR, deviceState, grantMsg, hasGrant, signOnKeys, withSlot, XVM_TYPE, type DeviceState } from "./appKey";
 import { CONVERT_COIN, toErc20Msg } from "./convert";
 import { createDeviceUnlocked, deviceInfo, unlockDevice, wipe } from "./device";
 import { deviceBroadcast, deviceQor } from "./native";
@@ -41,6 +41,8 @@ export interface ActionPlan {
   build: (auth: { key: PqKey; slot: number; sign: (signature: Hex) => Hex }) => Promise<Call>;
   /** Actions anyone may call (refundExpired) need no Qrow device key; they still run through this device. */
   needsKey?: boolean;
+  /** Names the action in the QoreX memo, so the approval says what it is for. */
+  label?: string;
 }
 
 /** What the silent checks found: the plan for the one QoreX approval. */
@@ -177,7 +179,7 @@ function rememberWindowRefusal() {
 export class WindowBlocker extends XvmError {
   readonly blocker: Blocker = {
     id: "window",
-    text: "One more step: open Qrow’s access window in QoreX. It lets your actions run for the next few hours, and it’s what stops a stolen key from touching your account.",
+    text: "One more step: open Qrow’s access window in QoreX. It caps what Qrow may do for the next few hours; each action still needs your approval in QoreX.",
     fix: { label: "How to open it", to: "/help#window" },
   };
 }
@@ -196,9 +198,12 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
     device = (await deviceInfo(plan.user)) ? await unlockDevice(plan.user) : (await createDeviceUnlocked(plan.user)).acc;
 
     // 1. The one QoreX approval: fees + permission (first time), convert permission, scoped window.
+    const memo = `Qrow: ${plan.label ?? "contract action"}`.slice(0, 120);
     const bundle = [];
     if (pre.needsTopUp) bundle.push(msg.bank.send({ fromAddress: userQor, toAddress: device.cosmos, amount: [{ denom: "uqor", amount: DEVICE_TOPUP_UQOR.toString() }] }));
-    if (pre.needsGrant) bundle.push(grantMsg(userQor, device.cosmos, XVM_TYPE, 30 * 86_400));
+    // Always: this action's own approval (a permission that expires in minutes), so nothing runs without QoreX.
+    const approval = grantMsg(userQor, device.cosmos, XVM_TYPE, ACTION_GRANT_SECONDS);
+    bundle.push(approval);
     if (pre.convert > 0n) bundle.push(grantMsg(userQor, device.cosmos, CONVERT_COIN, 10 * 60));
     const targets = windowTargets(plan, pre.firstTime, pre.needsApproval);
     const askWindow = !pre.windowOpen && !qorexRefusesWindow();
@@ -208,7 +213,7 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
       onPhase("qorex");
       let hash: string;
       try {
-        hash = (await signInQorex(bundle, "Qrow", 250_000 * bundle.length + 100_000)).txHash;
+        hash = (await signInQorex(bundle, memo, 250_000 * bundle.length + 100_000)).txHash;
       } catch (e) {
         const t = e instanceof Error ? e.message : String(e);
         const kind = qorexRefusal(t);
@@ -220,7 +225,7 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
         if (window && rest.length) {
           let r: { txHash: string };
           try {
-            r = await signInQorex(rest, "Qrow", 250_000 * rest.length + 100_000);
+            r = await signInQorex(rest, memo, 250_000 * rest.length + 100_000);
           } catch (e2) {
             const t2 = e2 instanceof Error ? e2.message : String(e2);
             if (qorexRefusal(t2) === "cancelled") throw new XvmError("You cancelled in QoreX. Nothing was sent.");
@@ -232,7 +237,7 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
         throw new WindowBlocker("window");
       }
       await waitForNativeTx(hash);
-      steps.push({ label: window ? (pre.firstTime ? "QoreX: set up this device and open the window" : "QoreX: open the window") : "QoreX: device fees and permission", hash });
+      steps.push({ label: window ? (pre.firstTime ? "QoreX: approve, set up this device and open the window" : "QoreX: approve and open the window") : "QoreX: approve this action", hash });
       if (window && !windowCovers(await readWindow(plan.user), targets, pre.calls)) throw new WindowBlocker("window");
     }
     // The window is opened by hand in QoreX (see WINDOW_GUIDE): stop here until it is.
@@ -285,7 +290,7 @@ export async function runAction(client: PublicClient, plan: ActionPlan, pre: Pre
  */
 export function estimateFee(pre: Preflight): { totalUqor: bigint; lines: { label: string; uqor: bigint }[]; movedUqor: bigint } {
   const lines: { label: string; uqor: bigint }[] = [];
-  const qorexMsgs = (pre.needsTopUp ? 1 : 0) + (pre.needsGrant ? 1 : 0) + (pre.convert > 0n ? 1 : 0) + (pre.windowOpen || qorexRefusesWindow() ? 0 : 1);
+  const qorexMsgs = (pre.needsTopUp ? 1 : 0) + 1 + (pre.convert > 0n ? 1 : 0) + (pre.windowOpen || qorexRefusesWindow() ? 0 : 1);
   if (qorexMsgs) lines.push({ label: "QoreX approval", uqor: BigInt(25_000 * qorexMsgs + 10_000) });
   if (pre.firstTime) lines.push({ label: "First-time set-up on this device", uqor: 330_000n });
   if (pre.convert > 0n) lines.push({ label: "Convert tokens for the contract", uqor: 50_000n });

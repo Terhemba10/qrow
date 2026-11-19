@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLogsChunked } from "./logs";
-import { erc20Abi, parseAbiItem, type Address, type Hex, type PublicClient } from "viem";
+import { erc20Abi, type Address, type Hex, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { evmToQor, qoreAddresses } from "@qorechain/sdk";
 import { qrowGenesisAbi } from "../abi/QrowGenesis";
 import { qrowMarketAbi } from "../abi/QrowMarket";
 import { CHAIN, REST } from "../config/network";
-import { GENESIS, GENESIS_DEPLOY_BLOCK, MARKET } from "../config/contracts";
+import { GENESIS, MARKET } from "../config/contracts";
 import { TOKENS, type Token } from "../config/tokens";
 
 // ---------------------------------------------------------------- balances (EVM + native lane + CosmWasm read)
@@ -54,9 +53,6 @@ export interface OwnedNft {
   listed?: { listingId: bigint; price: bigint; currency: Address };
 }
 
-const transfer = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)");
-const listed = parseAbiItem("event Listed(uint256 indexed listingId, address indexed seller, uint256 indexed tokenId, address currency, uint256 price)");
-
 export function parseTokenUri(uri: string): { name: string; image?: string } {
   try {
     const json = JSON.parse(atob(uri.replace(/^data:application\/json;base64,/, ""))) as { name?: string; image?: string };
@@ -67,29 +63,40 @@ export function parseTokenUri(uri: string): { name: string; image?: string } {
   }
 }
 
-async function loadNfts(client: PublicClient, me: Address): Promise<OwnedNft[]> {
-  const latest = await client.getBlockNumber();
-  const [inLogs, listLogs] = await Promise.all([
-    getLogsChunked(GENESIS_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: GENESIS, event: transfer, args: { to: me }, fromBlock, toBlock })),
-    getLogsChunked(GENESIS_DEPLOY_BLOCK, latest, (fromBlock, toBlock) => client.getLogs({ address: MARKET, event: listed, args: { seller: me }, fromBlock, toBlock })),
-  ]);
-  const candidates = [...new Set([...inLogs.map((l) => l.args.tokenId!), ...listLogs.map((l) => l.args.tokenId!)])];
-  const out: OwnedNft[] = [];
-  for (const id of candidates) {
-    const owner = await client.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "ownerOf", args: [id] }).catch(() => undefined);
-    let listing: OwnedNft["listed"];
-    if (owner?.toLowerCase() === MARKET.toLowerCase()) {
-      const ll = listLogs.filter((l) => l.args.tokenId === id).at(-1);
-      if (ll) {
-        const l = await client.readContract({ address: MARKET, abi: qrowMarketAbi, functionName: "getListing", args: [ll.args.listingId!] });
-        if (l.active && l.seller.toLowerCase() === me.toLowerCase()) listing = { listingId: ll.args.listingId!, price: l.price, currency: l.currency };
-      }
+/** Runs `fn` over `items`, a few at a time, keeping order. */
+export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]);
     }
-    if (owner?.toLowerCase() !== me.toLowerCase() && !listing) continue;
-    const meta = parseTokenUri(await client.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "tokenURI", args: [id] }));
-    out.push({ id, ...meta, listed: listing });
-  }
-  return out.sort((a, b) => Number(a.id - b.id));
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+/** Genesis token ids, 1..totalMinted (the collection is capped at 256). */
+export const genesisIds = (total: bigint): bigint[] => Array.from({ length: Number(total) }, (_, i) => BigInt(i + 1));
+
+/**
+ * NFTs are read from contract state, not events: QoreChain doesn't expose EVM logs from cross-VM
+ * calls (how QoreX users mint, list and buy), so eth_getLogs finds nothing for them (19 Nov: a
+ * user's Genesis #1 was missing from Portfolio). Genesis has at most 256 tokens, so every owner is
+ * read; listings come from the market's activeListingIds.
+ */
+async function loadNfts(client: PublicClient, me: Address): Promise<OwnedNft[]> {
+  const [total, listingIds] = await Promise.all([
+    client.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "totalMinted" }),
+    client.readContract({ address: MARKET, abi: qrowMarketAbi, functionName: "activeListingIds" }),
+  ]);
+  const listings = await mapLimit([...listingIds], 6, async (listingId) => ({ listingId, l: await client.readContract({ address: MARKET, abi: qrowMarketAbi, functionName: "getListing", args: [listingId] }) }));
+  const mine = new Map<bigint, OwnedNft["listed"]>();
+  for (const { listingId, l } of listings) if (l.active && l.seller.toLowerCase() === me.toLowerCase()) mine.set(l.tokenId, { listingId, price: l.price, currency: l.currency });
+  const owners = await mapLimit(genesisIds(total), 8, (id) => client.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "ownerOf", args: [id] }).catch(() => undefined));
+  const ids = genesisIds(total).filter((id, i) => owners[i]?.toLowerCase() === me.toLowerCase() || mine.has(id));
+  return mapLimit(ids, 6, async (id) => ({ id, ...parseTokenUri(await client.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "tokenURI", args: [id] })), listed: mine.get(id) }));
 }
 
 export function useNfts(me: Address | undefined) {

@@ -1,23 +1,21 @@
 import { useConnectQorex } from "../components/QorexConnect";
 import { EmptyState } from "../ds";
-import { getLogsChunked } from "../lib/logs";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { encodeAbiParameters, keccak256, parseAbiItem, type Address } from "viem";
+import { encodeAbiParameters, keccak256, type Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { qrowGenesisAbi } from "../abi/QrowGenesis";
 import { PqActionPanel } from "../components/PqActionPanel";
-import { GENESIS, GENESIS_DEPLOY_BLOCK } from "../config/contracts";
+import { GENESIS } from "../config/contracts";
 import { CHAIN } from "../config/network";
 import { tokenBySymbol } from "../config/tokens";
 import { displayAmount } from "../lib/amount";
-import { parseTokenUri, useNfts } from "../lib/portfolio";
+import { genesisIds, mapLimit, parseTokenUri, useNfts } from "../lib/portfolio";
 import { Link } from "react-router-dom";
 import { ListCard, useMarket } from "./MarketPage";
 import { short } from "../lib/address";
 
 const ZERO: Address = "0x0000000000000000000000000000000000000000";
-const minted = parseAbiItem("event Minted(uint256 indexed tokenId, address indexed to, address currency, uint256 price)");
 
 function useCollection() {
   const client = usePublicClient({ chainId: CHAIN.id });
@@ -35,13 +33,15 @@ function useCollection() {
         c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "priceFusd" }),
         c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "fusd" }),
       ]);
-      const logs = await getLogsChunked(GENESIS_DEPLOY_BLOCK, await c.getBlockNumber(), (fromBlock, toBlock) => c.getLogs({ address: GENESIS, event: minted, fromBlock, toBlock }));
-      const recent = await Promise.all(
-        logs
-          .slice(-12)
-          .reverse()
-          .map(async (l) => ({ id: l.args.tokenId!, to: l.args.to!, ...parseTokenUri(await c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "tokenURI", args: [l.args.tokenId!] })) })),
-      );
+      // Newest 12 by token number, owners read from state (cross-VM mints leave no EVM logs).
+      const ids = genesisIds(total).slice(-12).reverse();
+      const recent = await mapLimit(ids, 6, async (id) => {
+        const [uri, to] = await Promise.all([
+          c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "tokenURI", args: [id] }),
+          c.readContract({ address: GENESIS, abi: qrowGenesisAbi, functionName: "ownerOf", args: [id] }),
+        ]);
+        return { id, to, ...parseTokenUri(uri) };
+      });
       return { total, max, perWallet, priceQor, priceFusd, fusd, recent };
     },
   });
