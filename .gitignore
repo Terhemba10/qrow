@@ -55,3 +55,4 @@ video/demo/out/
 video/demo/audio/
 video/demo/assets/*.otf
 video/audio/shots-bella/
+web/tsconfig.tsbuildinfo
