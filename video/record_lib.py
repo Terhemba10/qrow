@@ -20,27 +20,21 @@ TMP = HERE / "raw" / "_tmp"
 
 CURSOR_JS = r"""
 (() => {
+  // A normal arrow pointer (owner, 19 Nov: no glowing circle, no click ripple). Headless Chromium draws no cursor,
+  // so the page draws this one; its tip is the exact mouse position.
+  const ARROW = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="34" viewBox="0 0 24 34">' +
+    '<path d="M1.5 1.5 L1.5 26 L7.6 20.2 L11.8 30.6 L16 28.8 L11.9 18.6 L20.4 18.6 Z" fill="#ffffff" stroke="#000000" stroke-width="1.6" stroke-linejoin="round"/></svg>');
   const add = () => {
     if (document.getElementById('__demo_cursor')) return;
-    const c = document.createElement('div');
+    const c = document.createElement('img');
     c.id = '__demo_cursor';
-    c.style.cssText = 'position:fixed;left:-100px;top:-100px;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;' +
-      'background:rgba(62,240,210,.35);border:2px solid #3ef0d2;box-shadow:0 0 0 6px rgba(62,240,210,.15);' +
-      'pointer-events:none;z-index:2147483647;transition:transform .12s ease-out;';
+    c.src = ARROW;
+    c.alt = '';
+    c.style.cssText = 'position:fixed;left:-100px;top:-100px;width:24px;height:34px;margin:-1px 0 0 -1px;' +
+      'pointer-events:none;z-index:2147483647;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45));';
     document.documentElement.appendChild(c);
     addEventListener('mousemove', e => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }, true);
-    addEventListener('mousedown', (e) => {
-      c.style.transform = 'scale(.7)';
-      // Click ripple: a teal ring that expands and fades from the click point.
-      const r = document.createElement('div');
-      r.style.cssText = 'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;width:16px;height:16px;margin:-8px 0 0 -8px;' +
-        'border-radius:50%;border:3px solid #3ef0d2;pointer-events:none;z-index:2147483646;opacity:.95;' +
-        'transition:transform .55s cubic-bezier(.22,1,.36,1),opacity .55s ease-out;';
-      document.documentElement.appendChild(r);
-      requestAnimationFrame(() => { r.style.transform = 'scale(5.5)'; r.style.opacity = '0'; });
-      setTimeout(() => r.remove(), 700);
-    }, true);
-    addEventListener('mouseup', () => { c.style.transform = 'scale(1)'; }, true);
   };
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', add); else add();
   // No first-visit welcome tip in the footage.
