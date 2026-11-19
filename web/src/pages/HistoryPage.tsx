@@ -10,6 +10,7 @@ import { short } from "../lib/address";
 import { displayAmount } from "../lib/amount";
 import { usePayments } from "../lib/payments";
 import { useReceipts } from "../lib/receipts";
+import { useChainHistory } from "../lib/chainHistory";
 import { EXPLORER_TX } from "../lib/tx";
 
 /** One transaction = one row (a flow's set-up steps are their own rows too). */
@@ -57,6 +58,7 @@ export function HistoryPage() {
   const { connect } = useConnectQorex();
   const receipts = useReceipts(address);
   const payments = usePayments(me);
+  const chain = useChainHistory(me);
   const [filter, setFilter] = useState("All");
   const referrals = useQuery({
     queryKey: ["referrals", me],
@@ -85,8 +87,11 @@ export function HistoryPage() {
     for (const p of payments.data?.incoming ?? [])
       if (p.createdTx && !out.has(p.createdTx.toLowerCase()))
         out.set(p.createdTx.toLowerCase(), { time: p.createdAt * 1000, kind: "Payment", what: `Received ${displayAmount(p.amount, p.token.decimals)} ${p.token.symbol} from ${short(p.sender)} (#${p.id}, ${p.status})`, hash: p.createdTx });
+    // Everything else the account did on chain (any browser): swaps, staking, approvals, contract actions.
+    for (const c of chain.data ?? [])
+      if (!out.has(c.hash.toLowerCase())) out.set(c.hash.toLowerCase(), { time: c.time, kind: c.failed ? "Failed" : c.kind, what: c.failed ? `${c.what} (failed on chain)` : c.what, hash: c.hash });
     return [...out.values()].sort((a, b) => b.time - a.time);
-  }, [receipts, payments.data]);
+  }, [receipts, payments.data, chain.data]);
 
   const kinds = ["All", ...new Set(rows.map((r) => r.kind))];
   const shown = rows.filter((r) => filter === "All" || r.kind === filter);
@@ -144,9 +149,9 @@ export function HistoryPage() {
         </button>
       </div>
 
-      {payments.isPending && rows.length === 0 && <span className="skeleton" style={{ width: "80%" }} />}
-      {payments.isPending && rows.length === 0 && <Skeleton lines={4} />}
-      {rows.length === 0 && !payments.isPending && <EmptyState title="No transactions yet" text="Each one you make shows up here with its own hash, so you can check it any time." action={<Button to="/trade" variant="cyan">Make your first trade</Button>} />}
+      {(payments.isPending || chain.isPending) && rows.length === 0 && <span className="skeleton" style={{ width: "80%" }} />}
+      {(payments.isPending || chain.isPending) && rows.length === 0 && <Skeleton lines={4} />}
+      {rows.length === 0 && !payments.isPending && !chain.isPending && <EmptyState title="No transactions yet" text="Each one you make shows up here with its own hash, so you can check it any time." action={<Button to="/trade" variant="cyan">Make your first trade</Button>} />}
       {shown.length > 0 && (
         <div className="table-wrap" tabIndex={0}>
           <table className="table">
@@ -184,7 +189,7 @@ export function HistoryPage() {
           </table>
         </div>
       )}
-      <p className="hint">Actions are remembered in this browser; escrow payments are also read from the chain, so they show on any device.</p>
+      <p className="hint">Read from QoreChain testnet (your latest 50 of each kind), so they show on any device; receipts made in this browser add their own wording.</p>
 
       <section aria-labelledby="ref-title" className="stack">
         <h2 id="ref-title">Referrals</h2>
