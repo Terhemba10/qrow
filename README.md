@@ -9,11 +9,13 @@ Built for the QoreChain *Build Before Q-Day* Developer Fest, Post-Quantum dApp c
 
 ## Demo video (2:46)
 
-[![Qrow demo: every feature in 3 minutes](media/qrow-thumbnail.png)](media/qrow-demo.mp4)
+[![Qrow demo: every feature in 3 minutes](media/qrow-thumbnail.png)](https://youtu.be/jJAJjqx_9sY)
 
-[**Watch the demo (MP4, 1920×1080)**](media/qrow-demo.mp4): a 3D intro, then every feature in the live app with
+[**Watch the demo on YouTube**](https://youtu.be/jJAJjqx_9sY): a 3D intro, then every feature in the live app with
 real clicks and typing, on the builder's own testnet wallet in a read-only view (nothing is signed on camera; each
 action stops at its review step, where QoreX would ask for approval).
+
+Full-quality MP4 file: [media/qrow-demo.mp4](media/qrow-demo.mp4)
 
 ## What you can try
 
