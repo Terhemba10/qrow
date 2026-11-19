@@ -416,7 +416,7 @@ def why_card(sc, caps, tr):
     t_forged = cap_time(caps, "can be forged", 0.42)      # on "forged"
     t_cant = cap_time(caps, "ML-DSA-87 can")              # "ML-DSA-87 can't."
     t_both = cap_time(caps, "carries both")               # "Every Qrow action carries both."
-    sig = "3045 0221 00c7 9e1a 44fb 2d0b 77a1 e590 0220 5b3c"
+    sig = "3045 0221 00c7 9e1a 44fb"
     ec_inner = ('<p class="pk">TODAY · ECDSA secp256k1</p><p class="pt">Classical signature</p>'
                 f'<p class="hx">{sig}</p><p class="ft">A quantum computer can forge it</p>')
     pq_inner = ('<p class="pk">QORECHAIN · FIPS 204</p><p class="pt">ML-DSA-87</p>'
@@ -521,7 +521,7 @@ END_HTML = (
     '<h2 class="end-title">Payments that stay safe after Q-Day</h2>'
     '<div class="url mono">' + "".join(f'<span class="ch">{c}</span>' for c in "qrow-app.vercel.app") + '<span class="cursor"></span></div>'
     '<div class="end-meta"><span class="mono">github.com/Terhemba10/qrow</span><span>Built in Doha, Qatar · Public beta: QoreChain testnet, tokens have no value</span></div>'
-    '<div class="credits">Voiceover: AI-generated (ElevenLabs) · Music: Good Days by Aylex (freetouse.com)</div>'
+    '<div class="credits">Voiceover: AI-generated (Microsoft Edge neural voice) · Music: Good Days by Aylex (freetouse.com)</div>'
     '<div class="motif"></div>'
     "</div>"
 )

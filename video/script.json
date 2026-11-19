@@ -1,6 +1,6 @@
 {
   "title": "Qrow: payments that stay safe after Q-Day",
-  "note": "One clip per shot. `caption` is what viewers read (captions match it exactly). `tts` is what the voice is given: the same words with phonetic spellings so names are said right (Qrow = crow, QoreChain = core-chain, QoreX = core-ex, QOR = core, fUSD = F-U-S-D, ML-DSA spelled out). Target pace about 150 words per minute; `seconds` is the scene's planned length. Cut 2 (13 Nov): built around the owner's own screen recording (raw/owner-clean.mp4: connect, swap, send form) plus automated clips.",
+  "note": "One clip per shot. `caption` is what viewers read (captions match it exactly). `tts` is what the voice is given: the same words with phonetic spellings so names are said right (Qrow = crow, QoreChain = core-chain, QoreX = core-ex, QOR = core, fUSD = F-U-S-D, ML-DSA spelled out). Voice: edge-tts en-US-AndrewNeural (ElevenLabs Bella until its free credits ran out, 19 Nov). Target pace about 150 words per minute; `seconds` is the scene's planned length. Cut 2 (13 Nov): built around the owner's own screen recording (raw/owner-clean.mp4: connect, swap, send form) plus automated clips.",
   "pronunciations": {
     "Qrow": "Crow",
     "QoreChain": "Core-chain",
@@ -63,12 +63,12 @@
       "id": "s08-more",
       "seconds": 19,
       "visual": "Live site, UI v2, the owner's address in a read-only view: Hub, Portfolio with Genesis #1, NFT Market, Staking, Launch.",
-      "caption": "There's more to try: your portfolio and receipts, Qrow Genesis NFTs and a market, staking, and a coin launcher with anti-scam checks."
+      "caption": "There's more to try: the Qrow Hub, your Genesis NFT in Portfolio, the NFT Market, staking, a coin launcher with anti-scam checks, perps trading and predictions."
     },
     {
       "id": "s09-end",
       "seconds": 12,
-      "visual": "End card: Qrow logo, qrow-app.vercel.app, github.com/Terhemba10/qrow, 'Built in Doha, Qatar', 'Public beta: QoreChain testnet, tokens have no value', 'Voiceover: AI-generated', 'Music: Good Days by Aylex (freetouse.com)'.",
+      "visual": "End card: Qrow logo, qrow-app.vercel.app, github.com/Terhemba10/qrow, 'Built in Doha, Qatar', 'Public beta: QoreChain testnet, tokens have no value', 'Voiceover: AI-generated (Microsoft Edge neural voice)', 'Music: Good Days by Aylex (freetouse.com)'.",
       "caption": "Qrow. Payments that stay safe after Q-Day. Built in Doha, Qatar, for QoreChain's Build Before Q-Day fest. Try it free on testnet."
     }
   ]

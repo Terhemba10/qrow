@@ -1,0 +1,119 @@
+{
+  "title": "Qrow: every feature in 3 minutes (demo_final.mp4)",
+  "note": "Fully automated demo (Playwright on the live site, the owner's public address in a read-only view: nothing is signed, every action stops at its review step). The AI tab is left out: hidden in the recording browser, never clicked, never named. Voice: edge-tts en-US-AndrewNeural, rate +5%. `seconds` is each scene's budget; a scene lasts max(budget, voice + 0.7 s).",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+5%",
+  "pronunciations": {
+    "Qrow": "Crow",
+    "QoreChain": "Core-chain",
+    "QoreX": "Core-X",
+    "QOR": "core",
+    "fUSD": "F-U-S-D",
+    "ML-DSA-87": "M-L-D-S-A eighty-seven"
+  },
+  "scenes": [
+    {
+      "id": "d01-intro3d",
+      "seconds": 4.6,
+      "kind": "intro",
+      "caption": ""
+    },
+    {
+      "id": "d02-title",
+      "seconds": 4.5,
+      "kind": "card",
+      "caption": "This is Qrow: payments and more, signed with quantum-safe keys."
+    },
+    {
+      "id": "d03-hub",
+      "seconds": 9,
+      "caption": "The Hub puts every feature in one place, with your live balance, prices and open prediction markets."
+    },
+    {
+      "id": "d04-faucet",
+      "seconds": 7,
+      "caption": "New here? The Faucet gets you free test QOR and fUSD from QoreChain's official faucet."
+    },
+    {
+      "id": "d05-swap",
+      "seconds": 11,
+      "caption": "Swap trades on the chain's own exchange. Type twenty-five QOR, and Qrow quotes what you'll receive before you sign."
+    },
+    {
+      "id": "d06-trade",
+      "seconds": 12,
+      "caption": "Trade opens perpetual positions on live prices. Pick ETH, go long with fifty fUSD at ten times leverage, and review it before signing."
+    },
+    {
+      "id": "d07-predict",
+      "seconds": 9,
+      "caption": "Predictions let you back YES or NO on crypto and QoreChain questions. The prices show the odds."
+    },
+    {
+      "id": "d08-send",
+      "seconds": 14,
+      "caption": "Sending is simple. Paste the address, enter fifteen fUSD and choose how it's released. The confirm screen checks for lookalike addresses before you approve in QoreX."
+    },
+    {
+      "id": "d09-receive",
+      "seconds": 8,
+      "caption": "To get paid, request forty fUSD with a note, then share the link or the QR code."
+    },
+    {
+      "id": "d10-shop",
+      "seconds": 7,
+      "caption": "The NFT Shop mints Qrow Genesis art, drawn entirely on chain."
+    },
+    {
+      "id": "d11-create",
+      "seconds": 9,
+      "caption": "Or create your own: upload your artwork, name it, and choose how many copies to mint."
+    },
+    {
+      "id": "d12-market",
+      "seconds": 8,
+      "caption": "The NFT Market lists pieces at the seller's price, with the floor and community collections."
+    },
+    {
+      "id": "d13-portfolio",
+      "seconds": 8,
+      "caption": "Portfolio shows your balances, your NFTs and any payments waiting in escrow."
+    },
+    {
+      "id": "d14-history",
+      "seconds": 6,
+      "caption": "History lists every transaction from your wallet, read from the chain, each with a hash you can verify."
+    },
+    {
+      "id": "d15-staking",
+      "seconds": 9,
+      "caption": "Staking delegates QOR to a validator, and an optional lock adds a bonus."
+    },
+    {
+      "id": "d16-launch",
+      "seconds": 9,
+      "caption": "Launch creates a testnet memecoin, with anti-scam rules like a fixed supply built in."
+    },
+    {
+      "id": "d17-news",
+      "seconds": 6,
+      "caption": "Market News brings live prices and the latest crypto headlines."
+    },
+    {
+      "id": "d18-verify",
+      "seconds": 11,
+      "caption": "Verify reads any hash straight from the testnet. Here's my own swap: confirmed, who signed, and the ML-DSA-87 signature the chain checked."
+    },
+    {
+      "id": "d19-admin",
+      "seconds": 6,
+      "caption": "And Admin and Analytics shows live Qrow numbers from the chain."
+    },
+    {
+      "id": "d20-outro",
+      "seconds": 5,
+      "kind": "card",
+      "caption": "Thanks for watching. Try Qrow free on testnet."
+    }
+  ]
+}

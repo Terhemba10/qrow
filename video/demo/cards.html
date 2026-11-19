@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Qrow demo cards</title>
+<!-- Title card, outro and thumbnail for demo_final.mp4 (HTML instead of Figma, owner's choice 19 Nov).
+     cards.html#title | #outro | #thumb ; capture_cards.py screenshots each to out/*.png -->
+<style>
+  @font-face { font-family: "General Sans"; src: url("assets/GeneralSans-Regular.otf"); font-weight: 400; }
+  @font-face { font-family: "General Sans"; src: url("assets/GeneralSans-Medium.otf"); font-weight: 500; }
+  @font-face { font-family: "General Sans"; src: url("assets/GeneralSans-Semibold.otf"); font-weight: 600; }
+  :root { --navy: #14162c; --deep: #0d0f22; --ink: #eef0ff; --dim: #b9bde0; --teal: #3ef0d2; --violet: #9b4dff; }
+  html, body { margin: 0; background: var(--deep); }
+  .card { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "General Sans", system-ui, sans-serif; color: var(--ink);
+          background: radial-gradient(60% 60% at 50% 42%, #1d2042 0%, var(--deep) 75%); display: none; }
+  .card::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(238,240,255,.08) 1.2px, transparent 1.4px); background-size: 34px 34px;
+                  mask-image: radial-gradient(70% 70% at 50% 50%, #000 30%, transparent 80%); }
+  .glow { position: absolute; width: 900px; height: 900px; border-radius: 50%; filter: blur(120px); opacity: .28; }
+  .g1 { left: -200px; top: -260px; background: var(--teal); } .g2 { right: -240px; bottom: -320px; background: var(--violet); }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; text-align: center; padding: 0 160px; box-sizing: border-box; }
+  .logo { width: 560px; height: auto; }
+  .logo path, .logo circle { stroke: var(--ink); }
+  .rule { width: 160px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--teal), var(--violet)); }
+  .line { font-size: 46px; font-weight: 500; letter-spacing: -.005em; max-width: 1300px; line-height: 1.25; }
+  .line b { color: var(--teal); font-weight: 600; }
+  .sub { font-size: 30px; color: var(--dim); }
+  .mono { font: 500 22px ui-monospace, "Geist Mono", Consolas, monospace; letter-spacing: .26em; color: rgba(238,240,255,.55); text-transform: uppercase; }
+  .big { font-size: 110px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
+  .links { display: flex; gap: 26px; }
+  .pill { font: 500 34px ui-monospace, "Geist Mono", Consolas, monospace; padding: 18px 30px; border-radius: 18px; background: rgba(13,15,34,.7);
+          box-shadow: inset 0 0 0 1.5px rgba(62,240,210,.55), 0 0 40px rgba(62,240,210,.12); }
+  .pill.v { box-shadow: inset 0 0 0 1.5px rgba(155,77,255,.6), 0 0 40px rgba(155,77,255,.14); }
+  .credits { position: absolute; left: 0; right: 0; bottom: 56px; text-align: center; font-size: 22px; color: rgba(238,240,255,.5); }
+  /* thumbnail: 1280x720 */
+  #thumb { width: 1280px; height: 720px; background: #0d0f22 url("out/hero3d.png") center 38% / 1500px auto no-repeat; }
+  #thumb::before { display: none; }
+  #thumb .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,15,34,0) 40%, rgba(13,15,34,.92) 78%); }
+  #thumb .t1 { position: absolute; left: 64px; right: 64px; bottom: 120px; font-size: 72px; font-weight: 600; letter-spacing: -.02em; line-height: 1.02; }
+  #thumb .t1 b { color: var(--teal); font-weight: 600; }
+  #thumb .t2 { position: absolute; left: 66px; bottom: 58px; font: 500 22px ui-monospace, Consolas, monospace; letter-spacing: .2em; color: var(--dim); }
+  #thumb .badge { position: absolute; right: 48px; top: 40px; font: 600 24px ui-monospace, Consolas, monospace; letter-spacing: .14em; padding: 12px 20px; border-radius: 12px;
+                  color: #07081a; background: linear-gradient(90deg, var(--teal), var(--violet)); }
+</style>
+</head>
+<body>
+<section class="card" id="title">
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="center">
+    <div class="mono">Live demo · QoreChain testnet</div>
+    <svg class="logo" viewBox="0 0 78 32" role="img" aria-label="Qrow"><g transform="translate(-1.5 -1.4) scale(1.02)"><path d="M17.09 24.16A10 10 0 1 1 24.16 17.09C25.7 20.3 27.4 24.5 28.3 27.1C28.8 28.6 27.6 29.4 26.2 28.5C23.6 26.8 20 25.4 17.09 24.16Z" fill="none" stroke-width="3.3" stroke-linejoin="round"/></g><g transform="translate(9.6 0)" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 24V9.9M21.2 16.2c0-4.4 2.7-6.3 6.9-6.3"/><circle cx="38.1" cy="16" r="6.3"/><path d="M48.2 9.9 52.6 22.3 57.3 11.4 62 22.3 66.4 9.9"/></g></svg>
+    <div class="rule"></div>
+    <div class="line">Escrow payments, swaps, NFTs, staking and trading, every action signed with a <b>quantum-safe key</b>.</div>
+  </div>
+</section>
+
+<section class="card" id="outro">
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="center">
+    <div class="big">Thanks for watching</div>
+    <div class="rule"></div>
+    <div class="links"><span class="pill">qrow-app.vercel.app</span><span class="pill v">github.com/Terhemba10</span></div>
+    <div class="sub">Public beta on QoreChain testnet. Test tokens have no value. Built in Doha, Qatar.</div>
+  </div>
+  <div class="credits">Voiceover: AI-generated (Microsoft Edge neural voice) · Music: Good Days by Aylex (freetouse.com)</div>
+</section>
+
+<section class="card" id="thumb">
+  <div class="shade"></div>
+  <div class="badge">LIVE DEMO</div>
+  <div class="t1">Every feature in 3 minutes: <b>quantum-safe</b> payments</div>
+  <div class="t2">QORECHAIN TESTNET · ML-DSA-87</div>
+</section>
+<script>
+  const id = (location.hash || "#title").slice(1);
+  document.getElementById(id).style.display = "block";
+</script>
+</body>
+</html>

@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * Qrow demo video: AI voiceover with ElevenLabs (plain HTTPS, no extra packages).
- * The API key is read from video/.env (git-ignored) and is never printed or logged.
+ * Qrow demo video: AI voiceover with edge-tts (Microsoft Edge neural voices; free, no API key).
+ * edge-tts (LGPL-3.0) lives only in video/.venv, a local video tool: it is not an app dependency.
+ * The owner approved this exception to the MIT/Apache/BSD/ISC rule on 19 Nov 2026.
  *
- *   node tts.mjs voices                         list this account's pre-made voices
- *   node tts.mjs samples [Name1 Name2 Name3]    the opening lines in 2-3 voices -> audio/samples/
- *   node tts.mjs shots --voice Name [--model eleven_v4|eleven_multilingual_v2] [--speed 1.0] [shot ids...]
- *                                               one clip per shot -> audio/shots/, plus audio/shots/timing.json
+ *   node tts.mjs voices                         list the English (US/GB) voices
+ *   node tts.mjs samples [Voice1 Voice2 ...]    the opening lines in a few voices -> audio/samples/
+ *   node tts.mjs shots [--voice en-US-AndrewNeural] [--rate +0%] [shot ids...]
+ *                                               one clip per shot -> audio/shots/<id>.mp3, plus audio/shots/timing.json
  *   node tts.mjs captions                       captions from script.json + timing.json -> out/captions.srt
+ *
+ * ElevenLabs was used until its free credits ran out (19 Nov); that code is in git history (commit 34e53d7).
+ * The ElevenLabs key in video/.env is left as it is and no longer read.
  *
  * Pronunciation: the voice gets each caption with script.json's phonetic spellings (Qrow -> Crow, ...);
  * captions use the real spelling, so they match the words exactly.
@@ -19,20 +23,10 @@ import { fileURLToPath } from "node:url";
 import { shotList } from "./cut.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const API = "https://api.elevenlabs.io/v1";
+const EDGE = join(HERE, ".venv", process.platform === "win32" ? "Scripts/edge-tts.exe" : "bin/edge-tts");
+const DEFAULT_VOICE = "en-US-AndrewNeural";
 const script = JSON.parse(readFileSync(join(HERE, "script.json"), "utf8"));
 const WPM_TARGET = 150;
-
-function apiKey() {
-  const file = join(HERE, ".env");
-  if (!existsSync(file)) fail("No video/.env yet. Add a line ELEVENLABS_API_KEY=... to qrow/video/.env (it is git-ignored).");
-  const line = readFileSync(file, "utf8")
-    .split(/\r?\n/)
-    .find((l) => /^\s*ELEVENLABS_API_KEY\s*=/.test(l));
-  const key = line?.split("=").slice(1).join("=").trim().replace(/^["']|["']$/g, "");
-  if (!key) fail("video/.env has no ELEVENLABS_API_KEY value.");
-  return key;
-}
 
 function fail(msg) {
   console.error(msg);
@@ -47,58 +41,21 @@ export function forSpeech(text) {
   return out;
 }
 
-async function call(path, init = {}) {
-  const res = await fetch(`${API}${path}`, { ...init, headers: { "xi-api-key": apiKey(), ...(init.headers ?? {}) } });
-  if (!res.ok) {
-    const body = (await res.text()).slice(0, 300);
-    const missing = res.status === 401 ? body.match(/missing the permission (\w+)/) : null;
-    if (missing) {
-      const err = new Error(`The key in video/.env is missing the "${missing[1]}" permission.`);
-      err.permission = missing[1];
-      throw err;
-    }
-    if (res.status === 401) fail(`ElevenLabs refused the request (401): ${body}`);
-    if (res.status === 402) fail(`This voice or setting needs a paid plan (402): ${body}`);
-    fail(`ElevenLabs error ${res.status}: ${body}`);
+function edge(args) {
+  if (!existsSync(EDGE)) fail("edge-tts isn't installed. Run: .venv/Scripts/python -m pip install edge-tts");
+  let r;
+  for (let attempt = 1; attempt <= 4; attempt++) { // the Edge service drops a request now and then
+    r = spawnSync(EDGE, args, { encoding: "utf8" });
+    if (r.status === 0) return r.stdout;
+    spawnSync(process.execPath, ["-e", `setTimeout(() => {}, ${1500 * attempt})`]);
   }
-  return res;
+  fail(`edge-tts failed: ${(r.stderr || r.stdout || "").split(/\r?\n/).filter(Boolean).slice(-3).join(" | ").slice(0, 400)}`);
 }
 
-/** Pre-made voices from ElevenLabs' current docs, for keys without the voices_read permission. */
-const KNOWN_PREMADE = [
-  { name: "Sarah", voice_id: "EXAVITQu4vr4xnSDxMaL", category: "premade", labels: { gender: "female", description: "soft, warm" } },
-  { name: "George", voice_id: "JBFqnCBsd6RMkjVDRZzb", category: "premade", labels: { gender: "male", description: "narrative" } },
-  { name: "Daniel", voice_id: "onwK4e9ZLuTAKqWW03F9", category: "premade", labels: { gender: "male", description: "authoritative" } },
-];
-
-async function premadeVoices() {
-  try {
-    const j = await (await call("/voices")).json();
-    return j.voices.filter((v) => v.category === "premade");
-  } catch (e) {
-    if (e?.permission === "voices_read") {
-      console.log("(This key can't list voices, so the pre-made voices from ElevenLabs' docs are used: Sarah, George, Daniel.)\n");
-      return KNOWN_PREMADE;
-    }
-    throw e;
-  }
-}
-
-async function resolveVoice(nameOrId) {
-  const voices = await premadeVoices();
-  const v = voices.find((x) => x.voice_id === nameOrId || x.name.toLowerCase().startsWith(nameOrId.toLowerCase()));
-  if (!v) fail(`No pre-made voice "${nameOrId}". Run: node tts.mjs voices`);
-  return v;
-}
-
-async function speak({ voiceId, text, model, speed, previous, next, file }) {
-  const settings = { stability: 0.55, similarity_boost: 0.75 };
-  if (model !== "eleven_v4" && speed) settings.speed = speed; // v4 has no speed setting
-  const body = { text, model_id: model, voice_settings: settings, apply_text_normalization: "on", ...(previous ? { previous_text: previous } : {}), ...(next ? { next_text: next } : {}) };
-  const res = await call(`/text-to-speech/${voiceId}?output_format=mp3_44100_128`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+function speak({ voice, text, rate, file }) {
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, Buffer.from(await res.arrayBuffer()));
-  return { seconds: duration(file), chars: Number(res.headers.get("x-character-count") ?? text.length) };
+  edge(["--voice", voice, `--rate=${rate}`, "--text", text, "--write-media", file]);
+  return { seconds: duration(file) };
 }
 
 function duration(file) {
@@ -120,63 +77,42 @@ const arg = (name, fallback) => {
   return i > 0 ? process.argv[i + 1] : fallback;
 };
 
-async function main() {
+function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   if (cmd === "voices") {
-    for (const v of await premadeVoices()) {
-      const l = v.labels ?? {};
-      console.log(`${v.name.padEnd(12)} ${[l.gender, l.age, l.accent, l.description ?? l.descriptive, l.use_case ?? l.use_case].filter(Boolean).join(", ")}`);
-    }
+    console.log(edge(["--list-voices"]).split(/\r?\n/).filter((l) => /^(Name|-|en-(US|GB)-)/.test(l)).join("\n"));
     return;
   }
 
   if (cmd === "samples") {
     const names = rest.filter((r) => !r.startsWith("--"));
-    const voices = await premadeVoices();
-    // Default picks: warm, clear narrators with a neutral (American) accent, one female and two male.
-    const wanted = names.length ? names : ["Sarah", "George", "Daniel"];
+    const wanted = names.length ? names : ["en-US-AndrewNeural", "en-US-AvaNeural", "en-US-BrianNeural"];
     const opening = `${script.shots[0].caption} ${script.shots[1].caption.split(". ")[0]}.`;
-    const model = arg("model", "eleven_v4");
-    console.log(`Opening lines (${words(opening)} words), model ${model}:\n  "${opening}"\n`);
-    for (const n of wanted) {
-      const v = voices.find((x) => x.name.toLowerCase().startsWith(n.toLowerCase()));
-      if (!v) {
-        console.log(`  ${n}: not available on this account (run: node tts.mjs voices)`);
-        continue;
-      }
-      const file = join(HERE, "audio", "samples", `${v.name.split(" ")[0].toLowerCase()}.mp3`);
-      const r = await speak({ voiceId: v.voice_id, text: forSpeech(opening), model, file });
-      const l = v.labels ?? {};
-      console.log(`  ${v.name.padEnd(10)} ${[l.gender, l.accent, l.description].filter(Boolean).join(", ").padEnd(36)} ${r.seconds.toFixed(1)} s, ${Math.round((words(opening) / r.seconds) * 60)} wpm -> ${file}`);
+    console.log(`Opening lines (${words(opening)} words):\n  "${opening}"\n`);
+    for (const v of wanted) {
+      const file = join(HERE, "audio", "samples", `${v}.mp3`);
+      const r = speak({ voice: v, text: forSpeech(opening), rate: arg("rate", "+0%"), file });
+      console.log(`  ${v.padEnd(28)} ${r.seconds.toFixed(1)} s, ${Math.round((words(opening) / r.seconds) * 60)} wpm -> ${file}`);
     }
     return;
   }
 
   if (cmd === "shots") {
-    const voiceArg = arg("voice");
-    if (!voiceArg) fail("Choose the voice: node tts.mjs shots --voice <Name>");
-    const v = await resolveVoice(voiceArg);
-    const model = arg("model", "eleven_v4");
-    const speed = arg("speed") ? Number(arg("speed")) : undefined;
-    const only = rest.filter((r) => !r.startsWith("--") && r !== voiceArg && r !== arg("model") && r !== arg("speed"));
-    const shots = [...script.shots, ...(script.alternates ?? [])];
+    const voice = arg("voice", DEFAULT_VOICE);
+    const rate = arg("rate", "+0%");
+    const only = rest.filter((r) => !r.startsWith("--") && r !== arg("voice") && r !== arg("rate"));
     const timingFile = join(HERE, "audio", "shots", "timing.json");
     const timing = existsSync(timingFile) ? JSON.parse(readFileSync(timingFile, "utf8")) : {};
-    for (let i = 0; i < shots.length; i++) {
-      const s = shots[i];
+    for (const s of script.shots) {
       if (only.length && !only.includes(s.id)) continue;
-      const main = script.shots;
-      const k = main.findIndex((x) => x.id === s.id);
-      const previous = k > 0 ? forSpeech(main[k - 1].caption) : undefined;
-      const next = k >= 0 && k < main.length - 1 ? forSpeech(main[k + 1].caption) : undefined;
       const file = join(HERE, "audio", "shots", `${s.id}.mp3`);
-      const r = await speak({ voiceId: v.voice_id, text: forSpeech(s.caption), model, speed, previous, next, file });
+      const r = speak({ voice, text: forSpeech(s.caption), rate, file });
       const wpm = Math.round((words(s.caption) / r.seconds) * 60);
-      timing[s.id] = { seconds: r.seconds, wpm, scene: s.seconds, voice: v.name, model };
+      timing[s.id] = { seconds: r.seconds, wpm, scene: s.seconds, voice, engine: "edge-tts", rate };
       const fit = r.seconds + 0.6 <= s.seconds ? "fits" : "LONGER than the scene: trim or speed up the footage, never the voice";
       console.log(`${s.id.padEnd(20)} ${r.seconds.toFixed(1)} s / scene ${s.seconds} s, ${wpm} wpm (${fit})`);
+      writeFileSync(timingFile, JSON.stringify(timing, null, 2)); // after every clip, so a failure keeps what was made
     }
-    writeFileSync(timingFile, JSON.stringify(timing, null, 2));
     const total = script.shots.reduce((a, s) => a + Math.max(s.seconds, (timing[s.id]?.seconds ?? 0) + 0.6), 0);
     console.log(`\nVideo length with these clips: ${Math.floor(total / 60)}:${String(Math.round(total % 60)).padStart(2, "0")} (limit 3:00). Pace target ${WPM_TARGET} wpm.`);
     return;
@@ -184,7 +120,7 @@ async function main() {
 
   if (cmd === "captions") {
     const timingFile = join(HERE, "audio", "shots", "timing.json");
-    if (!existsSync(timingFile)) fail("Generate the shots first: node tts.mjs shots --voice <Name>");
+    if (!existsSync(timingFile)) fail("Generate the shots first: node tts.mjs shots");
     const timing = JSON.parse(readFileSync(timingFile, "utf8"));
     const LEAD = 0.3; // the voice starts 0.3 s into each scene
     let t = 0;
@@ -227,15 +163,12 @@ async function main() {
       t += Math.max(s.seconds, dur + 0.6);
     }
     mkdirSync(join(HERE, "out"), { recursive: true });
-    writeFileSync(join(HERE, "out", process.argv.includes("--alt") ? "captions-alt.srt" : "captions.srt"), out.join("\n"));
-    console.log(`Wrote out/${process.argv.includes("--alt") ? "captions-alt.srt" : "captions.srt"} (${n - 1} captions, from script.json, so they match the narration word for word).`);
+    writeFileSync(join(HERE, "out", "captions.srt"), out.join("\n"));
+    console.log(`Wrote out/captions.srt (${n - 1} captions, from script.json, so they match the narration word for word).`);
     return;
   }
 
-  console.log("Usage: node tts.mjs voices | samples [names] | shots --voice <Name> [ids] | captions");
+  console.log("Usage: node tts.mjs voices | samples [voices] | shots [--voice V] [--rate +0%] [ids] | captions");
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1])
-  main().catch((e) =>
-    fail(e?.permission ? `${e.message} In ElevenLabs: Developers, API keys, edit this key and allow it. Nothing was generated.` : e instanceof Error ? e.message : String(e)),
-  );
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

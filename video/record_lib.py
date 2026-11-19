@@ -75,7 +75,17 @@ def read_only_js(address: str) -> str:
 """ % address
 
 
-def new_context(browser, *, address: str | None = None, name: str = "clip"):
+# Recording only (the live app is unchanged): the AI tab is left out of the demo videos (owner, 19 Nov).
+HIDE_AI_JS = """
+(() => {
+  const css = 'a[href="/ai"], a[href$="qrow-app.vercel.app/ai"] { display: none !important; } li.hub__cell:has(a[href="/ai"]) { display: none !important; }';
+  const add = () => { const s = document.createElement("style"); s.id = "rec-hide-ai"; s.textContent = css; (document.head || document.documentElement).appendChild(s); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", add); else add();
+})();
+"""
+
+
+def new_context(browser, *, address: str | None = None, name: str = "clip", hide_ai: bool = True):
     TMP.mkdir(parents=True, exist_ok=True)
     ctx = browser.new_context(
         viewport={"width": W, "height": H},
@@ -86,6 +96,8 @@ def new_context(browser, *, address: str | None = None, name: str = "clip"):
         reduced_motion="no-preference",
     )
     ctx.add_init_script(CURSOR_JS)
+    if hide_ai:
+        ctx.add_init_script(HIDE_AI_JS)
     if address:
         ctx.add_init_script(read_only_js(address))
     return ctx

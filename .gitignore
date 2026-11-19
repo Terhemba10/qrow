@@ -49,3 +49,9 @@ video/hf/node_modules/
 video/hf/assets/
 video/hf/.hyperframes/
 video/hf/snapshots/
+
+# demo_final.mp4 build outputs (sources in video/demo are committed)
+video/demo/out/
+video/demo/audio/
+video/demo/assets/*.otf
+video/audio/shots-bella/
